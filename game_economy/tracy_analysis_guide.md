@@ -4,6 +4,54 @@ A step-by-step guide to profile and compare the economy system performance.
 
 ---
 
+## Quick Start: Prove the Blocking Hypothesis
+
+For users with Tracy 0.11.1 compiled at `~/code/tracy-0.11.1`:
+
+### One-Liner Test (Linux)
+
+```bash
+# Terminal 1: Start Tracy
+~/code/tracy-0.11.1/Tracy &
+
+# Terminal 2: Run headless game (adjust paths as needed)
+cd /path/to/BAR && ./spring-pe-tracy --headless /path/to/replay.sdfz
+```
+
+### What to Look For
+
+1. Open Tracy, click **Connect** → `127.0.0.1`
+2. Let it capture ~30 seconds of gameplay
+3. Press **Ctrl+F** and search for `SlowUpdate`
+4. Look at the zone breakdown:
+
+| If You See This... | It Means... |
+|-------------------|-------------|
+| `SlowUpdate` contains `PE_Lua` as largest child | C++ is blocking on Lua |
+| `PE_Lua` ≈ `SlowUpdate` total time | 100% blocking, no parallelism |
+| Large gap between zone end and next zone | Thread is idle/waiting |
+
+### Quick Verification Zones
+
+Search for these zones to confirm blocking:
+
+```
+Zone: SlowUpdate::ProcessEconomy
+├── Zone: PE_Lua           ← Time spent in Lua
+│   ├── PE_Solver         ← Waterfill algorithm
+│   └── PE_PostMunge      ← Result formatting
+└── (gap = idle time)     ← If visible, thread is blocked
+```
+
+### Share These Metrics
+
+When reporting results, capture:
+- Mean `SlowUpdate::ProcessEconomy` duration (μs)
+- Mean `PE_Lua` duration (μs)
+- Ratio: `PE_Lua / SlowUpdate` (should be close to 1.0 if blocking)
+
+---
+
 ## Prerequisites
 
 ### Tracy Profiler
