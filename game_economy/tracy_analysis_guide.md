@@ -11,11 +11,7 @@ For users with Tracy 0.11.1 compiled at `~/code/tracy-0.11.1`:
 ### One-Liner Test (Linux)
 
 ```bash
-# Terminal 1: Start Tracy
-~/code/tracy-0.11.1/Tracy &
-
-# Terminal 2: Run headless game (adjust paths as needed)
-cd /path/to/BAR && ./spring-pe-tracy --headless /path/to/replay.sdfz
+docker-build-v2/build.sh linux -DTRACY_ENABLE=ON
 ```
 
 ### What to Look For
@@ -52,6 +48,142 @@ When reporting results, capture:
 
 ---
 
+## Visualizing Thread Blocking
+
+The key question is: **while ProcessEconomy runs, is other work blocked?**
+
+### Method 1: Timeline Thread View (Most Direct)
+
+1. **Open Timeline**: The main view after loading a trace
+2. **Find the main thread**: Look for `Main` or the thread with `Sim::GameFrame` zones
+3. **Zoom to a SlowUpdate frame**: Use Ctrl+F → search `ProcessEconomy` → click a result
+4. **Look for parallel activity**:
+
+```
+BLOCKING (bad):
+┌─────────────────────────────────────────────────┐
+│ Main Thread                                     │
+│ ┌─────────────────────────────────────────────┐ │
+│ │ GameFrame                                   │ │
+│ │ ┌─────────────────────────────────────────┐ │ │
+│ │ │ SlowUpdate                              │ │ │
+│ │ │ ┌───────────────────────────────────┐   │ │ │
+│ │ │ │ ProcessEconomy                    │   │ │ │ ← Everything waits
+│ │ │ │ ┌─────────────────────────────┐   │   │ │ │
+│ │ │ │ │ PE_Lua                      │   │   │ │ │
+│ │ │ └─┴─────────────────────────────┴───┘   │ │ │
+│ │ └─────────────────────────────────────────┘ │ │
+│ └─────────────────────────────────────────────┘ │
+│                                                 │
+│ Worker Thread 1                                 │
+│ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │ ← IDLE during PE!
+│                                                 │
+│ Worker Thread 2                                 │
+│ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │ ← IDLE during PE!
+└─────────────────────────────────────────────────┘
+
+NON-BLOCKING (good - hypothetical async design):
+┌─────────────────────────────────────────────────┐
+│ Main Thread                                     │
+│ ┌────┐    ┌────────────────────────────────────┐│
+│ │Kick│    │ Continue other work...             ││
+│ └────┘    └────────────────────────────────────┘│
+│      ↓                                     ↑    │
+│ Lua Thread                                 │    │
+│      ┌─────────────────────────────────┐   │    │
+│      │ PE_Lua (runs in parallel)       │───┘    │
+│      └─────────────────────────────────┘        │
+└─────────────────────────────────────────────────┘
+```
+
+### Method 2: CPU Data View
+
+1. **View → CPU Data** (or press `c`)
+2. Look at CPU utilization during ProcessEconomy frames
+3. If utilization drops to ~1 core during PE → confirms blocking
+
+### Method 3: Frame Time Histogram
+
+1. **View → Statistics** → find `Sim::GameFrame`
+2. Click to see histogram
+3. Look for **bimodal distribution**:
+   - Normal frames: ~600μs
+   - SlowUpdate frames (with PE): ~1500μs+ 
+4. The gap indicates blocking overhead
+
+### Interpreting Your Trace Data
+
+From your `zones.csv`, here's what the data shows:
+
+```
+ProcessEconomy Blocking Analysis
+================================
+
+Zone Hierarchy (reconstructed from source locations):
+  EventHandler::ProcessEconomy (41.3ms total)
+  └── LuaHandleSynced::ProcessEconomy (41.3ms) ← same call, C++ wrapper
+      └── PE_Lua (38.5ms)                       ← Lua execution time
+          ├── PE_Solver (15.0ms)                ← Waterfill algorithm
+          ├── PE_PolicyCache (18.8ms)           ← Policy updates
+          └── PE_LuaMunge (0.08ms)              ← Data formatting
+
+Time Breakdown:
+  PE_Lua / ProcessEconomy = 38.5 / 41.3 = 93.2%  ← CONFIRMS BLOCKING
+  
+  C++ overhead (marshaling, call setup):
+    ProcessEconomy - PE_Lua = 41.3 - 38.5 = 2.8ms (6.8%)
+    
+  Within PE_Lua:
+    PE_Solver:      15.0ms (39.0% of PE_Lua)
+    PE_PolicyCache: 18.8ms (48.9% of PE_Lua)  ← LARGEST BOTTLENECK
+    PE_LuaMunge:     0.1ms ( 0.2% of PE_Lua)
+    Unlabeled:       4.6ms (11.9% of PE_Lua)  ← API calls + misc
+
+Variance Analysis:
+  ProcessEconomy mean:  939μs
+  ProcessEconomy max: 2,309μs  ← 2.5× mean, causes frame spikes!
+  
+  PE_PolicyCache max: 1,779μs  ← Likely cause of variance
+```
+
+### Confirming the Blocking Hypothesis
+
+Your data **supports** the hypothesis from `do_not_block_cpp_plan.md`:
+
+| Evidence | Finding | Conclusion |
+|----------|---------|------------|
+| PE_Lua ≈ ProcessEconomy | 93.2% ratio | C++ waits for Lua to complete |
+| ProcessEconomy in EventHandler | Source: EventHandler.cpp:587 | Runs on main sim thread |
+| No parallel zones during PE | (check Timeline view) | Other work is blocked |
+| Max >> Mean (2.5×) | Variance in PE_PolicyCache | Causes frame time spikes |
+
+### What the Trace CANNOT Tell You
+
+1. **Absolute impact**: Is 0.94ms/call acceptable for your target hardware?
+2. **Comparison to master**: You need a master branch trace to compare
+3. **Real blocking proof**: Timeline view confirms, CSV summarizes
+
+### Recommended Tracy Settings for Blocking Analysis
+
+Add these to your Tracy capture for clearer visualization:
+
+```cpp
+// In LuaHandleSynced.cpp, around ProcessEconomy call:
+FrameMarkStart("SlowUpdate");  // Mark frame boundaries
+
+// At ProcessEconomy entry:
+ZoneScopedN("ProcessEconomy::Blocking");
+TracyMessageL("PE: Starting Lua call");
+
+// At ProcessEconomy exit:
+TracyMessageL("PE: Lua returned");
+FrameMarkEnd("SlowUpdate");
+```
+
+This creates **frame marks** that show up as vertical lines in Tracy's timeline, making it easy to see what else runs (or doesn't run) during PE.
+
+---
+
 ## Prerequisites
 
 ### Tracy Profiler
@@ -75,12 +207,12 @@ cd /path/to/RecoilEngine
 # === Master Build ===
 git checkout master
 git pull
-docker-build-v2/build.sh linux -DTRACY_ENABLE=ON -DTRACY_ON_DEMAND=ON
+docker-build-v2/build.sh linux -DTRACY_ENABLE=ON
 mv build-linux/spring spring-master-tracy
 
 # === ProcessEconomy Build ===
 git checkout game_economy
-docker-build-v2/build.sh linux -DTRACY_ENABLE=ON -DTRACY_ON_DEMAND=ON -DRECOIL_DETAILED_TRACY_ZONING=ON
+docker-build-v2/build.sh linux -DTRACY_ENABLE=ON
 mv build-linux/spring spring-pe-tracy
 ```
 
@@ -326,6 +458,98 @@ Fill this in after analysis:
 - [ ] ___
 - [ ] ___
 - [ ] ___
+
+---
+
+## Reference: Jaedrik's 6-Minute Trace Comparison (2026-01-14)
+
+Comprehensive analysis comparing ProcessEconomy branch vs Master on a slower machine.
+
+### ProcessEconomy Branch Metrics
+
+| Zone | Total (ms) | Count | Mean (μs) | Max (μs) |
+|------|-----------|-------|-----------|----------|
+| ProcessEconomy | 73.2 | 355 | 206 | 1,620 |
+| PE_Lua | 60.0 | 355 | 169 | 1,589 |
+| PE_PolicyCache_Deferred | 186.2 | 355 | 525 | **4,751** |
+| WaterfillSolver.Solve | 50.2 | 355 | 141 | 784 |
+| PE_CppMunge | 9.8 | 355 | 28 | 368 |
+| PE_CppSetters | 1.5 | 355 | 4 | 62 |
+
+**Key ratio:** `PE_Lua / ProcessEconomy = 60.0 / 73.2 = 82%` → Blocking confirmed
+
+### Overall Frame Time Comparison
+
+| Metric | Master | ProcessEconomy | Δ |
+|--------|--------|----------------|---|
+| `GameFrame` mean (μs) | 571 | 527 | **-8% (PE faster!)** |
+| `Sim::GameFrame` mean (μs) | 720 | 690 | **-4% (PE faster)** |
+| `Update` mean (μs) | 668 | 700 | +5% (PE slower) |
+| Trace duration | 11,318 frames | 10,647 frames | — |
+
+### ⚠️ Surprising Finding: No Overall Slowdown!
+
+The original hypothesis predicted a ~33% slowdown. The data shows:
+
+| Original Hypothesis | Actual Result |
+|---------------------|---------------|
+| "PE causes 33% slowdown" | PE is **comparable or faster** than Master |
+| "Blocking is the bottleneck" | Blocking exists but impact is **amortized** |
+
+**Why no slowdown?**
+1. PE runs only every 30 frames (SlowUpdate cadence)
+2. Amortized cost: `(206 + 525) / 30 ≈ 24μs per frame`
+3. Master's native sharing has its own overhead
+
+### The REAL Problem: Variance
+
+The issue isn't mean performance—it's **frame spikes**:
+
+| Zone | Mean | Max | Max/Mean |
+|------|------|-----|----------|
+| ProcessEconomy | 206μs | 1,620μs | **7.9×** |
+| PE_PolicyCache_Deferred | 525μs | 4,751μs | **9.0×** |
+| **Combined worst case** | 731μs | **6,371μs** | — |
+
+On bad frames, economy processing takes **6.4ms**—enough to cause visible stutters.
+
+### Architecture Note: Deferred Policy Cache
+
+The trace shows `PE_PolicyCache_Deferred` running as a **separate zone** from `ProcessEconomy`:
+- Source: `game_resource_transfer_controller.lua:191`
+- This is **outside** the ProcessEconomy call
+- Suggests policy cache updates were already moved to be deferred
+
+### Revised Hypothesis Status
+
+| Original Claim | Evidence | Status |
+|----------------|----------|--------|
+| "C++ blocks on Lua during PE" | PE_Lua = 82% of ProcessEconomy | ✅ **Confirmed** |
+| "PE causes ~33% slowdown" | Frame times comparable to Master | ❌ **Not observed** |
+| "Blocking is THE problem" | Variance (max >> mean) is worse | ⚠️ **Partially** |
+
+### Updated Bottleneck Priority
+
+```
+1. PE_PolicyCache_Deferred variance: max 4.75ms  ← BIGGEST SPIKE SOURCE
+   └── Called every SlowUpdate, highly variable
+   └── Consider: stagger across frames, or move to C++
+
+2. PE_Lua variance: max 1.59ms
+   └── WaterfillSolver itself is stable (max 784μs)
+   └── Issue may be in data marshaling or API calls
+
+3. Mean overhead is acceptable
+   └── 731μs per SlowUpdate = 24μs amortized per frame
+   └── No action needed for throughput
+```
+
+### Next Steps
+
+1. [x] ~~Compare PE vs Master frame times~~ → **Done: comparable**
+2. [ ] Investigate PE_PolicyCache_Deferred variance (why 9× max/mean?)
+3. [ ] Consider moving PolicyCache to C++ or staggering updates
+4. [ ] Profile specific games/scenarios where stuttering is reported
 
 ---
 

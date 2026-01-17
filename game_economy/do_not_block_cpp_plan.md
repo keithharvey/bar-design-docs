@@ -2,7 +2,7 @@
 
 ## The Problem
 
-The ProcessEconomy system shows a ~33% performance drop on lower-end machines. The hypothesis is simple: **the engine blocks during Lua execution**.
+The ProcessEconomy system was suspected to cause a ~33% performance drop on lower-end machines. The hypothesis was: **the engine blocks during Lua execution**.
 
 When the engine calls into Lua for ProcessEconomy, it:
 1. Stops the C++ simulation frame
@@ -11,115 +11,299 @@ When the engine calls into Lua for ProcessEconomy, it:
 4. Marshals results from Lua tables → C++ team state
 5. Only then continues with the rest of the frame
 
-This blocking round-trip is the suspected bottleneck.
+This blocking round-trip was the suspected bottleneck.
 
 ---
 
-## How to PROVE the Blocking Hypothesis
+## ⚠️ Hypothesis Status: PARTIALLY CONFIRMED (2026-01-14)
 
-### Method 1: Tracy Frame Analysis
+Tracy analysis from Jaedrik's slower machine reveals a more nuanced picture:
 
-Using Tracy, we can measure the exact duration of the blocking call:
+| Original Claim | Evidence | Status |
+|----------------|----------|--------|
+| "C++ blocks on Lua during PE" | PE_Lua = 82% of ProcessEconomy time | ✅ **Confirmed** |
+| "PE causes ~33% slowdown" | Frame times comparable to Master | ❌ **Not observed** |
+| "Blocking is THE problem" | Variance (max >> mean) is the issue | ⚠️ **Revised** |
 
-1. **Build with detailed Tracy zones**:
-   ```bash
-   docker-build-v2/build.sh linux -DTRACY_ENABLE=ON -DTRACY_ON_DEMAND=ON -DRECOIL_DETAILED_TRACY_ZONING=ON
-   ```
+### What the Data Shows
 
-2. **Look for these zones in Tracy**:
-   | Zone | What It Measures |
-   |------|-----------------|
-   | `SlowUpdate::ProcessEconomy` | Total C++ time blocked waiting for Lua |
-   | `PE_Lua` | Lua-side processing time |
-   | `LuaSyncedCall` | Lua↔C++ boundary crossing overhead |
+**ProcessEconomy (6-minute trace, slower machine):**
+- Mean: 206μs per call (every 30 frames)
+- Max: 1,620μs (7.9× mean)
+- PE_PolicyCache_Deferred: +525μs mean, **4,751μs max** (9× mean)
+- Combined worst case: **~6.4ms**
 
-3. **The smoking gun**: If `SlowUpdate::ProcessEconomy` duration ≈ `PE_Lua` duration, then C++ is fully blocked during Lua execution. There's no parallelism.
+**Frame Time Comparison:**
+| Metric | Master | ProcessEconomy |
+|--------|--------|----------------|
+| GameFrame mean | 571μs | 527μs (**PE faster**) |
+| Sim::GameFrame mean | 720μs | 690μs (**PE faster**) |
 
-### Method 2: Compare SlowUpdate Timing
+### Revised Understanding
 
-Compare frame timing with ProcessEconomy enabled vs disabled:
+The problem is **not throughput**—it's **variance causing frame spikes**:
 
-| Scenario | Expected SlowUpdate Duration |
-|----------|------------------------------|
-| ProcessEconomy OFF (engine native) | Baseline |
-| ProcessEconomy ON (Lua solver) | Baseline + Lua execution time |
+```
+Mean overhead per frame: (206 + 525) / 30 ≈ 24μs  ← Acceptable
+Worst-case spike: 6,400μs                          ← Causes stutters
+```
 
-If the overhead is additive (not overlapping), blocking is confirmed.
-
-### Method 3: Thread Analysis
-
-In Tracy's thread view:
-- Look at the main simulation thread during SlowUpdate
-- If it shows a single continuous block with no interleaving, the thread is blocked
-- No work is happening in parallel on the main thread
+SlowUpdate frames with bad variance can take 6+ milliseconds of economy processing, causing visible hitches even when average performance is good.
 
 ---
 
-## What "Not Blocking" Would Look Like
+## Evidence: Tracy Frame Analysis
 
-If we fixed the blocking issue, we'd expect:
-- C++ could continue processing non-economy work while Lua calculates
-- The Lua result would be applied at the start of the next SlowUpdate
-- One-frame latency in economy updates (acceptable for a 30-frame-per-second update cycle)
+The blocking hypothesis has been tested using Tracy profiling.
+
+### Build for Profiling
+
+```bash
+docker-build-v2/build.sh linux -DTRACY_ENABLE=ON
+```
+
+### Key Zones Measured
+
+| Zone | What It Measures | Jaedrik's Result |
+|------|-----------------|------------------|
+| `ProcessEconomy` | Total C++ time blocked waiting for Lua | 206μs mean |
+| `PE_Lua` | Lua-side processing time | 169μs (82% of PE) |
+| `PE_PolicyCache_Deferred` | Deferred policy cache update | 525μs mean, 4.75ms max |
+
+### The Smoking Gun
+
+`PE_Lua / ProcessEconomy = 82%` → C++ is blocked during Lua execution.
+
+However, the **overall frame impact is minimal** because:
+1. ProcessEconomy runs only every 30 frames (SlowUpdate)
+2. Amortized cost: ~24μs per frame
+3. Master branch's native sharing has comparable overhead
+
+### The Real Problem: Variance
+
+```
+ProcessEconomy max/mean ratio: 7.9×
+PE_PolicyCache_Deferred max/mean ratio: 9.0×
+```
+
+Bad frames can spike to **6+ milliseconds** of economy processing.
 
 ---
 
-## Proposed Fix: Async ProcessEconomy
+## Revised Goal: Reduce Variance, Not Mean Throughput
 
-### Current Flow (Blocking)
+Since mean throughput is acceptable, the goal shifts to **reducing frame spikes**.
+
+### Success Criteria
+
+| Metric | Current | Target |
+|--------|---------|--------|
+| ProcessEconomy mean | 206μs | — (acceptable) |
+| ProcessEconomy max | 1,620μs | < 500μs |
+| PE_PolicyCache_Deferred max | 4,751μs | < 1,000μs |
+| Combined worst case | 6,400μs | < 1,500μs |
+
+---
+
+## Root Cause Analysis: Why the Variance?
+
+### PE_PolicyCache_Deferred (Biggest Offender)
+
+- **Max/Mean ratio: 9.0×**
+- Runs at `game_resource_transfer_controller.lua:191`
+- **Confirmed O(n²)**: Nested loop over all team pairs in `UpdatePolicyCache`
+- For 16 teams: 256 pairs × 2 resources = 512 policy calculations per SlowUpdate
+
+### GC Correlation: CONFIRMED ✅
+
+Comparing GC spikes between branches:
+
+| Metric | ProcessEconomy | Master | Δ |
+|--------|----------------|--------|---|
+| CollectGarbage mean | 158μs | 147μs | +7% |
+| **CollectGarbage max** | **16,240μs** | **4,397μs** | **+269%** |
+
+**PE has 3.7× higher GC spikes!** The policy cache updates allocate objects that trigger expensive garbage collection during SlowUpdate frames.
+
+### Allocation Sources in UpdatePolicyCache
+
+```lua
+for _, senderID in ipairs(allTeams) do
+  for _, receiverID in ipairs(allTeams) do
+    local ctx = contextFactory.policy(...)  -- allocation
+    local metalPolicy = resultFactory(...)   -- allocation
+    local energyPolicy = resultFactory(...)  -- allocation
+    -- 3 allocations × 256 pairs = 768 allocations per SlowUpdate
+  end
+end
+```
+
+### WaterfillSolver
+
+- **Max/Mean ratio: 5.5×** (784μs max / 141μs mean)
+- Lower variance than PolicyCache
+- Already has C++ implementation available
+- Variance likely from iteration count, not GC
+
+---
+
+## Proposed Fixes: Variance Reduction
+
+### Current Flow
 
 ```
 Frame N SlowUpdate:
 ├─ Collect team data (C++)
-├─ Call ProcessEconomy(Lua) ← BLOCKS HERE
-├─ Wait for Lua to finish ← NO WORK DONE
+├─ Call ProcessEconomy(Lua)     ← 206μs mean, 1.6ms worst
+├─ PE_PolicyCache_Deferred      ← 525μs mean, 4.75ms worst  ← BIGGEST SPIKE
 ├─ Apply Lua results (C++)
 └─ Continue frame
+
+Total worst case: ~6.4ms (causes visible stutter)
 ```
 
-### Proposed Flow (Non-Blocking)
+### Target Flow (Variance-Bounded)
 
 ```
 Frame N SlowUpdate:
-├─ Apply results from Frame N-1 (if ready)
-├─ Start async: Collect team data → queue for Lua
-├─ Continue with other SlowUpdate work (doesn't need economy)
-└─ Lua processes in parallel (or deferred)
+├─ Collect team data (C++)
+├─ Call ProcessEconomy(Lua)     ← bounded to <500μs
+├─ Staggered PolicyCache        ← only update 1/N teams, <100μs
+├─ Apply Lua results (C++)
+└─ Continue frame
 
-Frame N+1 SlowUpdate:
-├─ Check if Lua result ready
-├─ Apply economy updates
-└─ ...
+Total worst case: <1.5ms (smooth)
 ```
 
 ### Implementation Options
 
-#### Option A: Deferred Lua Execution (Simplest)
+#### Option A: Stagger PolicyCache Updates (Low Effort, High Impact)
 
-1. During SlowUpdate, collect team data into a snapshot
-2. Schedule Lua ProcessEconomy to run AFTER SlowUpdate completes
-3. Apply results at the START of next SlowUpdate
+Instead of updating all team policies every SlowUpdate:
 
-**Pros**: Minimal engine changes
-**Cons**: One-frame latency in economy updates
+1. Divide teams into N groups
+2. Update 1 group per SlowUpdate
+3. Full refresh every N×30 frames
 
-#### Option B: Separate Lua State Thread
+**Pros**: Dramatically reduces per-frame work, simple change
+**Cons**: Slightly stale policy data (acceptable for 30-frame cycles)
+**Expected impact**: Reduces PE_PolicyCache_Deferred from 525μs to ~50μs mean
 
-1. Create a dedicated thread for economy Lua execution
-2. Main thread continues while economy calculates
-3. Sync results at frame boundary
+#### Option B: Move PolicyCache to C++ (Medium Effort)
 
-**Pros**: True parallelism
-**Cons**: Significant engine complexity, sync issues
+1. Implement policy lookup in C++ (simple team→team share ratio map)
+2. Keep Lua for policy configuration/UI only
+3. C++ updates cache incrementally
 
-#### Option C: Move Solver to C++
+**Pros**: Eliminates Lua overhead for hot path
+**Cons**: More engine code, policy logic duplication
 
-1. Keep Lua for configuration/policy only
-2. Move the hot waterfill loop to C++ (already done with SolveWaterfill)
-3. Reduce Lua boundary crossings to minimum
+#### Option C: Bound Iteration Counts (Quick Fix)
 
-**Pros**: Best performance
-**Cons**: Already partially implemented, need to measure remaining overhead
+1. Add early-exit conditions to waterfill solver
+2. Cap maximum iterations per frame
+3. Spread remaining work across multiple frames
+
+**Pros**: Guarantees max frame time
+**Cons**: Economy updates may take multiple frames to settle
+
+#### Option D: Profile-Guided Optimization
+
+1. Add Tracy zones inside PE_PolicyCache_Deferred
+2. Identify which operations cause 9× variance
+3. Optimize or batch those specific operations
+
+**Pros**: Data-driven fixes
+**Cons**: Requires more profiling
+
+#### ~~Option E: Async ProcessEconomy~~ (Deprioritized)
+
+Originally proposed to fix blocking overhead. Now deprioritized because:
+- Mean blocking time is acceptable (~24μs amortized)
+- Variance is the actual issue
+- Async adds complexity without addressing root cause
+
+---
+
+## Engine-Side Solutions (Recoil Changes)
+
+If Lua-side fixes aren't sufficient, these engine changes could help:
+
+### Engine Option 1: C++ Policy Orchestrator
+
+Instead of Lua maintaining the n² cache, the engine provides a policy configuration API:
+
+```cpp
+// Lua configures rules (rare, on policy change)
+Spring.ConfigurePolicyRule({
+  senderPattern = "ally",     -- "ally", "enemy", "all", or teamID
+  receiverPattern = "ally",
+  resourceType = "metal",
+  canShare = true,
+  taxRate = 0.1,
+  threshold = 100
+})
+
+// Engine maintains the n² cache internally
+// Lua queries via existing GetCachedPolicy (no change)
+```
+
+**Pros**: Zero Lua overhead for cache maintenance
+**Cons**: Policy logic must be expressible declaratively
+
+### Engine Option 2: Incremental/Dirty-Flag Cache
+
+Engine tracks which pairs need recalculation:
+
+```cpp
+// When share level changes, engine marks pair dirty
+Spring.SetTeamShareLevel(teamID, resource, level)  // auto-marks dirty
+
+// Lua only updates dirty pairs
+local dirtyPairs = Spring.GetDirtyPolicyPairs()
+for _, pair in ipairs(dirtyPairs) do
+  -- Calculate and cache only this pair
+end
+Spring.ClearDirtyPolicyPairs()
+```
+
+**Pros**: O(k) where k = changed pairs (usually k << n²)
+**Cons**: Requires change tracking, more complex API
+
+### Engine Option 3: Batch SetCachedPolicy API
+
+Reduce Lua↔C++ boundary crossings:
+
+```cpp
+// Instead of 512 individual SetCachedPolicy calls:
+Spring.SetCachedPoliciesBatch({
+  {sender=1, receiver=2, metal={...}, energy={...}},
+  {sender=1, receiver=3, metal={...}, energy={...}},
+  -- ...
+})
+```
+
+**Pros**: Single C++ call for all policies
+**Cons**: Still O(n²) work, but eliminates call overhead
+
+### Engine Option 4: Native Policy Calculator
+
+Move the policy calculation itself to C++:
+
+```cpp
+// Lua registers a policy formula once
+Spring.RegisterPolicyFormula("resource_transfer", {
+  canShare = "receiver.shareSlider > 0 AND sender.current > sender.storage * 0.9",
+  taxRate = "0.1",
+  threshold = "sender.shareSlider * sender.storage"
+})
+
+// Engine evaluates formula for all pairs in C++
+// Results available via GetCachedPolicy
+```
+
+**Pros**: Eliminates all Lua overhead for policy calculation
+**Cons**: Significant engine complexity, DSL design needed
 
 ---
 
@@ -153,12 +337,14 @@ The economy results just need to be ready before:
 
 ## Verification Checklist
 
-After implementing a fix, verify with Tracy:
+After implementing variance reduction fixes, verify with Tracy:
 
-- [ ] `SlowUpdate` duration decreases by ~`PE_Lua` time
-- [ ] Economy updates still arrive correctly (1 frame delayed is OK)
+- [ ] `ProcessEconomy` max < 500μs (was 1,620μs)
+- [ ] `PE_PolicyCache_Deferred` max < 1,000μs (was 4,751μs)
+- [ ] Max/Mean ratio < 3× for economy zones (was 7-9×)
+- [ ] No visible stuttering on SlowUpdate frames
+- [ ] Economy updates still correct (test sharing behaviors)
 - [ ] No desync issues in multiplayer (economy must be deterministic)
-- [ ] Memory usage stable (no accumulating queued snapshots)
 
 ---
 
