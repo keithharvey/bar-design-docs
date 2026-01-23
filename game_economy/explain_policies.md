@@ -26,7 +26,7 @@ I'll walk through the "Now" implementation in detail, then show a glimpse of "Ne
 * **Sharing modes exist** [PR](https://github.com/beyond-all-reason/BYAR-Chobby/pull/1041): Can disable, hide, lock, and show specific mod options with declarative configuration. This eliminates the "Easy Sharing" problem, where one checkbox does multiple behaviors, while still preserving the option for devs to name their own modes.
 
 ### Architecture Goals
-* **Synced domain layer**: Declarative, idempotent, centralized behavior logic.
+* **Synced domain layer**: Declarative, [idempotent](https://en.wikipedia.org/wiki/Idempotence), centralized behavior logic.
 * **Performance**: Optimized Lua algorithms for redistribution (Waterfill), with optional C++ acceleration.
 * **Testability**: Logic that can be tested without running the game.
 
@@ -94,7 +94,7 @@ sequenceDiagram
 
 ## 2. The Solution: Controllers & Policies
 
-To solve this, we invert the control. We introduce a **Service Layer** (Controllers) and a **Strategy Pattern** (Policies).
+To solve this, we invert the control. We introduce a **[Service Layer](https://en.wikipedia.org/wiki/Service_layer_pattern)** (Controllers) and a **[Strategy Pattern](https://en.wikipedia.org/wiki/Strategy_pattern)** (Policies).
 
 ### The Service Layer (Controllers)
 Instead of the engine asking "Can I do this?", the engine asks the game "What should I do?".
@@ -133,7 +133,7 @@ flowchart LR
     Cache --> UI
 ```
 
-A **Policy** is a pure function. Given mod options and team context, it produces a `PolicyResult`. This result is cached in `TeamRulesParams` and acts as a **ViewModel** for the UI. The UI never calculates business logic; it just reads the cached policy.
+A **Policy** is a [pure function](https://en.wikipedia.org/wiki/Pure_function). Given mod options and team context, it produces a `PolicyResult`. This result is cached in `TeamRulesParams` and acts as a **[ViewModel](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93viewmodel)** for the UI. The UI never calculates business logic; it just reads the cached policy.
 
 ---
 
@@ -306,8 +306,8 @@ flowchart TB
 ```
 
 ### Benefits of the New Architecture
-1.  **Inversion of Control**: Engine calls Controller, not gadgets intercepting engine.
-2.  **Single Source of Truth**: Policy cache is read by all consumers.
+1.  **[Inversion of Control](https://en.wikipedia.org/wiki/Inversion_of_control)**: Engine calls Controller, not gadgets intercepting engine.
+2.  **[Single Source of Truth](https://en.wikipedia.org/wiki/Single_source_of_truth)**: Policy cache is read by all consumers.
 3.  **Decoupled Gadgets**: Other gadgets query cache, they don't fight each other.
 4.  **Performance**: Optimized Lua with optional C++ acceleration.
 5.  **Quality Assurance**: Fully unit-testable Lua logic.
@@ -316,7 +316,7 @@ flowchart TB
 
 ## 7. The Future: A Policy DSL
 
-The `sharing_tab` branch establishes the foundation. But the architecture unlocks something more powerful: a **declarative DSL** for defining game policies.
+The `sharing_tab` branch establishes the foundation. But the architecture unlocks something more powerful: a **declarative [DSL](https://en.wikipedia.org/wiki/Domain-specific_language)** (Domain-Specific Language) for defining game policies.
 
 In a separate prototype, I've explored what this looks like. Here's the same tax policy, reimagined:
 
@@ -342,7 +342,7 @@ end
 ```
 
 The DSL provides:
-*   **Fluent API**: `builder:Allied():MetalTransfers():Use(...)`
+*   **[Fluent API](https://en.wikipedia.org/wiki/Fluent_interface)**: `builder:Allied():MetalTransfers():Use(...)`
 *   **Declarative intent**: Read what the policy *means*, not how it's wired.
 *   **Composability**: Policies are independent modules; the engine composes them.
 *   **Shared Infrastructure**: Common functionality (caching, validation, logging) lives in one place, not copy-pasted across gadgets.
@@ -380,7 +380,7 @@ This is **game design expressed as code**. No engine changes required. No hook o
 
 ```
 luarules/modules/
-├── policy_engine.lua           # Shared AST-like rule pipeline
+├── policy_engine.lua           # Shared rule pipeline (AST-like)
 ├── dsl.lua                     # Shared fluent builder API
 │
 ├── team_transfer/              # Economy & sharing module
@@ -405,15 +405,56 @@ luarules/modules/
 
 The `policy_engine` and `dsl` are shared infrastructure. Each domain module (team_transfer, combat, etc.) brings its own controller, policies, and default results—but they all compose through the same pipeline.
 
+### How Policies Compose
+
+Each policy file uses the DSL to declare rules. The DSL registers those rules with the policy engine. At runtime, the controller asks the engine to evaluate a context, and the engine runs through all registered rules to produce a result.
+
+```mermaid
+flowchart LR
+    subgraph Policies["Policy Files"]
+        P1[tax_resource_sharing.lua]
+        P2[building_unlocks.lua]
+        P3[allied_assist.lua]
+    end
+    
+    subgraph DSL["DSL Layer"]
+        Builder[builder:Allied<br/>:MetalTransfers<br/>:Use/Allow/Deny]
+    end
+    
+    subgraph Engine["Policy Engine"]
+        Rules[(Registered Rules)]
+        Eval[Evaluate Context]
+    end
+    
+    subgraph Runtime["Runtime"]
+        Ctrl[Controller]
+        Result[PolicyResult]
+    end
+    
+    P1 --> Builder
+    P2 --> Builder
+    P3 --> Builder
+    Builder -->|registers| Rules
+    Ctrl -->|context| Eval
+    Rules --> Eval
+    Eval --> Result
+```
+
+Each policy only knows about the DSL. The engine handles composition, ordering, and conflict resolution. Policies don't know about each other—they just declare what they care about.
+
 ### A Note on Lua 5.1 Performance
 
 The architect-minded among you may be thinking: *"Isn't Lua 5.1 insanely slow? Don't design patterns thrash the GC because you can't build tables without pooling everything?"*
 
 Yes. Yes it is.
 
-The current implementation works around this with aggressive object pooling and cache-friendly iteration. But the architecture is intentionally designed to be *runtime-agnostic*. If we later transpile these modules to native code (via LLVM or similar), or port to a language with proper value types, the policy/controller separation still holds. The abstractions pay for themselves twice: once in testability today, once in portability tomorrow.
+The current implementation works around this with aggressive [object pooling](https://en.wikipedia.org/wiki/Object_pool_pattern) and cache-friendly iteration. But the architecture is intentionally designed to be *runtime-agnostic*. If we later transpile these modules to native code (via LLVM or similar), or port to a language with proper value types, the policy/controller separation still holds. The abstractions pay for themselves twice: once in testability today, once in portability tomorrow.
 
 Taken further: native modules could enable Recoil to split into **core** (minimal simulation substrate) and **optional modules** (game behavior). The same pattern we're using here—swappable policies composed by a shared engine—could apply at the engine level. Recoil core handles physics, rendering, networking. Game modules handle economy, combat rules, unit transfers. Each game chooses which modules to load. BAR ships its opinionated defaults; other games swap in their own.
+
+### High Level Orchestration
+
+Because the module owns the policies, it can also orchestrate them—introducing dependencies between policies, composing outputs, or applying middleware-style transformations. That's a topic for a future doc.
 
 ---
 
