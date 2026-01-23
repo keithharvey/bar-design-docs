@@ -267,8 +267,10 @@ end
 Spring.ClearDirtyPolicyPairs()
 ```
 
-**Pros**: O(k) where k = changed pairs (usually k << n²)
-**Cons**: Requires change tracking, more complex API
+**Pros**: O(k) where k = changed pairs
+**Cons**: In a flow-based economy k still trends toward n² because any
+policy depends on global sender/receiver state (income, storage, share
+levels, stalls). Change tracking is mostly as expensive as recompute.
 
 ### Engine Option 3: Batch SetCachedPolicy API
 
@@ -305,6 +307,16 @@ Spring.RegisterPolicyFormula("resource_transfer", {
 **Pros**: Eliminates all Lua overhead for policy calculation
 **Cons**: Significant engine complexity, DSL design needed
 
+Worth mentioning for completeness but extreme. A less DSL-heavy variant is native
+behavior modules (Recoil-only rules engine) that keep behavior in engine code.
+That still creates a serious con: behavior becomes engine-specific, harder to
+iterate, and unmaintainable for mods. The policy logic is BAR-specific and changes
+frequently - encoding it in C++ or a DSL trades Lua's 1ms overhead for months of
+engine-side maintenance burden.
+
+The ThreadPool async pattern (see below) is more practical if C++ ownership is
+acceptable.
+
 ---
 
 ## Specific Timing Windows in Frame Lifecycle
@@ -324,14 +336,75 @@ The frame lifecycle has these relevant phases:
 
 ### Safe Windows for Async Economy
 
-The economy calculation could safely run in parallel during:
+At first glance, economy could run in parallel during:
 - `UnitHandler::Update()` (unit movement/combat)
 - `ProjectileHandler::Update()` (projectile physics)
-- Rendering (unsynced, but could overlap)
 
-The economy results just need to be ready before:
+**Problem**: Units consume resources during `UnitHandler::Update()` (cloaking,
+construction, regeneration). Economy calculation depends on resource state that's
+being mutated by unit updates. There's no clean "safe window" - economy reads
+the same data units write.
+
+The economy results would need to be ready before:
 - Next SlowUpdate applies resource changes
 - UI queries resource values (can tolerate 1-frame stale data)
+
+### Recoil's Existing ThreadPool
+
+The engine has a ThreadPool (`rts/System/Threading/ThreadPool.h`) already used in
+synced sim code:
+
+```cpp
+// Fire-and-forget async with future
+auto fut = ThreadPool::Enqueue([&]() { return HeavyCalculation(); });
+// ... other work ...
+auto result = fut.get();  // blocks if not done
+
+// Parallel iteration (already used in LosHandler, UnitHandler)
+for_mt(0, items.size(), [&](int i) { ProcessItem(i); });
+
+// ITaskGroup::WaitFor(spring_time) provides timeout-based blocking
+```
+
+Existing usage in synced sim:
+- `LosHandler::Update()` uses `for_mt` for raycast terrain
+- `UnitHandler::SlowUpdateUnits()` uses `for_mt` for bounding volume updates
+- `UnitHandler::UpdateUnitWeapons()` uses `for_mt_chunk`
+
+**The catch**: ProcessEconomy is a *Lua callin*, and Lua must run on the sim
+thread for determinism. The ThreadPool is for C++ work only. To use async
+economy, the calculation would need to be fully C++ (Engine Option 4 territory).
+
+A hypothetical async economy pattern would look like:
+
+```cpp
+// Early in SimFrame (before unitHandler.Update())
+auto economyFuture = ThreadPool::Enqueue([&]() {
+    return CalculateEconomyInCpp();  // pure C++, deterministic
+});
+
+// ... unitHandler.Update(), projectileHandler.Update() ...
+
+// Before teamHandler.GameFrame()
+if (!economyFuture.wait_for(500us)) {
+    LOG_L(L_ERROR, "Economy calculation timeout!");
+}
+auto result = economyFuture.get();
+ApplyEconomyResult(result);
+```
+
+This requires moving economy logic from Lua to C++, which is a significant
+refactor but would enable true parallel execution. The ThreadPool machinery
+is already there and battle-tested in the sim.
+
+**Reality check**: Moving to C++ means capturing modoptions in engine config,
+which defeats the purpose. The flexibility of Lua (iterate on policy logic
+without engine rebuilds, mod-specific behaviors) is why it's in Lua. The
+ThreadPool doesn't help us unless we're willing to give that up.
+
+**Conclusion**: Economy stays in Lua, on the sim thread, where it is. Focus
+optimization efforts on Lua-side efficiency (table pooling, caching, reducing
+n² work) rather than threading.
 
 ---
 
