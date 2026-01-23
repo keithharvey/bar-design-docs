@@ -46,15 +46,17 @@ The existing gadget system is powerful and flexible. Games *can* bypass the defa
 flowchart TB
     subgraph Existing["Existing: Engine-Controlled"]
         E1[Engine]
+        GH[GadgetHandler]
         G1[Gadget A]
         G2[Gadget B]
         UI[Unsynced UI]
         BL_S[Business Logic]
         BL_U[Business Logic]
         
-        E1 <-->|hook + allow/deny| G1
-        E1 <-->|hook + allow/deny| G2
-        G1 <-.->|coordinate/<br/>short-circuit| G2
+        E1 -->|calls| GH
+        GH <-->|hook + allow/deny| G1
+        GH <-->|hook + allow/deny| G2
+        G1 <-.->|coordinate via<br/>globals/state| G2
         G1 --> BL_S
         G2 --> BL_S
         
@@ -71,15 +73,18 @@ In the current system, a simple resource transfer request travels through a peri
 sequenceDiagram
     participant UI as Unsynced UI
     participant Eng as Engine
+    participant GH as GadgetHandler
     participant G1 as Gadget A
     participant G2 as Gadget B
 
     UI->>Eng: ShareResources(Team A -> B)
-    Eng->>G1: AllowResourceTransfer?
+    Eng->>GH: AllowResourceTransfer?
+    GH->>G1: AllowResourceTransfer?
     G1->>G2: (Implicit Coupling via Globals)
-    G1-->>Eng: true
-    Eng->>G2: AllowResourceTransfer?
-    G2-->>Eng: true
+    G1-->>GH: true
+    GH->>G2: AllowResourceTransfer?
+    G2-->>GH: true
+    GH-->>Eng: true
     Eng->>Eng: Execute Transfer
 ```
 
@@ -96,9 +101,11 @@ sequenceDiagram
 To solve this, we invert the control. We introduce a **[Service Layer](https://en.wikipedia.org/wiki/Service_layer_pattern)** (Controllers) and a **[Strategy Pattern](https://en.wikipedia.org/wiki/Strategy_pattern)** (Policies).
 
 ### The Service Layer (Controllers)
-Instead of the engine asking "Can I do this?", the engine asks the game "What should I do?".
+Instead of the engine asking "Can I do this?", the game tells the engine "Do this." The game owns the logic; the engine executes the mutations.
 
-We add a switch `modInfo.game_economy = true`. When enabled, the engine delegates the entire economy resolution to a synced gadget via [`Spring.SetEconomyController`](https://github.com/keithharvey/bar/blob/sharing_tab/luarules/gadgets/game_resource_transfer_controller.lua#L350).
+The goal is to route all economy operations through the controller: gadgets call `GG.Function` instead of engine APIs directly. `GG.Function` → Controller → Engine. This gives us a centralized place for cache updates, policy evaluation, and eventually an economy state machine if we add native modules.
+
+We add a switch `modInfo.game_economy = true`. When enabled, the engine delegates economy resolution to a synced gadget via [`Spring.SetEconomyController`](https://github.com/keithharvey/bar/blob/sharing_tab/luarules/gadgets/game_resource_transfer_controller.lua#L350).
 
 ### The Strategy Pattern (Policies)
 Because the game controls execution, it can expose that execution to "policies" as swappable components.
