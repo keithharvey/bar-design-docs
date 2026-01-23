@@ -145,7 +145,7 @@ A **Policy** is a [pure function](https://en.wikipedia.org/wiki/Pure_function). 
 
 Because policies are just functions, they can incorporate runtime state—not just static mod options. Want sharing to unlock when both players build a storage building? That's a policy that checks game state. Want tax rates to scale with game time? That's a policy too.
 
-The architecture enables this today. We don't have concrete examples in the `sharing_tab` branch yet, but the "Next" section (Section 7) shows what this looks like with the DSL: policies like `building_unlocks_sharing.lua` that gate behavior on predicates like `hasBothStorages()`.
+The architecture enables this today. We don't have concrete examples in the `sharing_tab` branch yet, but the "Next" section (Section 6) shows what this looks like with the DSL: policies like `building_unlocks_sharing.lua` that gate behavior on predicates like `hasBothStorages()`.
 
 ---
 
@@ -277,17 +277,7 @@ end
 
 ---
 
-## 5. Why This Architecture Enables Testing
-
-The examples above aren't hypothetical—the solver spec is running in CI today. Because the logic is decoupled from the engine loop, we can test it in isolation without booting the game.
-
-✅ **Testable**: Logic verified in milliseconds.
-✅ **Safe**: Refactor fearlessly.
-✅ **Professional**: Standard software engineering practices applied to game dev.
-
----
-
-## 6. Comparison Summary
+## 5. Comparison Summary
 
 ```mermaid
 flowchart TB
@@ -323,7 +313,7 @@ flowchart TB
 
 ---
 
-## 7. The Future: A Policy DSL
+## 6. The Future: A Policy DSL
 
 The `sharing_tab` branch establishes the foundation. But the architecture unlocks something more powerful: a **declarative [DSL](https://en.wikipedia.org/wiki/Domain-specific_language)** (Domain-Specific Language) for defining game policies.
 
@@ -467,7 +457,7 @@ Because the module owns the policies, it can also orchestrate them—introducing
 
 ---
 
-## 8. Conclusion: Why This Matters
+## 7. Conclusion: Why This Matters
 
 This isn't just about resource sharing. It's about establishing a pattern for how the game can own its own behavior.
 
