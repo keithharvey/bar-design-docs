@@ -23,7 +23,7 @@ I'll walk through the "Now" implementation in detail, then show a glimpse of "Ne
 
 ### UX Goals
 * **Cardinal mod options**: Each mod option does exactly 1 functional game behavior. No "Nuclear Options" or "Easy Sharing Tax" that incorporate multiple surprising behaviors. Instead: "Unit Sharing Mode", "Tax Rate", "Ally Assist Mode", etc.
-* **Sharing modes exist**: Can disable, hide, lock, and show specific mod options with declarative configuration.
+* **Sharing modes exist** [PR](https://github.com/beyond-all-reason/BYAR-Chobby/pull/1041): Can disable, hide, lock, and show specific mod options with declarative configuration. This eliminates the "Easy Sharing" problem, where one checkbox does multiple behaviors, while still preserving the option for devs to name their own modes.
 
 ### Architecture Goals
 * **Synced domain layer**: Declarative, idempotent, centralized behavior logic.
@@ -374,6 +374,8 @@ Yes. Yes it is.
 
 The current implementation works around this with aggressive object pooling and cache-friendly iteration. But the architecture is intentionally designed to be *runtime-agnostic*. If we later transpile these modules to native code (via LLVM or similar), or port to a language with proper value types, the policy/controller separation still holds. The abstractions pay for themselves twice: once in testability today, once in portability tomorrow.
 
+Taken further: native modules could enable Recoil to split into **core** (minimal simulation substrate) and **optional modules** (game behavior). The same pattern we're using here—swappable policies composed by a shared engine—could apply at the engine level. Recoil core handles physics, rendering, networking. Game modules handle economy, combat rules, unit transfers. Each game chooses which modules to load. BAR ships its opinionated defaults; other games swap in their own.
+
 ---
 
 ## 7. Conclusion: Why This Matters
@@ -396,6 +398,8 @@ Just because this is the first "game module" we rip out of `Recoil core` does no
 
 | File | Purpose |
 |------|---------|
+| [BAR PR - The Sharing Tab](https://github.com/beyond-all-reason/Beyond-All-Reason/pull/5704) | Game-side changes |
+| [Recoil PR - Game Economy](https://github.com/beyond-all-reason/RecoilEngine/pull/2664) | Engine-side changes |
 | [game_resource_transfer_controller.lua](https://github.com/keithharvey/bar/blob/sharing_tab/luarules/gadgets/game_resource_transfer_controller.lua) | Main controller gadget |
 | [resource_transfer_synced.lua](https://github.com/keithharvey/bar/blob/sharing_tab/common/luaUtilities/team_transfer/resource_transfer_synced.lua) | Policy calculation logic |
 | [economy_waterfill_solver.lua](https://github.com/keithharvey/bar/blob/sharing_tab/common/luaUtilities/economy/economy_waterfill_solver.lua) | Redistribution algorithm |
