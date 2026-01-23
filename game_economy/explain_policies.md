@@ -204,6 +204,29 @@ sequenceDiagram
     LuaCtrl->>Teams: Apply Transfers
 ```
 
+Because it's a pure function, we can test it in isolation:
+
+**[game_resource_transfer_controller_spec.lua](https://github.com/keithharvey/bar/blob/sharing_tab/spec/luarules/gadgets/game_resource_transfer_controller_spec.lua)**
+
+```lua
+describe("WaterfillSolver.SolveToResults", function()
+  it("balances metal between teams without tax", function()
+    local teamA = Builders.Team:new():WithMetal(800)
+    local teamB = Builders.Team:new():WithMetal(200)
+    
+    local results = WaterfillSolver.SolveToResults(mockSpring, {teamA, teamB})
+    
+    assert.is_near(500, results[1].current) -- Team A
+    assert.is_near(500, results[2].current) -- Team B
+  end)
+  
+  it("applies tax correctly in results", function()
+    -- ...
+    assert.is_true(teamAMetal.sent > teamBMetal.received)
+  end)
+end)
+```
+
 ---
 
 ## 4. The Controller: ProcessEconomy
@@ -245,32 +268,9 @@ end
 
 ---
 
-## 5. Verification: Unit Testing
+## 5. Why This Architecture Enables Testing
 
-This is the biggest win. Because the logic is decoupled from the engine loop, we can test it in isolation.
-
-We don't need to boot the game to verify that tax calculations are correct. We can run specs against the Lua policies directly.
-
-**[game_resource_transfer_controller_spec.lua](https://github.com/keithharvey/bar/blob/sharing_tab/spec/luarules/gadgets/game_resource_transfer_controller_spec.lua)**
-
-```lua
-describe("WaterfillSolver.SolveToResults", function()
-  it("balances metal between teams without tax", function()
-    local teamA = Builders.Team:new():WithMetal(800)
-    local teamB = Builders.Team:new():WithMetal(200)
-    
-    local results = WaterfillSolver.SolveToResults(mockSpring, {teamA, teamB})
-    
-    assert.is_near(500, results[1].current) -- Team A
-    assert.is_near(500, results[2].current) -- Team B
-  end)
-  
-  it("applies tax correctly in results", function()
-    -- ...
-    assert.is_true(teamAMetal.sent > teamBMetal.received)
-  end)
-end)
-```
+The examples above aren't hypothetical—the solver spec is running in CI today. Because the logic is decoupled from the engine loop, we can test it in isolation without booting the game.
 
 ✅ **Testable**: Logic verified in milliseconds.
 ✅ **Safe**: Refactor fearlessly.
