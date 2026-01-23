@@ -141,6 +141,12 @@ flowchart LR
 
 A **Policy** is a [pure function](https://en.wikipedia.org/wiki/Pure_function). Given mod options and team context, it produces a `PolicyResult`. This result is cached in `TeamRulesParams` and acts as a **[ViewModel](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93viewmodel)** for the UI. The UI never calculates business logic; it just reads the cached policy.
 
+### Dynamic Behavior
+
+Because policies are just functions, they can incorporate runtime state—not just static mod options. Want sharing to unlock when both players build a storage building? That's a policy that checks game state. Want tax rates to scale with game time? That's a policy too.
+
+The architecture enables this today. We don't have concrete examples in the `sharing_tab` branch yet, but the "Next" section (Section 7) shows what this looks like with the DSL: policies like `building_unlocks_sharing.lua` that gate behavior on predicates like `hasBothStorages()`.
+
 ---
 
 ## 3. Deep Dive: A Policy In Action
