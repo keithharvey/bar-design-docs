@@ -206,7 +206,46 @@ sequenceDiagram
 
 ---
 
-## 4. Verification: Unit Testing
+## 4. The Controller: ProcessEconomy
+
+The controller is the glue. It's called by the engine every `SlowUpdate` and orchestrates two distinct phases:
+
+**[game_resource_transfer_controller.lua](https://github.com/keithharvey/bar/blob/sharing_tab/luarules/gadgets/game_resource_transfer_controller.lua#L176)**
+
+```lua
+---@param frame number
+---@param teams table<number, TeamResourceData>
+---@return EconomyTeamResult[]
+local function ProcessEconomy(frame, teams)
+  -- ...
+  
+  -- Step 1: Solve redistribution (the math)
+  local results = WaterfillSolver.SolveToResults(springRepo, teams)
+  
+  -- Step 2: Flag policy cache for deferred update
+  pendingPolicyUpdate = true
+  pendingPolicyFrame = frame
+  
+  return results
+end
+
+local function DeferredPolicyUpdate()
+  if not pendingPolicyUpdate then return end
+  pendingPolicyUpdate = false
+  
+  -- ...
+  lastPolicyUpdate = ResourceTransfer.UpdatePolicyCache(
+    springRepo, pendingPolicyFrame, lastPolicyUpdate, POLICY_UPDATE_RATE, contextFactory
+  )
+end
+```
+
+**Step 1** (Waterfill) runs in the hot path and returns results to the engine immediately.
+**Step 2** (Policy Cache) is deferred to `GameFrame` to avoid blocking.
+
+---
+
+## 5. Verification: Unit Testing
 
 This is the biggest win. Because the logic is decoupled from the engine loop, we can test it in isolation.
 
@@ -239,7 +278,7 @@ end)
 
 ---
 
-## 5. Comparison Summary
+## 6. Comparison Summary
 
 ```mermaid
 flowchart TB
@@ -275,7 +314,7 @@ flowchart TB
 
 ---
 
-## 6. The Future: A Policy DSL
+## 7. The Future: A Policy DSL
 
 The `sharing_tab` branch establishes the foundation. But the architecture unlocks something more powerful: a **declarative DSL** for defining game policies.
 
@@ -378,7 +417,7 @@ Taken further: native modules could enable Recoil to split into **core** (minima
 
 ---
 
-## 7. Conclusion: Why This Matters
+## 8. Conclusion: Why This Matters
 
 This isn't just about resource sharing. It's about establishing a pattern for how the game can own its own behavior.
 
