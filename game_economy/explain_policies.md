@@ -183,18 +183,7 @@ One major concern with moving logic to Lua is performance. Resource sharing invo
 
 **[economy_waterfill_solver.lua](https://github.com/keithharvey/bar/blob/sharing_tab/common/luaUtilities/economy/economy_waterfill_solver.lua)** — The algorithm.
 
-The solver is implemented in optimized Lua 5.1. While we are bound by the runtime, we have structured the data flow to be efficient using object pooling and cache-friendly iteration. The architecture also allows optional C++ acceleration via `Spring.SolveWaterfill` but so far the LUA tracy results are promising (SlowUpdate is a little faster in the new branch).
-
-```lua
-local function solveWithCppOrLua(members, memberCount, taxRate)
-  if Spring and Spring.SolveWaterfill then
-    -- Use C++ solver if available
-    local result = Spring.SolveWaterfill(cppMembersCache, taxRate)
-    return result.lift, result.deltas
-  end
-  return solveWaterfill(members, memberCount, taxRate)
-end
-```
+The solver is implemented in optimized Lua 5.1. While we are bound by the runtime, we have structured the data flow to be efficient using [object pooling](https://en.wikipedia.org/wiki/Object_pool_pattern) and cache-friendly iteration. Tracy results are promising—SlowUpdate is a little faster in the new branch.
 
 ```mermaid
 sequenceDiagram
@@ -210,28 +199,36 @@ sequenceDiagram
     LuaCtrl->>Teams: Apply Transfers
 ```
 
-Because it's a pure function, we can test it in isolation:
-
-**[game_resource_transfer_controller_spec.lua](https://github.com/keithharvey/bar/blob/sharing_tab/spec/luarules/gadgets/game_resource_transfer_controller_spec.lua)**
+Because it's a pure function, we can test it in isolation. Here's an actual test from **[game_resource_transfer_controller_spec.lua](https://github.com/keithharvey/bar/blob/sharing_tab/spec/luarules/gadgets/game_resource_transfer_controller_spec.lua)**:
 
 ```lua
-describe("WaterfillSolver.SolveToResults", function()
-  it("balances metal between teams without tax", function()
-    local teamA = Builders.Team:new():WithMetal(800)
-    local teamB = Builders.Team:new():WithMetal(200)
-    
-    local results = WaterfillSolver.SolveToResults(mockSpring, {teamA, teamB})
-    
-    assert.is_near(500, results[1].current) -- Team A
-    assert.is_near(500, results[2].current) -- Team B
-  end)
+it("balances metal between teams without tax", function()
+  local teamA = Builders.Team:new()
+    :WithMetal(800)
+    :WithMetalStorage(1000)
+    :WithMetalShareSlider(50)
+  local teamB = Builders.Team:new()
+    :WithMetal(200)
+    :WithMetalStorage(1000)
+    :WithMetalShareSlider(50)
+
+  normalizeAllies({ teamA, teamB }, teamA.allyTeam)
+
+  local spring = buildSpring({ taxRate = 0 }, { teamA, teamB })
+  local teamsList = buildTeamsTable({ teamA, teamB })
   
-  it("applies tax correctly in results", function()
-    -- ...
-    assert.is_true(teamAMetal.sent > teamBMetal.received)
-  end)
+  local results = WaterfillSolver.SolveToResults(spring, teamsList)
+  
+  -- ... extract teamAMetal, teamBMetal from results ...
+  
+  assert.is_near(500, teamAMetal.current, 0.1)
+  assert.is_near(500, teamBMetal.current, 0.1)
+  assert.is_near(300, teamAMetal.sent, 0.1)
+  assert.is_near(300, teamBMetal.received, 0.1)
 end)
 ```
+
+The test uses builder patterns to construct mock Spring state, then asserts on the solver's pure output. No engine required.
 
 ---
 
