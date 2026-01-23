@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Right now, the gadget system as it pertains to unit and resource transfers is baked into the engine. It is assumed that the engine will be controlling those transfers internal to the hook system it exposes.
+Right now, the gadget system provides hooks for unit and resource transfers. Games *can* take full control of these subsystems—nothing in the engine prevents it. But there's no shared infrastructure for doing so cleanly. Each game that wants declarative, testable transfer logic has to reinvent the wheel.
 
 I started my discovery process trying to remove the `capture` parameter from the `AllowUnitTransfer` hook, and to move `/take` out of the engine. Pretty quickly I asked the question:
 
@@ -34,13 +34,13 @@ I'll walk through the "Now" implementation in detail, then show a glimpse of "Ne
 
 This branch is a stepping stone. I originally built a more complete framework, realized it was too big a leap, and backported the core patterns without the scaffolding. You'll see functions treated as atomic units with full EmmyLua decorators—this is intentional. When you're not sure where code will live long-term, portability matters.
 
-The goal here is singular: **invert control from the engine to the synced layer**. Demonstrate that the game can own a subsystem completely. The "used once" value objects and explicit typing may look over-engineered for what's merged today, but they're load-bearing for what comes next.
+The goal here is singular: **provide infrastructure that makes game-owned subsystems easy**. The game *can* already own subsystems—this PR provides the patterns, caching, and tested code to do it well. The "used once" value objects and explicit typing may look over-engineered for what's merged today, but they're load-bearing for what comes next.
 
 ---
 
 ## 1. The Existing System: "The Spaghetti"
 
-The existing gadget system is powerful but assumes control flow *originates* from the engine for subsystems the engine doesn't actually understand. This leads to a bidirectional dependency mess where gadgets fight each other.
+The existing gadget system is powerful and flexible. Games *can* bypass the default hooks entirely. But if you use the hooks as intended, you end up with implicit coordination between gadgets that's hard to reason about and impossible to test in isolation.
 
 ```mermaid
 flowchart TB
@@ -81,7 +81,6 @@ sequenceDiagram
     Eng->>G2: AllowResourceTransfer?
     G2-->>Eng: true
     Eng->>Eng: Execute Transfer
-    Eng-->>UI: Event: TransferComplete
 ```
 
 ### Problems
@@ -465,10 +464,11 @@ This isn't just about resource sharing. It's about establishing a pattern for ho
 The engine is a powerful simulation substrate. It doesn't need to know about "tax rates" or "unit stun durations" or "building unlock requirements." Those are *game design decisions*. They should live in the game.
 
 What we're proposing:
-1.  **This PR**: Controller pattern, PolicyResult caching, testable Lua logic.
-2.  **Future PRs**: DSL, policy engine, more subsystems migrated out of engine control.
+1.  **The Sharing Tab PR (BAR-only)**: Controller pattern, PolicyResult caching, testable Lua logic. Works today by hooking `GameFrame`.
+2.  **Engine changes (Recoil PR)**: A `ProcessEconomy` callback that formalizes the IoC pattern. This requires buy-in but isn't blocking—we can keep hooking `GameFrame` if needed.
+3.  **Future PRs**: DSL, policy engine, more subsystems migrated to game control.
 
-Just because this is the first "game module" we rip out of `Recoil core` does not mean it should be the last. Resource Transfers, Unit Transfers, Combat behavior—each of these could follow the same pattern.
+Resource Transfers, Unit Transfers, Combat behavior—each of these could follow the same pattern. The game owns the logic; the engine provides the simulation substrate.
 
 **The game should be in charge of the game.**
 
@@ -478,8 +478,8 @@ Just because this is the first "game module" we rip out of `Recoil core` does no
 
 | File | Purpose |
 |------|---------|
-| [BAR PR - The Sharing Tab](https://github.com/beyond-all-reason/Beyond-All-Reason/pull/5704) | Game-side changes |
-| [Recoil PR - Game Economy](https://github.com/beyond-all-reason/RecoilEngine/pull/2664) | Engine-side changes |
+| [BAR PR - The Sharing Tab](https://github.com/beyond-all-reason/Beyond-All-Reason/pull/5704) | Game-side implementation (works standalone via GameFrame hooks) |
+| [Recoil PR - Game Economy](https://github.com/beyond-all-reason/RecoilEngine/pull/2664) | Proposed engine changes (ProcessEconomy callback—optional but better long-term) |
 | [game_resource_transfer_controller.lua](https://github.com/keithharvey/bar/blob/sharing_tab/luarules/gadgets/game_resource_transfer_controller.lua) | Main controller gadget |
 | [resource_transfer_synced.lua](https://github.com/keithharvey/bar/blob/sharing_tab/common/luaUtilities/team_transfer/resource_transfer_synced.lua) | Policy calculation logic |
 | [economy_waterfill_solver.lua](https://github.com/keithharvey/bar/blob/sharing_tab/common/luaUtilities/economy/economy_waterfill_solver.lua) | Redistribution algorithm |
