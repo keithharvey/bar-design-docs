@@ -147,6 +147,40 @@ Because policies are just functions, they can incorporate runtime state—not ju
 
 The architecture enables this today. We don't have concrete examples in the `sharing_tab` branch yet, but the "Next" section (Section 6) shows what this looks like with the DSL: policies like `building_unlocks_sharing.lua` that gate behavior on predicates like `hasBothStorages()`.
 
+### Actions: Separating Queries from Commands
+
+This architecture follows a [CQRS](https://en.wikipedia.org/wiki/Command_Query_Responsibility_Segregation)-like pattern: **Policies** are queries (pure functions that return what *should* happen), **Actions** are commands (functions that *make it happen* by touching engine state).
+
+Here's the `ResourceTransfer` action from the `sharing_tab` branch:
+
+**[resource_transfer_synced.lua](https://github.com/keithharvey/bar/blob/sharing_tab/common/luaUtilities/team_transfer/resource_transfer_synced.lua)**
+
+```lua
+---@param ctx ResourceTransferContext
+---@return ResourceTransferResult
+function Gadgets.ResourceTransfer(ctx)
+  local policyResult = ctx.policyResult
+  local desiredAmount = ctx.desiredAmount
+  if (not policyResult or not policyResult.canShare) or (not desiredAmount or desiredAmount <= 0) then
+    return { success = false, sent = 0, received = 0, ... }
+  end
+
+  local received, sent, untaxed = Shared.CalculateSenderTaxedAmount(policyResult, desiredAmount)
+
+  -- Side effects: touch engine state
+  springRepo.AddTeamResource(ctx.senderTeamId, policyResult.resourceType, -sent)
+  springRepo.AddTeamResource(ctx.receiverTeamId, policyResult.resourceType, received)
+
+  return { success = true, sent = sent, received = received, untaxed = untaxed, ... }
+end
+```
+
+The action receives a `policyResult` that was already computed. It doesn't decide *whether* the transfer is allowed—the policy already did that. It just executes the transfer if the policy permits it. This separation means you can:
+
+- **Load policies as a set** and evaluate them before any mutation
+- **Test policies in isolation** without mocking engine state
+- **Compose policies** via ASTs or middleware in the future
+
 ---
 
 ## 3. Deep Dive: A Policy In Action
@@ -313,7 +347,7 @@ flowchart TB
 
 ---
 
-## 6. The Future: A Policy DSL
+## 7. The Future: A Policy DSL
 
 The `sharing_tab` branch establishes the foundation. But the architecture unlocks something more powerful: a **declarative [DSL](https://en.wikipedia.org/wiki/Domain-specific_language)** (Domain-Specific Language) for defining game policies.
 
