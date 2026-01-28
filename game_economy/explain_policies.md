@@ -145,7 +145,28 @@ A **Policy** is a [pure function](https://en.wikipedia.org/wiki/Pure_function). 
 
 Because policies are just functions, they can incorporate runtime state—not just static mod options. Want sharing to unlock when both players build a storage building? That's a policy that checks game state. Want tax rates to scale with game time? That's a policy too.
 
-The architecture enables this today. We don't have concrete examples in the `sharing_tab` branch yet, but the "Next" section (Section 6) shows what this looks like with the DSL: policies like `building_unlocks_sharing.lua` that gate behavior on predicates like `hasBothStorages()`.
+This is enabled by the **Context Factory**, which gathers runtime state before policy execution.
+
+**[context_factory.lua](https://github.com/keithharvey/bar/blob/sharing_tab/common/luaUtilities/team_transfer/context_factory.lua)**
+
+```lua
+---@type PolicyContext
+local ctx = {
+  senderTeamId = senderTeamID,
+  receiverTeamId = receiverTeamID,
+  sender = senderResources,
+  receiver = receiverResources,
+  springRepo = springRepo,
+  areAlliedTeams = springRepo.AreTeamsAllied(senderTeamID, receiverTeamID),
+  -- ... can be extended with any game state
+}
+```
+
+The factory provides a shared place to batch expensive state checks (e.g., reading resources, checking alliances) once per frame.
+
+However, policies aren't limited to the context object. They are passed the `springRepo` and can query specific game state directly when needed (e.g., "does this team have a Pinpointer?"). This hybrid approach allows optimization for hot-path data while keeping policy-specific logic encapsulated within the policy itself.
+
+The architecture enables this today. We don't have concrete examples in the `sharing_tab` branch yet, but Section 6 shows what this looks like: policies like `building_unlocks_sharing.lua` that gate behavior on predicates like `hasBothStorages()`.
 
 ---
 
