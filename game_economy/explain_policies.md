@@ -202,7 +202,7 @@ local function calcResourcePolicyResult(ctx, resourceType)
 end
 ```
 
-This is a **pure function**. It takes context, returns a result. No side effects, no engine calls (at least not that mutate state!), no global state mutation. This is the core insight: *the policy doesn't do the transfer, it describes the boundaries of what a transfer can be*.
+This is a **pure function**. It takes context, returns a result. No side effects—policies may read engine state but never mutate it. No global state changes. This is the core insight: *the policy doesn't do the transfer, it describes the boundaries of what a transfer can be*.
 
 ### The Waterfill Solver
 
