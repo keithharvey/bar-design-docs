@@ -139,7 +139,7 @@ flowchart LR
     Cache --> UI
 ```
 
-A **Policy** is a [pure function](https://en.wikipedia.org/wiki/Pure_function). Given mod options and team context, it produces a `PolicyResult`. This result is cached in `TeamRulesParams` and acts as a **[ViewModel](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93viewmodel)** for the UI. The UI never calculates business logic; it just reads the cached policy.
+A **Policy** is a [pure function](https://en.wikipedia.org/wiki/Pure_function). Given mod options and team context, it produces a `PolicyResult`. This result is cached in `TeamRulesParams` and acts as both a **[ViewModel](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93viewmodel)** (cached state for consumers) and a **[Mediator](https://en.wikipedia.org/wiki/Mediator_pattern)** (the object through which policies, actions, and UI interact without knowing about each other).
 
 ### Dynamic Behavior
 
@@ -401,10 +401,10 @@ This is **game design expressed as code**. No recoil changes required. No hook o
 ```
 luarules/modules/
 ├── policy_engine.lua           # Shared rule pipeline (AST-like)
-├── dsl.lua                     # Shared fluent builder API
 │
-├── team_transfer/              # Economy & sharing module
+├── team_transfer/              # Resource & unit transfers between teams
 │   ├── controller.lua
+│   ├── dsl.lua                 # Module-specific fluent builder
 │   ├── policies/
 │   │   ├── tax_resource_sharing.lua
 │   │   ├── building_unlocks_sharing.lua
@@ -417,6 +417,7 @@ luarules/modules/
 │
 └── combat/                     # Hypothetical combat module
     ├── controller.lua
+    ├── dsl.lua                 # Module-specific fluent builder
     ├── policies/
     │   ├── friendly_fire.lua
     │   ├── capture_rules.lua
@@ -465,7 +466,40 @@ flowchart LR
     Eval --> Result
 ```
 
-Each policy only knows about the DSL. The engine handles composition, ordering, and conflict resolution. Policies don't know about each other—they just declare what they care about.
+The knowledge boundaries here are still being refined, but the intent is:
+
+- **Policies** only know about the DSL—they declare rules without knowing how they're composed.
+- **DSL** registers rules with the policy engine.
+- **Controller** is the orchestrator. It's thin but has visibility into everything: context factory, DSL/policy engine, actions, cache. It wires the pieces together and exposes the `GG.*` API entry points.
+
+```mermaid
+flowchart TB
+    subgraph LoadTime["Load Time"]
+        P[Policy Files] -->|declare via| DSL
+        DSL -->|registers| PE[Policy Engine]
+    end
+    
+    subgraph CacheFlow["Cache Update (periodic)"]
+        SU[SlowUpdate/GameFrame] --> Ctrl1[Controller]
+        Ctrl1 -->|builds| Ctx1[Context]
+        Ctrl1 -->|evaluates| PE
+        PE -->|returns| PR1[PolicyResult]
+        Ctrl1 -->|writes| Cache[TeamRulesParams]
+    end
+    
+    subgraph ActionFlow["Action (on-demand)"]
+        API[GG.TransferResources] --> Ctrl2[Controller]
+        Ctrl2 -->|reads| Cache
+        Ctrl2 -->|if allowed| Act[Action]
+        Act -->|mutates| Eng[Engine State]
+    end
+```
+
+There are two runtime flows:
+- **Cache update**: Periodic evaluation writes PolicyResult to TeamRulesParams. All consumers read from here.
+- **Action**: On-demand requests (like `GG.TransferResources`) read the cached PolicyResult and execute if allowed. No re-evaluation—just read and act.
+
+The controller orchestrates both flows. Policies don't know about each other. Actions don't know about policies. Each piece is independently testable.
 
 ### A Note on Lua 5.1 Performance
 
