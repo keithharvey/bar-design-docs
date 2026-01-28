@@ -343,7 +343,7 @@ end
 The DSL provides:
 *   **[Fluent API](https://en.wikipedia.org/wiki/Fluent_interface)**: `builder:Allied():MetalTransfers():Use(...)`
 *   **Declarative intent**: Read what the policy *means*, not how it's wired.
-*   **Composability**: Policies are independent modules; the engine composes them.
+*   **Composability**: Policies are independent modules that don't know about each other. The policy engine (not Recoil—this is game-side Lua) composes them using the same infrastructure across all behavior modules (economy, combat, etc.).
 *   **Shared Infrastructure**: Common functionality (caching, validation, logging) lives in one place, not copy-pasted across gadgets.
 *   **Low Barrier to Entry**: Adding a new policy is trivial. Intellisense guides you, the DSL constrains you to valid patterns, and you only worry about *your* policy—not the plumbing. Senior devs build the rails; junior devs ship features.
 
@@ -373,7 +373,7 @@ local function policyFunction(builder)
 end
 ```
 
-This is **game design expressed as code**. No engine changes required. No hook ordering nightmares. Just declare what you want.
+This is **game design expressed as code**. No recoil changes required. No hook ordering nightmares. Just declare what you want.
 
 ### Potential File Layout
 
@@ -406,7 +406,7 @@ The `policy_engine` and `dsl` are shared infrastructure. Each domain module (tea
 
 ### How Policies Compose
 
-Each policy file uses the DSL to declare rules. The DSL registers those rules with the policy engine. At runtime, the controller asks the engine to evaluate a context, and the engine runs through all registered rules to produce a result.
+Each policy file uses the DSL to declare rules. The DSL registers those rules with the policy engine. At runtime, the controller asks the policy engine to evaluate a context, and the engine runs through all registered rules to produce a result.
 
 ```mermaid
 flowchart LR
