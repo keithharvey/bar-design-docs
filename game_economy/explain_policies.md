@@ -411,6 +411,8 @@ luarules/modules/
 │   │   ├── allied_assist.lua
 │   │   └── unit_sharing_mode.lua
 │   ├── actions/
+│   │   ├── transfer_resources.lua
+│   │   └── transfer_units.lua
 │   └── default_results/
 │
 └── combat/                     # Hypothetical combat module
@@ -420,6 +422,9 @@ luarules/modules/
     │   ├── capture_rules.lua
     │   └── unit_veterancy.lua
     ├── actions/
+    │   ├── apply_damage.lua
+    │   ├── capture_unit.lua
+    │   └── grant_veterancy.lua
     └── default_results/
 ```
 
