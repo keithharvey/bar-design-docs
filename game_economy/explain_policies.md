@@ -23,7 +23,7 @@ I'll walk through the "Now" implementation in detail, then show a glimpse of "Ne
 
 ### UX Goals
 * **Cardinal mod options**: Each mod option does exactly 1 functional game behavior. No "Nuclear Options" or "Easy Sharing Tax" that incorporate multiple surprising behaviors. Instead: "Unit Sharing Mode", "Tax Rate", "Ally Assist Mode", etc.
-* **Sharing modes exist** [PR](https://github.com/beyond-all-reason/BYAR-Chobby/pull/1041): Can disable, hide, lock, and show specific mod options with declarative configuration. This eliminates the "Easy Sharing" problem, where one checkbox does multiple behaviors, while still preserving the option for devs to name their own modes.
+* **Sharing modes exist** [PR](https://github.com/beyond-all-reason/BYAR-Chobby/pull/1041): Can disable, hide, lock, and show specific mod options with declarative configuration. This preserves the ability for devs to name their modes while still preserving the cardinality of mod options.
 
 ### Architecture Goals
 * **Synced domain layer**: Declarative, [idempotent](https://en.wikipedia.org/wiki/Idempotence), centralized behavior logic.
@@ -146,40 +146,6 @@ A **Policy** is a [pure function](https://en.wikipedia.org/wiki/Pure_function). 
 Because policies are just functions, they can incorporate runtime state—not just static mod options. Want sharing to unlock when both players build a storage building? That's a policy that checks game state. Want tax rates to scale with game time? That's a policy too.
 
 The architecture enables this today. We don't have concrete examples in the `sharing_tab` branch yet, but the "Next" section (Section 6) shows what this looks like with the DSL: policies like `building_unlocks_sharing.lua` that gate behavior on predicates like `hasBothStorages()`.
-
-### Actions: Separating Queries from Commands
-
-This architecture follows a [CQRS](https://en.wikipedia.org/wiki/Command_Query_Responsibility_Segregation)-like pattern: **Policies** are queries (pure functions that return what *should* happen), **Actions** are commands (functions that *make it happen* by touching engine state).
-
-Here's the `ResourceTransfer` action from the `sharing_tab` branch:
-
-**[resource_transfer_synced.lua](https://github.com/keithharvey/bar/blob/sharing_tab/common/luaUtilities/team_transfer/resource_transfer_synced.lua)**
-
-```lua
----@param ctx ResourceTransferContext
----@return ResourceTransferResult
-function Gadgets.ResourceTransfer(ctx)
-  local policyResult = ctx.policyResult
-  local desiredAmount = ctx.desiredAmount
-  if (not policyResult or not policyResult.canShare) or (not desiredAmount or desiredAmount <= 0) then
-    return { success = false, sent = 0, received = 0, ... }
-  end
-
-  local received, sent, untaxed = Shared.CalculateSenderTaxedAmount(policyResult, desiredAmount)
-
-  -- Side effects: touch engine state
-  springRepo.AddTeamResource(ctx.senderTeamId, policyResult.resourceType, -sent)
-  springRepo.AddTeamResource(ctx.receiverTeamId, policyResult.resourceType, received)
-
-  return { success = true, sent = sent, received = received, untaxed = untaxed, ... }
-end
-```
-
-The action receives a `policyResult` that was already computed. It doesn't decide *whether* the transfer is allowed—the policy already did that. It just executes the transfer if the policy permits it. This separation means you can:
-
-- **Load policies as a set** and evaluate them before any mutation
-- **Test policies in isolation** without mocking engine state
-- **Compose policies** via ASTs or middleware in the future
 
 ---
 
@@ -347,7 +313,7 @@ flowchart TB
 
 ---
 
-## 7. The Future: A Policy DSL
+## 6. The Future: A Policy DSL
 
 The `sharing_tab` branch establishes the foundation. But the architecture unlocks something more powerful: a **declarative [DSL](https://en.wikipedia.org/wiki/Domain-specific_language)** (Domain-Specific Language) for defining game policies.
 
