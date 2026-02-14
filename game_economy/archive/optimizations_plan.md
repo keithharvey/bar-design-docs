@@ -114,7 +114,7 @@ result.senderTeamId = ctx.senderTeamId
 return result
 ```
 
-2. **Pooled Serialization Buffer** - Reuses buffer in `team_transfer_cache.lua`:
+2. **Pooled Serialization Buffer** - Reuses buffer in `team_transfer_serialization_helpers.lua`:
 ```lua
 local serializeBuffer = {}
 

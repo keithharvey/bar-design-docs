@@ -156,7 +156,7 @@ Count calls to:
 ### Current Gaps in Tracy Instrumentation
 
 1. **No zone for individual API calls** in Lua → Can't see cost of `SetTeamResource` boundary
-2. **No zone for ledger serialization** in `team_transfer_cache.lua`
+2. **No zone for ledger serialization** in `team_transfer_serialization_helpers.lua`
 3. **No GC tracking zone** around SlowUpdate
 4. **No cumulative counter** for table allocations
 
