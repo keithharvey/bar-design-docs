@@ -1,0 +1,917 @@
+==============================================================
+Guild: Beyond All Reason | BAR
+Channel: ⚪━━━    Support｜Feedback / 📐｜meta-discussion / TechCore (Testing feedback only)
+==============================================================
+
+[12/7/2025 6:48 AM] c3bo8088
+https://github.com/Cebolletoth/C3BOBAR/tree/main
+
+Made by C3BO in the spirit of MeowCatMeow’s economic system overhaul.
+The TechCore patch relies on the infrastructure provided by Seth's TechBlocking modoption which he kindly allowed us to use for this public initiative.
+
+Please read all the documentation on the above link. The tweak codes you require are there, just copy-paste straight into the lobby chat. 
+***Due to the nature of the building provisionally used you must use the "Force load all units" tickbox at the bottom of the Cheat section.
+Legion may also be used, worth testing those changes too.
+
+The basis of this patch is the delay of higher tech tier timings through imposing a "research" cost. This is achieved through the construction of a building found on all T1Con's lab build menu. 
+Once the team has achieved the required level of points, the team will permanently research the techlevel.
+
+Keep the thread for actual testing feedback. Please include video links or replays attached to your comments so I can see the issue live and evaluate.
+I intend to disregard unrelated noise but feel free to create additional ranting threads elsewhere.
+
+Please let me know if anyone struggles with the instructions, been through them many times but I am happy to amend if anything needs clarification.
+Feedback on testing parameters, unit/building costing and quality of gameplay is highly appreciated to allow us to fine tune the balance across all game modes..
+
+Updated 25/1/2026 to include the new additions of legion sea.
+
+To do:
+- Change Core model when made available by devs to a smaller suitable building
+- Try to avoid having to tick the forceload of assets option as there is feedback of game lag
+- Replace the spot of the legion t1.5 mex with a smaller copy of the legion 2.5mex with suitable stats.
+
+{Embed}
+https://github.com/Cebolletoth/C3BOBAR/tree/main
+GitHub - Cebolletoth/C3BOBAR: Hosting site for the updated informat...
+Hosting site for the updated information and tweakcodes of BAR TechCore and C3BOBalancePatch - Cebolletoth/C3BOBAR
+https://images-ext-1.discordapp.net/external/5pFPNQ8jSjutitDPD9F5k4InWDiT2H22_VPzz5ME7Ik/https/opengraph.githubassets.com/46366c793b3b0b36b81480634d8c6588fc58a8b36442d61951ea261180efe4b6/Cebolletoth/C3BOBAR
+
+{Reactions}
+🎊 (3) 💖 (7)
+
+[12/7/2025 6:51 AM] sethdgamre
+The suffering will be worth it
+
+
+[12/7/2025 8:20 AM] zeitdilatation
+I've only tested its functionality in skirmish, but none the less first feedback:
+
+- sometimes clicks (like placing a T1 lab) weren't registered (unfortunately I couldn't specifiy how to replicate it)
+- T2 lab build option should be greyed out when T2 tech is not yet reached (currently you can click it and even see the preview but not place it)
+- I think when tech cores are destroyed you should lose your tech level again (because even though you can't reclaim them and they don't leave a wreck you probably want to get rid of them in late game nonetheless to use the space if it doesn't impact your tech level. But then you have to destroy them and it damages buildings around it - it's a weird situation)
+- the tech core model (experimental air lab) is very big (probably good) but the footprint is very small and units get lost in the big model
+
+Other than that I'm looking forward to first real online experiences!
+
+{Reactions}
+👍
+
+[12/7/2025 8:23 AM] sethdgamre
+Graying out invalid build options is pending. Done and waiting for the merge
+
+{Reactions}
+👍
+
+[12/7/2025 8:44 AM] c3bo8088
+- Have to change the model sooner rather than later. 
+- When the cores are destroyed you lose progress towards the next tech tier, if you have managed to get to t2 then it will just cost you the extra towards t3 if that is set at a higher threshold. 
+- If lategame it gets in the way then so be it I think, just make some planning ahead with regards to base layout, the no reclaim condition is necessary to avoid funny shenanigans. The building itself comes with Eproduction and possibly some future conturret behaviour so it would be sort of a waste to lose that investment. With a future smaller footprint it should be less of an issue hopefully.
+
+{Reactions}
+👍
+
+[12/7/2025 9:27 AM] lucyydragon
+Does this look correct? I seem to have my t2 lab disabled as expected but no new building.
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1447223310319489024/1447263363754233917/4C907402-638E-44DA-9672-80EC5187C6C0.png?ex=6991f40a&is=6990a28a&hm=bb35e934233ca2b8108dd06a80bda3301f1277ce3aa44fc7052b7a2a9b6e3b2a&
+
+
+[12/7/2025 9:36 AM] sethdgamre
+Force load all units
+
+
+[12/7/2025 9:37 AM] sethdgamre
+It's in the cheats tab at the very bottom
+
+{Reactions}
+❤️ (3)
+
+[12/7/2025 9:56 AM] qscrew
+This is nice. The change list is just small enough to read quickly and fit into your head before a game. I like that it's all eco, too.
+
+
+[12/7/2025 5:19 PM] c3bo8088
+I have modified the descriptions to try to make that requirement more obvious
+
+
+[12/8/2025 4:47 PM] ratty
+As a bad gamer, i'm liking techcore.
+No clue why the building needs to build a unit tbh. But being able to build cores as a team and then having cheap labs feels pretty good. Kinda diminishes the "eco player gets all the fun toys and front then just watches them win" side of things
+
+
+[12/8/2025 4:53 PM] hayajicz
+wait, labs are cheaper? This could actually be much more fun, i really have to try it sometimes - just from looking at it it seems really interesting and I wonder if it could be the solution to t2 coop
+
+
+[12/8/2025 4:56 PM] meow1198
+LABS are 1800 metal, total metal for T2 unit is 1800 + 4x1100=6200 vs old 2900. On 4 T2 labs its around even amount of total metal.
+
+
+[12/8/2025 5:00 PM] ratty
+@C3BO i opened a PR with the bset commands for techblock, it's what i did wrong first
+
+
+[12/8/2025 5:00 PM] meow1198
+At around 4 tech mexes your metal income efficiency is same as if you went T2 con and T2 mexes. After that T2 would be better for total metal invested. So general idea is to start T2 phase with more metal and more T2 labs alleviating coop little bit.
+
+
+[12/8/2025 5:36 PM] c3bo8088
+have reupdated the description again to re reclarify xD I am just missing the images to explain it but working on it, the laptop is really wonky and it doesnt actually show the lobby settings cause that is hidden behind other part of the chat interface
+
+
+[12/8/2025 6:57 PM] c3bo8088
+It should now be as good as it gets with images, tables, full description, full lobby message with link. Will include a few more images later of the ingame assets and thats the limit
+
+https://github.com/Cebolletoth/TechCore-Patch-BAR/blob/main/TechCoreBAR.md
+
+Can anyone provide a full single screenshot of the lobby settings with everything ready for an 8v game?
+
+
+[12/9/2025 12:57 AM] lucyydragon
+I only tried it out in skirmish, i did not find a lobby with it yet. But incorporating a tech mex into my isthmus gameplay seems bad. Why are they more expensive than T2 mexes?
+
+With the current costs i would invest 4350 metal for 18 extra metal income. Not to mention time investment. Windscaling is just better in terms of payoff time and i would never make a tech core for myself, unless its the last one we need for t2.
+
+I suppose someone could make a techcore and the techbot could upgrade other peoples mexes, but the vision is for this to work in no sharing settings. So aren't we almost immediately in a situation where its just much easier to make tech mexes worth it, if the techer takes all back mexes and air doesn't play? They can make a few planes off the extra mexes, it should be worth it in the long run.
+
+Also in a solo skirmish with no enemy i just made 11 cores and i still cant place a t2 lab.
+(Maybe i did the tweaks wrong, ill try again in the evening)
+
+
+[12/9/2025 1:36 AM] c3bo8088
+The are priced so t2 mexes are the desired option but the 1.5 can be obtained earlier. It is an inefficient earlier income investment to prop your economy a bit without making it a t2 rush [the coop problem]
+
+
+[12/9/2025 1:53 AM] hayajicz
+Imo they could be useful for high value mexes (think Rosetta mid mex) but not for regular mexes
+
+
+[12/9/2025 2:01 AM] lucyydragon
+My first impression is that if i am making a tech core on isthmus early (just for myself), not perfectly synchronized with team, it feels really bad.
+
+But synchronizing tech cores in public lobbies seems not fun.
+
+I think eco passing out tech core builders might feel okay. But thats just cooping for techmexes and later cooping 3 more cores for t2.
+
+(But thats only my skirmish impression, dont want to judge before playing actual games.)
+
+
+[12/9/2025 2:05 AM] .alunara
+I would imagine that a meta establishes fairly quickly who is expected to make a tech core - perhaps it's 2 for eco, 1 geo, 1 geo sea or any other constellation
+
+{Reactions}
+this
+
+[12/9/2025 2:08 AM] c3bo8088
+I would expect geo, eco, air and one/two of the seas to be candidates for making cores for t2.
+Realistically it is less than the cost of a destroyer they are actually paying towards empty research cost value.
+
+
+[12/9/2025 2:12 AM] lucyydragon
+I expect eco to prep estorages and bp and get paid 3k metal to make them quickly in sequence.
+
+Because if the remaining extra three (after the one we use for techmex  builders) are distributed and the other two are not coming up perfectly synchronized with the one assigned to me, i will flame people! And be justified too.
+
+
+[12/9/2025 2:20 AM] c3bo8088
+I really dont think so, the seas definitely have an interest in making their own cause it is an amphi con and gives stable E. It is tricky to balance for all maps all modes so I really need the actual ingame feedback and not the theory of how things will play, we have already been over the theory of things over and over before even bringing this up to you guys.
+
+Can you guys take a screenshot of the lobby settings? my screen is literally too small
+
+{Reactions}
+👍 (2)
+
+[12/9/2025 2:53 AM] meow1198
+Pricings can be adjusted, just need to see how games play out first. Tech mex has to have usecases. It would be better for glitters than supreme imo
+
+
+[12/9/2025 3:07 AM] meow1198
+Straight has very narrow front and with sharing still enabled you want to boost out front anyway. What tech core does for straight is slowing down T2 units. I wish we could implement no sharing options but at this point it's not possible to have that respond to tech levels.
+
+
+[12/9/2025 2:47 PM] meow1198
+So played 1 game. Some people liked slower T2 but they are confused as this being coop fix. It's anti T2 rush.
+
+
+[12/9/2025 2:48 PM] hayajicz
+That's kinda relevant to coop fix, because the most cooped thing is t2. i haven't seen anyone really coop t1 much
+
+
+[12/9/2025 2:57 PM] meow1198
+People misunderstood goal of tech core, it's not anti coop fix, it's T2 timing change
+
+
+[12/9/2025 2:59 PM] meow1198
+You will always find ways to split build power between players even if you don't directly share resources and economy.
+
+
+[12/9/2025 2:59 PM] hayajicz
+obviously, but cooping t1 has a much, much lower value compared to cooping t2
+
+
+[12/9/2025 3:00 PM] meow1198
+even with 1800 labs cooping value is reduced, could go lower on labs like 1400 and cores costing 150 more.
+
+
+[12/9/2025 3:01 PM] meow1198
+Basically cost for T2 unlock should be around 4000-5000 in form of cores and labs could go from 1200-1800. Same way as t1 labs aren't worth cooping even in tourneys sometimes you build multiple of them but you have starting metal that's a factor
+
+
+[12/9/2025 3:02 PM] meow1198
+I wish players would want to test more but even hijacking lobby was hard to get 1 game in, not best but wcyd, im desperate for some real tests...
+
+
+[12/9/2025 3:04 PM] c3bo8088
+where replay?
+
+
+[12/9/2025 3:08 PM] meow1198
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1447223310319489024/1448073782953640128/TECHCORE_2025-12-09_21-22-08-293_All_That_Glitters_v2.2_2025.06.11.sdfz?ex=69919b0d&is=6990498d&hm=7397c2729f9a875a5a4494320299f45fe7bbff3a7b60fe67dbf8bdbe923d0a43&
+
+
+[12/9/2025 3:36 PM] zeitdilatation
+I'd phrase it a little differently. It's adjusting teching speed (or t2 timing) to player numbers in team games. Such that we can have the same tech speed experience over different game modes (even with resource funneling enabled).
+
+
+[12/9/2025 3:37 PM] meow1198
+Yes that's correct, that's best we can do cause coop is unavoidable, every solution fails to adress leaving mexes to techer even with 100% tax and 0 unit sharing
+
+{Reactions}
+👍
+
+[12/9/2025 3:43 PM] zeitdilatation
+Yea, mex leaving is probably only restrcited to some extend via map design - but true, we cannot fully circumvent it. Still ofc we agree that resource funneling should be restricted to some degree, right?
+
+
+[12/10/2025 5:39 AM] ratty
+you're already structurally funneling resources to your techer by making the techcore building team-wide
+instead of sending your techer a handfull of cash, you're building cores (as a team)
+pretty sure you can leave resourcesharing as-is
+
+
+[12/10/2025 8:13 AM] asian6106
+Why is it so big 😂
+
+{Reactions}
+thisplusone
+
+[12/10/2025 8:26 AM] meow1198
+https://tenor.com/view/bosnov-67-bosnov-67-67-meme-gif-16727368109953357722
+
+{Embed}
+https://tenor.com/view/bosnov-67-bosnov-67-67-meme-gif-16727368109953357722
+https://images-ext-1.discordapp.net/external/USUB7jh5LU0XHsvcVtvFHbMWqTvBk9mzf_iDTagwofc/https/media.tenor.com/6COMq6z3l5oAAAAe/bosnov-67.png
+
+
+[12/10/2025 8:45 AM] c3bo8088
+Token building for now
+
+
+[12/10/2025 8:45 AM] meow1198
+I think my response is better
+
+
+[12/10/2025 6:39 PM] c3bo8088
+This was the single game that was played the other day impromtu on a glitters lobby.
+
+It was done by hijacking a lobby of people that didnt know what was going on cause no one did read the instructions.
+If anyone tries to get lobbies up for testing ensure that everyone reads the github page before clicking ready. Do not try to force it on people that are not there for the test because that leads to bad quality.
+
+Also had someone PM me today saying that someone else said when they tested on a different ocassion it was "buggy" without any specification.
+The only thing buggy you may encounter is when you try to click to produce the constructor it sometimes doesnt accept the order, just press G to clear and click constructor to add it to the queue.
+
+Any other novel issues please report here but there are none.
+
+Pasting the instructions again cause I know you guys lazy to scroll up or read the pinned messages
+
+
+[12/10/2025 6:40 PM] c3bo8088
+https://github.com/Cebolletoth/TechCore-Patch-BAR/blob/main/TechCoreBAR.md
+
+{Embed}
+https://github.com/Cebolletoth/TechCore-Patch-BAR/blob/main/TechCoreBAR.md
+TechCore-Patch-BAR/TechCoreBAR.md at main · Cebolletoth/TechCore-P...
+Hosting site for the updated information and tweakcodes of the BAR TechCore initiative. - Cebolletoth/TechCore-Patch-BAR
+https://images-ext-1.discordapp.net/external/MKPtwA8DHB4sNPKMxi1Vzpq1Gdc4HwhSgL0MxKbxu14/https/opengraph.githubassets.com/09e73958575de791e3f8f81d860defdf1f4f596e82cfb3414ed37602563185b0/Cebolletoth/TechCore-Patch-BAR
+
+
+[12/10/2025 7:36 PM] w0lvren
+I tried it mid game I couldnt click my lab for like 10 seconds. Might not be much but having to sit there while trrying to do something and unable to click your lab is frustrating. was clicking on it multiple times just couldnt click lab.
+
+
+[12/10/2025 7:42 PM] w0lvren
+https://www.beyondallreason.info/replays?gameId=3d273a69de3091fca24c6b856eca8102  I dont know if tech core is not suppose to show during replay but i cant see tech core building and both tech said they couldnt make t2
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1447223310319489024/1448505261051478118/image.png?ex=6991db66&is=699089e6&hm=5473dc23c8a4d4924e831e514450cb7fbe918671125ec75ea189e73db01d9584&
+
+{Embed}
+https://www.beyondallreason.info/replays?gameId=3d273a69de3091fca24c6b856eca8102
+BAR Replays
+Replays of Battles once fought!
+https://images-ext-1.discordapp.net/external/53ALagDiV-XVV5GKcRSB5wzYJUNeEZoDDyLhO_auYr0/https/cdn.prod.website-files.com/5c68622246b367adf6f3041d/6047fbeb0937f1519bacff39_BAR_Replays_OG-media.jpg
+
+
+[12/10/2025 7:43 PM] sethdgamre
+What does it mean to "click lab?"
+
+
+[12/10/2025 7:44 PM] w0lvren
+like lab was unselectable
+
+
+[12/10/2025 7:44 PM] sethdgamre
+You mean like you click the build tile and 
+- it doesn't select it all? 
+- it is selected, but when you try to actually place the lab somewhere on the map it is rejected
+
+
+[12/10/2025 7:44 PM] sethdgamre
+Ok, so the first one
+
+
+[12/10/2025 7:44 PM] sethdgamre
+And the UI indicated that you were at the appropriate tech level for it?
+
+
+[12/10/2025 7:47 PM] w0lvren
+no my t1 lab was unselectable. Also cant see tech core watching replay. Idk if its different when replay. I was just in t1 all game didn't attempt to make tech core but watching replay doesnt seem to be an option there only t2 lab.
+
+
+[12/10/2025 7:50 PM] sethdgamre
+You couldn't build a T1 lab?
+
+
+[12/10/2025 7:50 PM] c3bo8088
+He didn't load the assets, thats the issue. Please look at the images again and click the button on the cheat section.
+
+It is important to follow the instructions, I did remark the need for "force load all assets" about 3 times within that github page.
+
+I cant do anything about people not reading because this isn't a proper modoption that I can set up for you with one single click. We are literally squaters under seth's stuff playing on borrowed time that will eventually run out because of the lack of proper testing.
+
+
+[12/10/2025 7:57 PM] w0lvren
+Your right I forgot to forceload assets
+
+
+[12/10/2025 8:01 PM] c3bo8088
+I have a lobby up, just need some people. I would advise once you set it up just save everything as a preset so you dont have to do it twice cause it is a bit tiresome. Just ammend the techblocking limits to suit the lobby size. [/ copy the preset if you happen to walk into a lobby that has it on]
+
+I will announce when we make any changes, then the presets would need updating at that point
+
+
+[12/10/2025 8:13 PM] sethdgamre
+Good debugging there c3bo
+
+{Reactions}
+👍
+
+[12/11/2025 1:01 AM] c3bo8088
+To whoever commented on github about adding the text for auto techblocking setup: Thanks for the suggestion but best not to add it as we are testing for all team sizes and people still have to go into the menu to click something else too. Appreciate the input though 😀
+
+{Reactions}
+❤️
+
+[12/11/2025 4:00 AM] meow1198
+They said tech blocking makes game buggy not tech cores itself. It makes game laggy and have select buggs
+
+
+[12/11/2025 4:07 AM] sethdgamre
+I'm a bit slammed right now - if y'all can give it some testing and give me some quality feedback on when it lags I can improve upon it
+
+
+[12/11/2025 4:08 AM] sethdgamre
+"it lags" without a when means playtesting a few full games myself, 3x the time of coding
+
+
+[12/11/2025 4:08 AM] c3bo8088
+Limitations of the system, we may get some improvements when we have different assets that dont require the force load.
+
+
+[12/11/2025 4:24 AM] c3bo8088
+I havent noticed lag but will have a look when I am not playing on the shitty laptop 😂 cause now I am lagging hard all the time
+
+
+[12/11/2025 5:00 AM] hayajicz
+I'd like to test this out over the weekend, will see if I round up some people
+
+
+[12/11/2025 5:55 AM] c3bo8088
+I would recommend to start from a small teams lobby and grow it into a large teams as people come in. That should give the best experience for testing I think, plus we do need testing across all team sizes including 1v1s.
+Remember to use the lobby welcome message and to toss the replays in here as you go 😀
+
+
+[12/11/2025 9:33 AM] ratty
+@҉Seth🦆Gamre(Lead Surveyor)  techblocking makes it so that some places can't be clicked
+that's about the most specific i can describe it, it's very weird
+some specific spots on the map can't be clicked, so if there's a unit there you can't select it and you have to box-select over it to grab it
+same with move commands.
+it's extremely weird, and i can't reliably reproduce it. 
+i'd post this in the techblock thread but ... i cannot find it anymore, discord is awful as a forum
+
+
+[12/11/2025 10:17 AM] qscrew
+I will review the code for tech blocking sometime, possibly Sunday or Monday.
+
+
+[12/11/2025 10:39 AM] sethdgamre
+Some places on screen or in world space?
+
+
+[12/11/2025 11:56 AM] ratty
+No clue tbh, my belly says worldspace but It's pretty elusive. Im going to try and reproduce it in a bunch of bot games tonight.
+
+
+[12/11/2025 2:40 PM] w0lvren
+im watching replay and someone said they cant reclaim the tech core
+
+
+[12/11/2025 2:42 PM] sethdgamre
+Intended
+
+{Reactions}
+👍
+
+[12/11/2025 2:45 PM] w0lvren
+can you make it smaller if it not reclaimable it takes a ton of space if possible
+
+{Reactions}
+👍
+
+[12/11/2025 2:46 PM] plxnt_kid
+I think it puts way too much focus on t1.  I think you should still have a window to out tech t1 and it should be slim but manageable.  If t2 were more power balanced to t1 i think this wouldn't be so abusive
+
+
+[12/11/2025 2:50 PM] sethdgamre
+Focus on the feelies. Why do you feel this way?
+
+{Reactions}
+❤️
+
+[12/11/2025 2:50 PM] sethdgamre
+Also, skill level helps. Even noob impressions are useful.
+
+
+[12/11/2025 2:52 PM] w0lvren
+ye the noobs dont like having to make 2 tech cores. i think being able to adjust tech core cost rather than having multiple tech cores probably better. Having to make 2 feels clunky i think. Also they are huge
+
+
+[12/11/2025 2:53 PM] sethdgamre
+What was your lobby comprised of roughly skill level?
+
+
+[12/11/2025 2:53 PM] w0lvren
+10-30 3 3 chevs 1 4 chev and 5 chev + for the rest. Most techs nowadays are usually the lower skilled in glitters anyway.
+
+
+[12/11/2025 2:54 PM] sethdgamre
+Why do you not like building more than one? Why do you think they felt that way about the tech core concept
+
+
+[12/11/2025 2:55 PM] w0lvren
+i think they want a smooth transition for 1 person to do it. having to make 2 probably feels bad. Also the building is huge so that also feels bad imo. if its small and unreclaimable ye but its take like 24 sqaures for one 48 squares for 2.
+
+
+[12/11/2025 2:58 PM] w0lvren
+its hard to test it if I cant get more than 1 game in cause of how people feel.
+
+
+[12/11/2025 2:58 PM] plxnt_kid
+OS level 32.  I don't feel like there's a window to t2 front to take advantage of an opportunity.  I like the opportunity to take advantage of a skill descrepancy to t2 to use that advantage timing
+
+
+[12/11/2025 2:59 PM] sethdgamre
+Do you like exercising that advantage and skill while you are in advantage State more than you feel miserable when you are in the opposite corner in the disadvantage State getting stomped by well timed t2?
+
+
+[12/11/2025 3:00 PM] plxnt_kid
+I think this could largely be solved by nerfing the discrepency in t2 to t1.  My opportunity should result in 1.5x return not 2x return and absolute stomp.
+
+Right now the advantage gives you abusive power vs moderate power.
+
+But I would still like the option for the opportunity
+
+{Reactions}
+👍
+
+[12/11/2025 3:19 PM] ratty
+the building is 100% WIP
+it's just the best you can do right now as a proof-of-concept
+
+
+[12/11/2025 7:18 PM] c3bo8088
+The building size issues will be handled by the end of next week I think.
+
+It is always going to be not reclaimable. 
+
+Making the building give you stable 100e that helps you with smooth t2 transition needs and the t1.5 con give you an additional 20 which already covers the eupkeep cost of the first 4-6 amex.
+
+There should be a power difference between t1 and t2, you are getting extra delay on t1 phase so you dont get crashed by heavy coop without the opportunity for your t1 army having an opportunity to deal significant damage.
+Failure to inflict significant damage with the extra time window means skill issue or wrong strategy used.
+
+No one really needs to make two cores, ideally everyone makes their own. People would need to make more when other people dont or cant carry their weight, that will help struggling people whilst still placing the research burden on the team.
+
+The window to t2 front is there, you just need to defend your front if that is what you want to do. Failure to strategize and execute is player skill issue. There is a high reward for doing it but you are taking the risk, it is a player's choice to make.
+
+The possibility of taking advantage of skill discrepancy is always gonna be there too,  nothing has changed about that.
+
+
+[12/11/2025 7:30 PM] c3bo8088
+My questions to you all are:
+
+1 - where are the replays from the testing (link the replay when you provide feedback)
+2 - what was the timing of both team's first t2 lab
+
+
+[12/11/2025 9:28 PM] w0lvren
+https://www.beyondallreason.info/replays?gameId=8e343b6914d17c819ca8e09c1cd25062 I dont think tech core is a co-op fix its more like a fix for the t2 powerspike
+
+{Embed}
+https://www.beyondallreason.info/replays?gameId=8e343b6914d17c819ca8e09c1cd25062
+BAR Replays
+Replays of Battles once fought!
+https://images-ext-1.discordapp.net/external/53ALagDiV-XVV5GKcRSB5wzYJUNeEZoDDyLhO_auYr0/https/cdn.prod.website-files.com/5c68622246b367adf6f3041d/6047fbeb0937f1519bacff39_BAR_Replays_OG-media.jpg
+
+
+[12/11/2025 9:37 PM] c3bo8088
+It is meant to be the timegate the t1 needs to have a meaningful chance of having effect.
+
+
+[12/11/2025 9:38 PM] c3bo8088
+.
+Toss the file if you can/review the link/I will try again later to see if it works.
+
+Thank you for the testing and replay! 😄
+
+
+[12/15/2025 10:46 AM] c3bo8088
+I have just seen this. Thanks for doing that, I am not including the code though cause this is meant to cover all team sizes and dont want to include each.
+
+Updates:
+- Boneless was gonna try to help this week with reducing lag due to the loading of additional assets and to clone a building that we can shrink to a nice size as per the very reasonable feedback received. Hopefully he manages to find the time as he is also a very busy man.
+- I am back home with access to a decent computer so if anyone fancy doing some testing I will be around tomorrow and will also be adding additional photos of the assets on the github readme in case that helps people be game-ready.
+
+Just remember, if you do manage to gather people for testing it is only good if they actually read the github before start because it is a bad feeling not knowing what to expect/how to play
+
+Original message:
+ https://discord.com/channels/549281623154229250/1447223310319489024/1447223310319489024
+
+
+[1/25/2026 12:30 PM] c3bo8088
+Techcores getting updated today to now also include the new legion sea part of the code and also there is a code reconcilliation of the cebopatch that is available on the github if you want to use both together you can do so using the code on the cebopatch section.
+The to do list of the original post still is on the works.
+https://discord.com/channels/549281623154229250/1447223310319489024/1447223310319489024
+
+
+[1/25/2026 1:32 PM] zeitdilatation
+Has the building been replaced with something more... fitting? 
+And I still believe in this concept.
+
+
+[1/25/2026 4:02 PM] c3bo8088
+Nope, chunky building is there.
+
+Still need access to something better suited or someone to briefly teach me how to make a clone of an asset that I can format myself.
+
+Hopefully we are lucky enough to enjoy @attean 's sharingtab in the next few months too
+
+
+[1/27/2026 3:29 AM] c3bo8088
+Actually went scrolling around and found a very nice and fitting asset, but so far unable to get it to produce the constructor.
+
+Any ideas on how to fix that?
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1447223310319489024/1465654903543173244/image.png?ex=69919fff&is=69904e7f&hm=89b8d3245ade94716a92c16e8adb4a6842f63fc8e2464daf41adf90443442297&
+
+
+[1/27/2026 5:18 AM] sethdgamre
+I believe you might need to have a unit that has building capabilities to find in its animation script. Or, it has to be a factory which also requires animation script stuff.
+
+{Reactions}
+👍
+
+[1/27/2026 5:18 AM] sethdgamre
+Your best option is once again to use loot box nanos for scavengers
+
+
+[1/27/2026 5:23 AM] .alunara
+Maybe just give everyone access to legions overcharged mexes and remove the tech cons (at least for testing, removes friction towards adoption)
+
+
+[1/27/2026 8:18 AM] qscrew
+Yeah unfortunately this is not configurable. The unit's script needs the ability to build, which uses animations (BAR just doesn't really animate much).
+
+
+[1/27/2026 8:23 AM] qscrew
+A dev assigned to this definitely can produce the result needed, but without a new model and unit script it will require totally wacky methods (replacing the Printer base unit with a building, or repurposing the loot boxes, come to mind).
+
+
+[1/27/2026 8:24 AM] qscrew
+So you could say my previous plan for resourcing development for tech core has hit a minor snag.
+
+
+[1/27/2026 8:59 AM] c3bo8088
+Yeah Seth, you are right, the lootboxnano solves the needs, will try to work with that. 
+Ideally someone can at some point paste that script behaviour into a copy of the other asset because that is totally the look/size/functionality we could use for the techcore but not urgent.
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1447223310319489024/1465738055561253081/image.png?ex=6991ed70&is=69909bf0&hm=95bae0dfc61a771d2f82ab4391b9e349eaf552fc222d645fab96ed2527af5738&
+
+
+[1/27/2026 10:34 AM] c3bo8088
+I am too stubborn sorry. Not giving up on the asset.
+
+Both the Nanolootbox conturret and the Sancturary have been added to the buildoption lists of all the T1 Cons (in Amphi/Seaplanecons it spills into a second page).
+
+The Sanctuary provides points towards the techblocking modoption in order to go into T2.
+The Nanolootbox con turret will be able to place the blueprint for the printer, as the Sanctuary is unable due to the above script issue, it cost nothing so it will be built immediately.
+
+You are to build both literally together to imitate the desired but unavailable asset.
+
+The Sanctuary offers a small shield of 200 with recharge of 10. Recharging the shield costs 100 more energy than what it produces. The building can be turned off if desired. The shield is Eggshell so units can actually fire from inside bypassing the shield. It has 100 bp and can repair within the shield radius. Explosion detonations are of the same standard as a fusion.
+
+These assets, though still not fully ideal, do greatly reduce the size-base building complaints and add an extra layer of depth to it.
+
+This new iteration is currently available on my patch link for testing.
+https://github.com/Cebolletoth/C3BOBAR/blob/main/C3BO%20Balance%20Patch.md
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1447223310319489024/1465762002856185876/image.png?ex=699203be&is=6990b23e&hm=e88a911b7e4e8114008dbc12d75baca7380d90072ef72eceb8fc8d91edd58116&
+https://cdn.discordapp.com/attachments/1447223310319489024/1465762003338657914/image.png?ex=699203be&is=6990b23e&hm=d9e4b4ed64e4005e2fa1a21399d923d720caeae6e7a167427562424b52d0121e&
+https://cdn.discordapp.com/attachments/1447223310319489024/1465762003602641207/image.png?ex=699203be&is=6990b23e&hm=50fa569773042ecebe17e532d3b968ac39ff150535c6aa2dbeb41a976c133831&
+
+{Embed}
+https://github.com/Cebolletoth/C3BOBAR/blob/main/C3BO%20Balance%20Patch.md
+C3BOBAR/C3BO Balance Patch.md at main · Cebolletoth/C3BOBAR
+Hosting site for the updated information and tweakcodes of BAR TechCore and C3BOBalancePatch - Cebolletoth/C3BOBAR
+https://images-ext-1.discordapp.net/external/Ih00JyQci9VwLVPyPz5m6peUUrX51NpssD5Egb4AsMs/https/opengraph.githubassets.com/9a8f30eea45af20b36b74fa978c08c1a768dfea19da331ff5a89275a22290bd7/Cebolletoth/C3BOBAR
+
+
+[1/27/2026 1:34 PM] johannes_gd
+You could also instead of adding a separate con unit, have the techcore itself be able to build the t1.5 mexes. With some reasonable build range. Then you'd also have an incentive to spread them out, since it couldn't move them to cap mexes
+
+
+[1/27/2026 1:51 PM] lucyydragon
+You could maybe just make it a metal producing structure?
+Then it behaves the same on every map and you can tune payoff time exactly to what you want.
+And you would not have to mess about with extra t1.5 units at all.
+
+
+[1/27/2026 2:34 PM] c3bo8088
+No unless you are planning to have t1/2 labs to cap t1/2 mexes within a reasonable distance. Therefore there would be incentive to do less commie.
+
+It is a metal sink for t2 team payment, not designed for metal repayment just by itself unless you get into 1.5 mexes.
+
+
+[1/27/2026 2:48 PM] johannes_gd
+The issue is that either: 
+
+Primarily a tech structure, and inefficient for eco. -> you probably shouldn't build them until you can build enough of them at once to reach t2.
+
+Or, it's actually efficient for eco, in which case it becomes spammable
+
+
+[1/27/2026 3:42 PM] c3bo8088
+You should build one to have access to t1.5 economy.
+But it is an individual/team decision when to squeeze that metal into economy/tech.
+
+It is not as efficient as t2, but it is earlier than t2 so it compounds. Also, it is techblocking so you cant be sure when t2 is gonna happen (unless you diy) or if raids will happen before you unlock the tech.
+
+
+[1/29/2026 2:34 AM] c3bo8088
+Updated to also add all three faction's assets. It is still Lootboxnano dependent to create the blueprint.
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1447223310319489024/1466365914659291187/image.png?ex=6991932d&is=699041ad&hm=ece94b09e4c621a8b9eb9473cba9f94c257ded6600fe0a6f4c4736965c9c9397&
+
+
+[1/29/2026 3:15 AM] c3bo8088
+Minor multiplayer technical difficulties: The nanolootbox is not hidden in the fog of war WIP
+
+
+[1/29/2026 3:52 AM] c3bo8088
+Solved, now each faction has its respective t2conturret to drop the Printer blueprint
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1447223310319489024/1466385438078927031/image.png?ex=6991a55c&is=699053dc&hm=43797a713753ba3be32d2da02cb0e63bbf1b1994ea803d60a8b3ae2f69b35066&
+
+{Reactions}
+👍 (3)
+
+[1/29/2026 4:43 AM] c3bo8088
+How time consuming would it be to create a copy of those assets called Arm/Cor/Leg Techcore and give it the ability to drop blueprint on the script?
+
+
+[1/29/2026 6:31 AM] c3bo8088
+1v1 TechCore replays with C3BOpatch and Techblocking too
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1447223310319489024/1466425451772903514/2026-01-29_11-44-19-758_Otago_1.43_2025.06.12.sdfz?ex=6991caa0&is=69907920&hm=c4b757ce59817f0bb641eea28061c06d725f003e27079451c5e71fca0a812894&
+https://cdn.discordapp.com/attachments/1447223310319489024/1466425452116705325/2026-01-29_12-11-45-244_Aethermoor_Creek_1.0_2025.06.12.sdfz?ex=6991caa0&is=69907920&hm=72b15d55c50e1b38dccc77a17725da6f0ab0908ae31cdff7287caa6428971898&
+https://cdn.discordapp.com/attachments/1447223310319489024/1466425452577952067/2026-01-29_13-08-33-785_Canis_River_v1.4_2025.06.12.sdfz?ex=6991caa0&is=69907920&hm=4243732a9f17cd12cbfe8c11fd44550c614b87c5f5751ad7a0525642cfaa9420&
+
+
+[1/29/2026 6:32 AM] c3bo8088
+2v2 Techcore replay with C3BOpatch, Techblocking (limits set at 2 and 3). No-sharing and taxes at 30%.
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1447223310319489024/1466425876261634173/2026-01-29_12-32-09-168_Canis_River_v1.4_2025.06.12.sdfz?ex=6991cb05&is=69907985&hm=ca42002ed836f3b55362d45b5fcf30682b5d30fc3e8c13190094977cdae3b5bc&
+
+
+[1/29/2026 6:36 AM] c3bo8088
+@[BONELESS] @҉Seth🦆Gamre(Lead Surveyor) The tweaks break the game to the point that unit selection is really troublesome. You may very well be clicking the same thing for several seconds, labs unit or stuff can decide not to feel targetted.
+Would be real cool to try to minimize those issues if there is a way?
+
+
+[1/29/2026 6:36 AM] sethdgamre
+Idk why it's happening and I can't get in front of a computer recently and forseeably
+
+{Reactions}
+👍
+
+[1/29/2026 6:49 AM] sethdgamre
+From my perspective, I have run my own tests and am happy to abandon and remove it. My experiment is over. I'm moving on to more important things. 
+
+It continues to sit there so you can try stuff with tech cores or other forms of experience based tech blocking.
+
+Someone else is welcome to fix and maintain it but remember the experimental tab comes with the warning "things in here might suck"
+
+
+[1/29/2026 6:50 AM] sethdgamre
+If I get 6 hours of dev time per week it's best spent moving campaign along.
+
+
+[1/29/2026 6:52 AM] c3bo8088
+Fair enough
+
+
+[1/29/2026 7:47 AM] qscrew
+I am inclined to fix it personally. It's a question of time. I did a test last week that didn't manage to hack it but I think it was an improvement, at least.
+
+
+[2/1/2026 7:33 AM] c3bo8088
+2v2 On Pools with Techblocking (2&3) Techcore - Nosharing - Taxed
+Managed to almost dsync, same select/construction bug, lobby commited sudoku at game end.
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1447223310319489024/1467528324736618651/2026-02-01_13-47-02-172_Pools_of_Ilys_1.1.2_2025.06.12.sdfz?ex=6991d941&is=699087c1&hm=5ef0e19c772537d9041548d68d607e53632416c0a629de5561ed25ef96e8dbff&
+
+
+[2/1/2026 8:55 AM] c3bo8088
+Following that we played a couple of 2v2 games. It seems that the lobby decided to bug and only show the "core" asset for legion and not the armada/cortex ones.
+
+Have tested again remaking lobby and it works fine but it was a pretty weird bug and basically killed the test lobby population.
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1447223310319489024/1467548958757748777/image.png?ex=6991ec79&is=69909af9&hm=90e78d0690aa64d8315fe724a16e7f8b64c225d2b66c272c9905e96092647a39&
+https://cdn.discordapp.com/attachments/1447223310319489024/1467548959194222814/image.png?ex=6991ec79&is=69909af9&hm=7288a2f9b3b4f12698ea649f7d999e1943632afca7a96dcbc2239713d974ed75&
+https://cdn.discordapp.com/attachments/1447223310319489024/1467548959558996184/2026-02-01_14-47-45-943_Prismatic_Anomaly_v1.02_2025.06.12.sdfz?ex=6991ec79&is=69909af9&hm=80383b9615e4c575b24a5b59d18a9d69b588373332501998c2a493aa030364de&
+https://cdn.discordapp.com/attachments/1447223310319489024/1467548960116969664/2026-02-01_15-21-56-549_Otago_1.43_2025.06.12.sdfz?ex=6991ec79&is=69909af9&hm=b1953cb0ed263bf630df9e65bc0b9bf87d60c90e312a460af6e0c85ab3dbd0f3&
+
+
+[2/1/2026 4:51 PM] c3bo8088
+TECHCORE GAMEPLAY INSTRUCTIONS
+- Gaining techpoints towards upgrading techlevel:
+- - Each team requires X techpoints. Each "Shield generator / Techcore- the new building that costs 1000M in the T1con's lab section will earn you one point.
+- - When enough Shield generators are alive at the same time equal to the techpoints required the new techlevel is unblocked permanently.
+
+- Creating the techcon:
+- - Once you create the Shield generator / Techcore you can build the Techconstructor AKA Printer.
+- - You can do so by creating the T2conturret next to the techcore and said conturret will allow you to create the blueprint.
+
+- Creating T1.5 mexes:
+- - The printer allows you to build T1.5 mexes that give you x3 metal but are more costly and less efficient to run than amex so build sparingly or if you didn't manage to go t2 yet. Make sure you keep upgrading your energy to not E-stall.
+﻿
+Image 1: You can see the T1 constructor lab section of the build menu. You can clearly see that a new building (cost 1000M) has appeared and also the t2 conturret (cost 1M). The T2 lab will become available when the techlevel is researched.
+Image 2: You can see the Shield generator. Beware, it explodes like a fusion.
+Image 3: Once you build your own Shield generator you can build the T2conturret next to it in order to create the Printer
+
+Players please write some feedback postgame, much appreciated.
+
+You can read more information in my Github.
+https://github.com/Cebolletoth/C3BOBAR
+
+
+Please Pin this message.
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1447223310319489024/1467668620854431857/image.png?ex=6991b32b&is=699061ab&hm=02e12bc9a091bd1b4f740a12b8cdada9d5aa75647074ef219732a3fd38f408ba&
+https://cdn.discordapp.com/attachments/1447223310319489024/1467668621420531732/image.png?ex=6991b32b&is=699061ab&hm=7bc3ee70474348e96bfd7f1030cc2aec32ad5e7771db29dac54072bbc987d8a8&
+https://cdn.discordapp.com/attachments/1447223310319489024/1467668622217576754/image.png?ex=6991b32b&is=699061ab&hm=f807fd9ec5c9fbd1115edcb9472584c256028bfa685a5ef86ed89e74c13c5f08&
+
+{Embed}
+https://github.com/Cebolletoth/C3BOBAR
+GitHub - Cebolletoth/C3BOBAR: Hosting site for the updated informat...
+Hosting site for the updated information and tweakcodes of BAR TechCore and C3BOBalancePatch - Cebolletoth/C3BOBAR
+https://images-ext-1.discordapp.net/external/JMRur8Tja8H31j6vzoEmd9N7u8rpsRzc7DfLEysSfFQ/https/opengraph.githubassets.com/0092d6edb72e2ac20195b0dccd5cd4f3710bda61cab20f25b7082870c917420e/Cebolletoth/C3BOBAR
+
+{Reactions}
+PandaDerp
+
+[2/1/2026 4:55 PM] c3bo8088
+1v1 20OS with Techcore (1-2) on Wanderlust
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1447223310319489024/1467669615822897254/2026-02-01_23-18-36-879_Wanderlust_2.1_2025.06.12.sdfz?ex=6991b418&is=69906298&hm=5c2b2def3638036d378788423556afcece43a29ac2d1b432937b4021a5c36bee&
+
+
+[2/1/2026 5:55 PM] c3bo8088
+General dev question. Why is it impossible to modify wreck reclaim values using tweaks?
+
+
+[2/1/2026 6:10 PM] qscrew
+It gets overridden in code. I made a hasty modoption for it but it hasn't been approved. It was just for testing.
+
+
+[2/2/2026 3:01 AM] c3bo8088
+Hopefully one day it gets through, would help with balance tweaks.
+Currently the wreck of the building gives 600M which is highly undesirable as it is too high. Players may want to destroy it for the resources so had to lock the reclaim and therefore the wreck pile is gonna remain there all game.
+
+I dont think the current techcore setup would admit an additional modoption though, the lag/bug problems are real bad and the lobby feels like it would stab me if it could 😂
+
+
+[2/2/2026 8:49 AM] qscrew
+The lag is bad and it's def caused in the code. I'm back from traveling today, but I'm going to mostly sleep, and maybe fix bugs. TechCore is bugged too though. It needs a fix, and then it needs a maintainer.
+
+{Reactions}
+👍
+
+[2/2/2026 9:34 AM] c3bo8088
+I just dont understand what is the cause. I am only aware of bugs since I changed the assets but the previous asset was still scavenger, forceloaded and assigned the same buildoption anyway.
+Didnt have problems with techblocking at all.
+
+Gonna be checking if reducing the assets/tweaks solves the issue in the next few days. Hopefully I return with good news.
+
+
+[2/2/2026 9:41 AM] ratty
+I've had issues with everything techblocking tbh. So even without the bsets.
+
+
+[2/2/2026 9:55 AM] c3bo8088
+What were your issues?
+
+
+[2/2/2026 11:17 AM] ratty
+fps drops, and spots on the ui where clicking does nothing. (awkward when you want to select a unit)
+
+
+[2/3/2026 6:56 AM] c3bo8088
+Guess the issue is similar enough, maybe it was there from the beginning and did not feel it but I certainly feel it now.
+Did try yesterday with the old assets and the bug still hits. Which means that I will try a couple more things but likely to not help at all.
+
+Gonna continue running the lobbies because it is worth it. Best gameplay I had in a long time, tired on the shitty tournament commie from minute 0.
+Just missing atteans sharingtab thingy for peak gameplay
+
+
+[2/3/2026 7:02 AM] itsokimjewish
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1447223310319489024/1468245305874190417/image.png?ex=6991d1ff&is=6990807f&hm=7e8d838afff82c4a6f2ad45615d197be04dd5313b21fdd1407cfbbfd19c5b0bb&
+
+
+[2/3/2026 10:40 AM] c3bo8088
+Big batch of people showed up today and persevered for many games through the bugs. Much appreciated.
+3v3 to 5v5 lobbies on a rotation of maps.
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1447223310319489024/1468300243505381490/2026-02-03_14-50-07-987_Hyperion_Shale_1.0.1_2025.06.12.sdfz?ex=69920529&is=6990b3a9&hm=446fdc41d0d2ee0a4d6574ab0f29b48b14fecbc382ec45b7e8798ad8f9746859&
+https://cdn.discordapp.com/attachments/1447223310319489024/1468300243949981940/2026-02-03_15-11-31-858_Project_SD-129_v1.0_2025.06.12.sdfz?ex=69920529&is=6990b3a9&hm=ccbae9cb1bcc907fcd68f2d06c8ee9f38f7d1a146de12a7a0db0bd6c36f3018a&
+https://cdn.discordapp.com/attachments/1447223310319489024/1468300244415680707/2026-02-03_15-45-36-071_Tetrad_V2_2025.06.12.sdfz?ex=69920529&is=6990b3a9&hm=d3e8b4ff89c6df2bddc21f248d2bc46139d9658557a373bd5144dc06a18820ea&
+https://cdn.discordapp.com/attachments/1447223310319489024/1468300244763803759/2026-02-03_16-06-17-653_Center_Command_BAR_v1.0_2025.06.12.sdfz?ex=6992052a&is=6990b3aa&hm=204c646c416ba6568b2936d7ee737aa5aee07a1d7126ba8206527e4adde09de1&
+https://cdn.discordapp.com/attachments/1447223310319489024/1468300245032112234/2026-02-03_16-24-00-645_Desolation_v1.0.1_2025.06.12.sdfz?ex=6992052a&is=6990b3aa&hm=79c509759b901253ff83de912d860e1368dc38e8e649f50c87b5af0a7f063ce4&
+https://cdn.discordapp.com/attachments/1447223310319489024/1468300245313261830/2026-02-03_16-50-26-788_Gecko_Isle_Remake_v1.2.1_2025.06.12.sdfz?ex=6992052a&is=6990b3aa&hm=9b02bef98bc45928146e06d283d129e280904214193efdaec14f34b38a008b13&
+https://cdn.discordapp.com/attachments/1447223310319489024/1468300245661384898/2026-02-03_17-08-20-052_Talus_v2_2025.06.12.sdfz?ex=6992052a&is=6990b3aa&hm=1333b6f1cb614673d7a0ab1237338188c4027fa6d177251389eacfd8b9a8a219&
+
+
+[2/3/2026 10:54 AM] itsokimjewish
+T1.5 mexes cost way too much takes 155seconds each to pay for themselves on a 2.1 (factoring in the single regular mex is already there on top) when t2 costs less and produces way more ussually the team that just stays t1 has a major advantage when it comes to taking out a teching team
+Cant cancel a shield gen when its started cant eat one when its too many
+
+{Reactions}
+👍
+
+[2/3/2026 11:19 AM] c3bo8088
+- Agree on the t1.5mex price reduction. Will get it done by the weekend.
+- Unfortunately they cant be reclaimed, otherwise you run into eco abuse and end up having the same problems as vanilla.
+- - Maybe there is a way of having the decay rate of the building be higher than the standard decay in the future.
+- - Maybe there is a technical way in the future of only allowing X(number required for t3) to be built. But things gonna continue the way they are for the foreseable so some minimal team talk and coordination can solve this issue easily anyway.
+
+
+[2/12/2026 4:02 PM] c3bo8088
+We may be lucky enough to gain some traction in the near-ish future sorting the techblocking bug and the required asset modifications as well as the limited sharing needed for peak games using techcore. All that together is a very positive turn of events almost out of the blue so fingers crossed there is an actual breakthrough.
+
+I am hoping to find some time on Sunday to run further techcore testing, will update the github by then with the reduced cost on t1.5 mexes.
+
+We can avoid the techblocking bug by running the game just with a gentleman's agreement (as long as new players are familiar with techcore) in order to not feel sad about the control issues if that is preferred.
+
+If anyone is interested in getting a notification for testing toss a thumbs up to this post.
+
+
+==============================================================
+Exported 141 message(s)
+==============================================================

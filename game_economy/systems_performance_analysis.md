@@ -122,12 +122,12 @@ Play comparable games (not the same replay -- different engine versions would de
 
 ```bash
 # 1. Test PE build
-cd ~/code/Beyond-All-Reason
-ln -sf ~/code/RecoilEngine/build-linux local-build
+cd ~/state/Beyond All Reason
+ln -sf ~/code/RecoilEngine/build-linux engine/local-build
 # Play game with Tracy connected → save trace
 
 # 2. Test RE build
-ln -sf ~/code/RecoilEngine-RE/build-linux local-build
+ln -sf ~/code/RecoilEngine-RE/build-linux engine/local-build
 # Play comparable game with Tracy connected → save trace
 ```
 

@@ -1,0 +1,852 @@
+==============================================================
+Guild: Direct Messages
+Channel: C3BO
+==============================================================
+
+[2/7/2026 5:54 AM] c3bo8088
+Hi
+Cant bear to read any more of the coop is a problem nonsense people 😂
+Just wanted to ask how is the sharing tab coming along
+
+
+[2/8/2026 5:41 PM] daniel_demain
+it's going good, I need to read every line of it and sign off on it myself, and give a comparison to Sprung between the two ways to talk to the engine about the economy - give me a couple weeks and I'll move it out of draft and start harrassing them 😉
+
+
+[2/8/2026 5:46 PM] c3bo8088
+Amazing stuff
+Remind me a bit about the sharing aspect, its been so long.
+- Did you include options for sharing to be disabled until t2?
+- Shararable only army / t1con / t2con?
+
+
+[2/8/2026 5:48 PM] daniel_demain
+this is really the framework
+
+
+[2/8/2026 5:48 PM] daniel_demain
+so the existing options are intended to mirror the exact same functionality that's present now plus a little
+
+
+[2/8/2026 5:48 PM] daniel_demain
+but it functionally decomposes those options into individual settings
+
+
+[2/8/2026 5:49 PM] daniel_demain
+and gives a mechanism for definining "modes", which allows others to come in behind me and compose those options into new named modes
+
+
+[2/8/2026 5:50 PM] daniel_demain
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1468900431672381470/1470220292302438561/image.png?ex=6991c119&is=69906f99&hm=17af3968867a880150061cc83293d0ef34366adfbbc5c2a3fc84942e20ccec31&
+
+
+[2/8/2026 5:51 PM] daniel_demain
+but yeah it introduces rules like "thou shall not do more than 1 thing ever" to the mod options, at least the ones that relate to transfers between players
+
+
+[2/8/2026 5:51 PM] daniel_demain
+which should simplify them and also make them easy to string together into brand new shit
+
+
+[2/8/2026 5:52 PM] daniel_demain
+but it does contain the tools to do what you asked
+
+
+[2/8/2026 5:52 PM] daniel_demain
+for example, enabling sharing after you build a t2 lab
+
+{Reactions}
+👍
+
+[2/8/2026 5:53 PM] daniel_demain
+I maybe should add that example because it's powerful, but I'd want to really think about it if I were to tackle that, the best way to build that configuration out
+
+
+[2/8/2026 5:53 PM] c3bo8088
+Any chance of limiting the sharing at that point to a certain type of constructor?
+
+
+[2/8/2026 5:53 PM] daniel_demain
+yeah so the way this works is "Unit Sharing" is the filter
+
+
+[2/8/2026 5:53 PM] daniel_demain
+so "T2 cons only" is an option there
+
+
+[2/8/2026 5:54 PM] c3bo8088
+As in, at that only t2 con is sharable and not t1 and no army or coms
+
+
+[2/8/2026 5:54 PM] daniel_demain
+right
+
+
+[2/8/2026 5:54 PM] daniel_demain
+so that is in there now
+
+
+[2/8/2026 5:54 PM] c3bo8088
+Cool, I think that covers all my needs
+
+
+[2/8/2026 5:55 PM] daniel_demain
+yeah that'll get most people I think. But we could do other things too, like e-storage = energy sharing, shit like that
+
+
+[2/8/2026 5:59 PM] c3bo8088
+In my stuff I would potentially want it linked to the team unlocking the tech2 but to be honest I was happy with the general tax on transfers and it may be messy as the tech2 research is through techblocking and custom building values not in game
+
+
+[2/8/2026 5:59 PM] daniel_demain
+yeah ideally tech blocking would also be a mode
+
+
+[2/8/2026 5:59 PM] daniel_demain
+since that will make the game behave very differently
+
+
+[2/8/2026 5:59 PM] daniel_demain
+but I don't know what will win or care really
+
+
+[2/8/2026 5:59 PM] daniel_demain
+I just want the technical clean
+
+{Reactions}
+👍
+
+[2/8/2026 6:00 PM] daniel_demain
+and them to stop shitting on each other 😄
+
+
+[2/8/2026 6:00 PM] c3bo8088
+Thanks for all the info
+
+
+[2/8/2026 6:01 PM] daniel_demain
+np
+
+
+[2/8/2026 6:01 PM] c3bo8088
+When it becomes available for public test will give it a good go
+
+
+[2/8/2026 6:01 PM] c3bo8088
+Want to run my tournaments with it
+
+
+[2/8/2026 6:02 PM] daniel_demain
+yeah it's kind of a lot to get your dev env set up to run it right now, but that is possible - you just have to set up chobby, game, and recoil
+
+
+[2/8/2026 6:02 PM] daniel_demain
+Jaedrik verified it's working recently
+
+
+[2/8/2026 6:02 PM] c3bo8088
+So the clan members deal with their own economy, tired of this tournament coop 247 😂
+
+
+[2/8/2026 6:02 PM] daniel_demain
+that would be interesting
+
+
+[2/8/2026 6:03 PM] daniel_demain
+maybe have THEM come up with the restrictions by vote or something
+
+
+[2/8/2026 6:03 PM] daniel_demain
+that would be an interesting ruleset to come out of competitive
+
+
+[2/8/2026 6:04 PM] c3bo8088
+It is internal clan tournaments but will be streamed, I dont think your stuff will come out by early march I guess?
+
+
+[2/8/2026 6:04 PM] daniel_demain
+really hard to say
+
+
+[2/8/2026 6:04 PM] daniel_demain
+I'm sloooowly winning people over in engineering it feels like
+
+
+[2/8/2026 6:04 PM] daniel_demain
+but they are stubborn bastards
+
+
+[2/8/2026 6:04 PM] c3bo8088
+Yes they are
+
+
+[2/8/2026 6:04 PM] daniel_demain
+I will definitely be out of draft by March
+
+
+[2/8/2026 6:05 PM] daniel_demain
+but it's both huge and sitting on top of a unit testing branch that needs to go first
+
+
+[2/8/2026 6:05 PM] daniel_demain
+I doubt anyone that matters even reads it by march 😄
+
+
+[2/8/2026 6:05 PM] daniel_demain
+but who knows
+
+
+[2/8/2026 6:06 PM] daniel_demain
+things like this tend to snowball fast once they get going
+
+
+[2/8/2026 6:06 PM] daniel_demain
+there is some consensus we need modes
+
+
+[2/8/2026 6:06 PM] daniel_demain
+and I am doing very reasonable design patterns to accomplish the other bits of magic
+
+
+[2/8/2026 6:07 PM] daniel_demain
+it can pass code review if they don't just shut it down because of authority based arguments (AI, credibility, just-use-gadgets)
+
+
+[2/8/2026 6:07 PM] c3bo8088
+Well, will definitely use it for the following internal when it comes out. Next one will be summertime, hoping they read it by then.
+
+Currently the techblocking is both great gameplay and massively bugged killing clicks and making you unable to select units so hopefully someone gets a hand in to sort the code because seth has abandoned it.
+
+
+[2/8/2026 6:07 PM] daniel_demain
+yeah I can probably convert that to a mode
+
+
+[2/8/2026 6:07 PM] daniel_demain
+that's already in master?
+
+
+[2/8/2026 6:07 PM] daniel_demain
+it's on experimental or something?
+
+
+[2/8/2026 6:08 PM] daniel_demain
+I haven't played with it yet
+
+
+[2/8/2026 6:08 PM] c3bo8088
+Experimental
+
+
+[2/8/2026 6:08 PM] daniel_demain
+but if it's buggy I kind of dont want it lol
+
+
+[2/8/2026 6:08 PM] c3bo8088
+It is yes
+
+
+[2/8/2026 6:08 PM] daniel_demain
+prob faster to rewrite it properly
+
+
+[2/8/2026 6:08 PM] daniel_demain
+inside this paradigm
+
+
+[2/8/2026 6:08 PM] daniel_demain
+with tests etc
+
+
+[2/8/2026 6:08 PM] daniel_demain
+I suspect they're just monkey patching unit defs and shit
+
+
+[2/8/2026 6:09 PM] daniel_demain
+which is going to be bug city versus just fixing the post processing to point at an abstraction like I'm doing with policies
+
+
+[2/8/2026 6:09 PM] c3bo8088
+If you decide to rewrite it do it my way because seth didnt listen when I told him and went off some weird "labs generate xp for t2" which doesnt produce desirable gameplay
+
+
+[2/8/2026 6:10 PM] c3bo8088
+Ends up with a spam of random t1 labs to gather points 😂
+
+
+[2/8/2026 6:11 PM] daniel_demain
+yeeaah
+
+
+[2/8/2026 6:11 PM] daniel_demain
+I dont want that lol
+
+
+[2/8/2026 6:12 PM] c3bo8088
+https://discord.com/channels/549281623154229250/1447223310319489024
+
+He did give us the modification to substitute the lab passive xp for techpoints linked to buildings the team has to build to pay a team cost towards teching
+
+
+[2/8/2026 6:13 PM] daniel_demain
+I tend to try to avoid arbitrary resource creation
+
+
+[2/8/2026 6:14 PM] daniel_demain
+a team xp pool would be one of those things
+
+
+[2/8/2026 6:14 PM] daniel_demain
+not saying yall couldn't develop a mod option that did that, but I'd try to steer the team toward better UX
+
+
+[2/8/2026 6:15 PM] c3bo8088
+Running that with tax and no-sharing it is great stuff (apart from the bugs).
+
+The only aspect that needs sorting is to only be able to share T2con only once t2 lab is made in order to get players back into the game if they fully lost base.
+
+
+[2/8/2026 6:21 PM] c3bo8088
+Keep up the amazing work 😄
+Thanks for the chat
+
+
+[2/9/2026 11:58 AM] daniel_demain
+No problem man. Is there a comprehensive user story for that tech core idea somewhere?
+
+
+[2/9/2026 11:59 AM] c3bo8088
+What do you mean by user story?
+
+
+[2/9/2026 12:03 PM] c3bo8088
+I had to google that, short answer is no 😂
+
+{Reactions}
+👍
+
+[2/9/2026 12:06 PM] c3bo8088
+Basically the techcores thingy opens an additional time window for t1 to have space to play and achieve objectives. This is done through the gating of t2 of the behind the team payment to which all team can contribute by building a "core".
+
+
+[2/9/2026 12:13 PM] c3bo8088
+I have included features to incentivise the buildings to be done by multiple members of the team rather than a single eco player.
+- considerable bp requirement
+- made by t1cons (which are not sharable) - so less battery play also taxed
+- e-production but with initial e-cost to charge shield so not as spammable
+- cant be reclaimed - so cant be abused rushed and remade into units
+- minimal wreck value (game limitation, tweaks are not effective changing wreck value - will be fixed at some point)
+- aoe so not as spammable
+- opens door to obtaining a t1.5con for t1.5 mexes at x3 (legion is modified and doesnt have their x2 mexes)
+
+
+[2/9/2026 12:14 PM] c3bo8088
+This makes more sense too when there is tax and no-sharing initially
+
+{Reactions}
+💯
+
+[2/9/2026 12:16 PM] c3bo8088
+But yeah the no-sharing comes back later to bite if a player loses all base and constructors so really need that "on t2 unblock you can be shared a t2con" and then the player can rebuild from there.
+T2cons are not something you want to spamshare so it also helps regulate gameplay
+
+
+[2/9/2026 12:17 PM] c3bo8088
+Assist will be On but due to the no-sharing assist is taxed in opportunities missed and travel time to relocate bp where necessary. Cant abuse sharing a cons/conturret to draw from someone else eco pool
+
+
+[2/9/2026 12:18 PM] c3bo8088
+(If I can limit it to only t2con sharable)
+
+
+[2/9/2026 12:18 PM] c3bo8088
+And all that should see people handling their stuff
+
+
+[2/9/2026 1:00 PM] daniel_demain
+I feel like this could be slightly more detailed. But something like this outlining the exact changes in an issue somewhere would be fantastic
+
+
+[2/9/2026 1:00 PM] daniel_demain
+OR I could teach you to program and you could use my system lol
+
+
+[2/9/2026 1:01 PM] daniel_demain
+so your idea is like a "tech building" that everyone has to build, while taxes discourage direct t1 transfers between players
+
+
+[2/9/2026 1:03 PM] daniel_demain
+kind of separately, I did add the ability to add a "metal send allowance" that is tax-free
+
+
+[2/9/2026 1:03 PM] daniel_demain
+I am the only person that wants this, but it does work lol
+
+
+[2/9/2026 1:03 PM] daniel_demain
+but that would probably break your idea since you could commy the "tech building"
+
+
+[2/9/2026 1:14 PM] c3bo8088
+Seth did try to encourage me to code, I failed miserably. Cant even get chat gpt to do 2 gidgets that would be good additions to the game 😂
+
+
+[2/9/2026 1:19 PM] c3bo8088
+Code requirements are
+- the game to read X attribute on each team's assets
+- count how many X the team had
+- when team reaches a given threshold do:
+ - - unlock t2 buildoptions on t1cons
+- - additional option for tax modification [possibly some kind of better deal on economy share/transfer?]To also dangle a carrot towards going t2 as well as opening the option for t1 to be able to actually do stuff
+- - same for t3 threshold (unoock t2cons t3 buildoption - additional tax modification)
++ trigger the sound team notification (you have unlocked X tier tech, already available in game)
+
+
+[2/9/2026 1:20 PM] daniel_demain
+so when t2 unlocks after 8 [energy storages], what are the buildings?
+
+
+[2/9/2026 1:20 PM] daniel_demain
+should you make up a new building?
+
+
+[2/9/2026 1:21 PM] daniel_demain
+but yeah we could enable all transfers at that moment, that'd be fine
+
+
+[2/9/2026 1:21 PM] daniel_demain
+it's a little weird t3 not doing something similar tho
+
+
+[2/9/2026 1:22 PM] c3bo8088
+Maybe have something like
+30% tax into 20%% at t2 into 10% at t3
+
+
+[2/9/2026 1:25 PM] c3bo8088
+But equally could just keep taxes reasonably high as it makes player handle their own stuff rather than give it away
+
+
+[2/9/2026 1:26 PM] c3bo8088
+What happens now is that pooling resources is so efficient than people end up getting sidelined rather than helped to play
+
+
+[2/9/2026 1:42 PM] daniel_demain
+so do you have a faction building already built?
+
+
+[2/9/2026 1:42 PM] daniel_demain
+a "tech building"
+
+
+[2/9/2026 1:42 PM] daniel_demain
+cuz I think that's ideal, versus construing an existing building into this role
+
+
+[2/9/2026 1:42 PM] daniel_demain
+I had a dude asking me to do 3d work recently lol, I could get him to do that for me probably
+
+
+[2/9/2026 1:52 PM] daniel_demain
+even better if we had lore
+
+
+[2/9/2026 1:52 PM] daniel_demain
+can it be creep please? lol
+
+
+[2/9/2026 2:18 PM] c3bo8088
+https://discord.com/channels/549281623154229250/1447223310319489024/1467668620204310643
+
+
+[2/9/2026 2:18 PM] c3bo8088
+scanvengers have those t3 shields
+
+
+[2/9/2026 2:18 PM] c3bo8088
+they only need to be modified to be able to place a blueprint
+
+
+[2/9/2026 2:18 PM] c3bo8088
+script modification only
+
+
+[2/9/2026 2:19 PM] c3bo8088
+so currently patching that up with an additional conturret that allows the blueprint to be placed but it all should be on the same asset eventually
+
+
+[2/12/2026 12:16 PM] daniel_demain
+yeah I might take a run at incorporating tech core soon, I did easy tax, I don't see why i wouldn't do that too and just bring it all in
+
+
+[2/12/2026 12:47 PM] c3bo8088
+I mean, that would be lifesaving and very much appreciated
+
+
+[2/12/2026 12:49 PM] daniel_demain
+first I need to start this painful conversation with sprung over on the engine side lmao
+
+
+[2/12/2026 12:50 PM] daniel_demain
+and maintain my bar skill 😄
+
+
+[2/12/2026 12:50 PM] c3bo8088
+Barriers at the moment
+- techblocking bug -》which you will eliminate
+- core assets and t1.5con (printer) currently sit outside vanilla and require forceloading of assets -》not sure who can improve that situation
+- core assets script need to be minimally modified to allow dropping a blueprint -》same
+
+
+[2/12/2026 12:51 PM] daniel_demain
+we will just sub the core assets in this branch until they are merged into vanilla I think is the answer to that question
+
+
+[2/12/2026 12:51 PM] daniel_demain
+that looks like an [energy storage] now!
+
+
+[2/12/2026 12:52 PM] c3bo8088
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1468900431672381470/1471594945558220881/Screenshot_20260212_195241_Samsung_Internet.jpg?ex=69922417&is=6990d297&hm=ec6a17302a28697836e1b5553457a91d4bb3dd1c403cf0fa79199ad719e5b284&
+
+
+[2/12/2026 12:53 PM] daniel_demain
+yeah I remember this problem with blueprint sub
+
+
+[2/12/2026 12:53 PM] daniel_demain
+whole api would explode without the right unit defs
+
+
+[2/12/2026 12:54 PM] c3bo8088
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1468900431672381470/1471595300639604909/Screenshot_20260212_195352_Samsung_Internet.jpg?ex=6992246c&is=6990d2ec&hm=632ab0510cceae931e83ab608dbfcfdda9dda086583a7ad52a463b90e0c3244a&
+
+
+[2/12/2026 4:32 PM] c3bo8088
+https://gex.honu.pw/user/267536/?name=%5BBats%5DAttean
+Is this you? (If it is you, hats off to you for playing arm)
+I guess the timezones dont align  but if you ever want some play/training feel free to ask
+
+{Embed}
+https://gex.honu.pw/user/267536/?name=%5BBats%5DAttean
+Gex / User
+View user stats for [Bats]Attean
+https://images-ext-1.discordapp.net/external/RJ-jxaQHVWY9Ev-ignp0Qy3WluOFa7KqGez5CNxKQVw/https/gex.honu.pw/img/logo0.png
+
+{Reactions}
+👍
+
+[2/13/2026 11:08 AM] daniel_demain
+so do we have permission to radically re-use those as completely seperate unit definitions? Or are yall just using the same unit definition and changing its tech tier etc.?
+
+
+[2/13/2026 11:19 AM] daniel_demain
+I have a dude asking to do 3d work for me lol, should I have him make something similar to that but that is a unique unit definition?
+
+
+[2/13/2026 11:32 AM] c3bo8088
+Permissions I have none, I have only recently swapped the assets as I discovered them and they are fitting in terms of looks and also because there were different for each faction.
+
+I was doing a simple tweakunits of the assets at the moment but there is a limitation in terms of that cant modify the script (to place the blueprint) or change the values of the metal left on the wreck. Both are a problem currently.
+
+
+[2/13/2026 11:33 AM] daniel_demain
+what's the version currently in master doing?
+
+
+[2/13/2026 11:33 AM] daniel_demain
+cuz we could just steal that for now
+
+
+[2/13/2026 11:33 AM] daniel_demain
+and fix the technical problems
+
+
+[2/13/2026 11:33 AM] daniel_demain
+0 permission there
+
+
+[2/13/2026 11:40 AM] c3bo8088
+They are scavengers assets (t3 shields) and extra units pack (printer).
+I would say both see some use. Not sure if a clone of the asset could be done and just modify the script or if there is some legal gaming stuff behind that and is a no go.
+
+The less work required the better (at the moment) because got very small playerbase so far due to not being an official option and the 8v people are weird bunch thats only good for complaining about nonsense on the coop thread
+
+
+[2/13/2026 11:41 AM] daniel_demain
+If there's legal gaming stuff we have huge problems, it's our asset we can use it in a different mode lol
+
+
+[2/13/2026 11:41 AM] daniel_demain
+well you know my opinion, I think the 8v8 crowd is going to have this sorted out in about 5s if we give them the proper knobs
+
+
+[2/13/2026 11:41 AM] daniel_demain
+Jagomu is way smarter than the GDT
+
+
+[2/13/2026 11:42 AM] daniel_demain
+but yeah I'm working on the design for your thing, are you going to be around later? We can vibe code this design out if you want in a couple hours
+
+
+[2/13/2026 11:43 AM] c3bo8088
+Yeah, ideally use same assets.
+Just have to insert the blueprint ability on the shields.
+Happy to use the printer at the moment, maybe in the future worth to also split to a con for each faction but I am a practical man so not bothered on aesthetics
+
+
+[2/13/2026 11:43 AM] daniel_demain
+from where I'm at anyway, I'll have something planned shortly I can run by you with screenshots
+
+
+[2/13/2026 11:44 AM] daniel_demain
+yeah could it be a physical unit?
+
+
+[2/13/2026 11:44 AM] daniel_demain
+would that be better?
+
+
+[2/13/2026 11:44 AM] daniel_demain
+you can use it for useful things like repair, but that slows down your tech if you lose it to a comm bomb
+
+
+[2/13/2026 11:44 AM] daniel_demain
+idk
+
+
+[2/13/2026 11:44 AM] daniel_demain
+tell me what to do lol
+
+
+[2/13/2026 11:44 AM] daniel_demain
+we can do either a building or a printer like thing
+
+
+[2/13/2026 11:44 AM] daniel_demain
+we can do both lol
+
+
+[2/13/2026 11:45 AM] daniel_demain
+that's kind of the interesting part of this question, how do we break it down into useful mod options that make sense
+
+
+[2/13/2026 11:46 AM] c3bo8088
+Currently the printer allows construction of mexes t1.5
+
+
+[2/13/2026 11:46 AM] daniel_demain
+I feel like if it can assist with building that's almost too OP, and kind of a lame unit because cons are already a lot without this other class of cons confusing people
+
+
+[2/13/2026 11:46 AM] daniel_demain
+yeah this would be something different, so it would need a new model for each faction
+
+
+[2/13/2026 11:46 AM] c3bo8088
+Now, that mex is the one x2 mex from legion which I have given to all 3 factions
+
+
+[2/13/2026 11:46 AM] daniel_demain
+it's more of a res bot than a con I think
+
+
+[2/13/2026 11:47 AM] daniel_demain
+or a spellcaster or something
+
+
+[2/13/2026 11:47 AM] daniel_demain
+but it's certainly not a printer
+
+
+[2/13/2026 11:47 AM] daniel_demain
+that's just obscenely op
+
+
+[2/13/2026 11:47 AM] daniel_demain
+I'm imagining chevrolet with a tier 1 printer
+
+
+[2/13/2026 11:47 AM] daniel_demain
+and 1.5 mexes
+
+
+[2/13/2026 11:47 AM] daniel_demain
+I guess if you delay t2 enough it kind of could work
+
+
+[2/13/2026 11:48 AM] daniel_demain
+I'm not opposed to it as a mode, I want lots of modes 😄
+
+
+[2/13/2026 11:49 AM] daniel_demain
+but honestly, if we stick to what is currently in master, as a mode, and then imagine what we might want to do with each decomposed mod option in the future, that is enough and nobody can argue - they already merged it
+
+
+[2/13/2026 11:49 AM] daniel_demain
+especially if we're fixing bugs along the way
+
+
+[2/13/2026 11:49 AM] daniel_demain
+anything more right now is probably scope creep unless it's absurdly easy
+
+
+[2/13/2026 11:50 AM] daniel_demain
+but I do think it helps sell my system because it demonstrates a mutually exclusive mode, which is a huge part of what this framework gives us
+
+
+[2/13/2026 11:51 AM] c3bo8088
+Gonna drive for about 1h, will text later
+
+{Reactions}
+👍
+
+[2/13/2026 12:57 PM] c3bo8088
+The printer tweaked is just a normal con, nothing fancy.
+
+Why dont we play a game or two this weekend and you get a better idea. I am not quite sure about what you mean by decomposed modoption.
+All the parts I mentioned are important and have to come together to be meaningful and avoid player abuse into coop.
+There will be a recommended set of settings tax/sharing/corenumbers that will be the go to and left as a default for each team size I guess but yeah people could then modify those values in lobby through the sharingtab I suppose if that is what you meant
+
+{Reactions}
+👍
+
+[2/13/2026 12:57 PM] c3bo8088
+What timezone are you on?
+
+
+[2/13/2026 1:02 PM] daniel_demain
+I'll show you, MT
+
+
+[2/13/2026 3:36 PM] c3bo8088
+https://discord.gg/fjSpE7Qy
+Btw this is our clan discord, we also have a few americans in case you guys want to do a clanvsclan small teams or 1v1 with them at some point
+
+
+[2/13/2026 4:28 PM] daniel_demain
+hell yeah we do!
+
+
+[2/13/2026 4:28 PM] daniel_demain
+we're bats
+
+
+[2/13/2026 4:28 PM] daniel_demain
+not super serious, more of a mentorship thing atm - but we're fairly active
+
+
+[2/13/2026 4:28 PM] c3bo8088
+thought you guys all americans but got around the whole place
+
+
+[2/13/2026 4:28 PM] daniel_demain
+yeah we're eu too
+
+
+[2/13/2026 4:28 PM] daniel_demain
+lil southeast asia
+
+
+[2/13/2026 4:28 PM] c3bo8088
+I was very bad last game xD
+
+
+[2/13/2026 4:29 PM] c3bo8088
+hopefully perform a bit better on this one
+
+
+[2/13/2026 4:29 PM] daniel_demain
+lol oh hey you're in here
+
+
+[2/13/2026 4:29 PM] daniel_demain
+I'm literally just win farming atm, if I do that starlight thing from the right place it's gg lol
+
+
+[2/13/2026 4:30 PM] c3bo8088
+your pinpointers were very good
+
+
+[2/13/2026 4:30 PM] c3bo8088
+also the cents help a lot
+
+
+[2/13/2026 4:30 PM] c3bo8088
+but right clicking instead of Fmove works best apparently
+
+
+[2/13/2026 4:30 PM] c3bo8088
+they target better instead of closer
+
+
+[2/13/2026 4:30 PM] c3bo8088
+for starlights
+
+
+[2/13/2026 4:30 PM] daniel_demain
+yeah that's 1 tic, 1 pawn, 1 cent, 1 res bot, repeat
+
+
+[2/13/2026 4:31 PM] daniel_demain
+super powerful
+
+
+[2/13/2026 4:31 PM] c3bo8088
+this time I aint giving 7 t2 cons for free xD
+
+
+[2/13/2026 5:09 PM] c3bo8088
+still no good xD
+
+
+[2/13/2026 5:10 PM] daniel_demain
+ggs
+
+
+[2/13/2026 5:10 PM] c3bo8088
+will catch you at some other point
+
+
+[2/13/2026 5:10 PM] c3bo8088
+gotta sleep
+
+
+[2/13/2026 5:10 PM] daniel_demain
+night man I should stop playing this and sketch out your thing lol
+
+
+[2/14/2026 12:54 PM] c3bo8088
+I am around if you wanna continue the technical chat
+
+
+[2/14/2026 12:56 PM] daniel_demain
+I was just starting to read that, I'm going to form something concrete and send it your way still in the planning phase
+
+{Reactions}
+👍
+
+[2/14/2026 12:56 PM] daniel_demain
+my main thinking so far is how to present it, it's kind of a good PR to demonstrate the thing but I need to write unit tests etc for that to work best and really make them understand
+
+
+[2/14/2026 12:57 PM] daniel_demain
+well, not a good PR, a good commit as part of the PR
+
+
+[2/14/2026 12:57 PM] daniel_demain
+anyway that's not you stuff just talking lol
+
+
+==============================================================
+Exported 192 message(s)
+==============================================================
