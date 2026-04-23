@@ -1,0 +1,284 @@
+# Fmt Phase 2: Post-Format Migration Plan
+
+Additional text transformations to bundle into PR [#7199](https://github.com/beyond-all-reason/Beyond-All-Reason/pull/7199) (the stylua/luacheck pass) **before** it lands, so contributors only have to migrate through one formatting event. The bracket-to-dot and trailing comment fixes get folded into the same commit; consumers run `bar::fmt-mig` (or the raw perl + stylua commands) once and they're done.
+
+**Tooling:** perl (pre-installed everywhere), stylua (already required), `rg` for searching.
+
+---
+
+## 1. Bracket-to-Dot Accessor Transformation
+
+Addresses efrec's [PR comment](https://github.com/beyond-all-reason/Beyond-All-Reason/pull/7199#discussion_r2983337191): `unitDef.modCategories["ship"]` should become `unitDef.modCategories.ship`.
+
+### Scale
+
+~8,240 instances repo-wide, split across two sub-patterns.
+
+### Pattern A: Table constructor keys
+
+`["identifier"] =` becomes `identifier =`
+
+Dominant in:
+- `effects/` (~1,037 hits) -- CEG particle data tables
+- `luaui/configs/` -- build menu sorting, lights, etc.
+- `luarules/configs/` -- collision volumes, unit configs
+- `units/`, `gamedata/`
+
+```lua
+-- Before:
+["armck"] = 001100,
+["fogdirty"] = { ... }
+
+-- After:
+armck = 001100,
+fogdirty = { ... }
+```
+
+### Pattern B: Field access
+
+`expr["identifier"]` becomes `expr.identifier`
+
+Dominant in:
+- `luaui/Widgets/` -- `WG["widgetname"]` patterns (~35 in widget_selector.lua alone)
+- `luarules/gadgets/` -- `callins["AimWeapon"]` etc.
+- `common/` -- `globalScope["resource_spot_finder"]` etc.
+
+```lua
+-- Before:
+unitDef.modCategories["ship"]
+WG["limitidlefps"].update()
+callins["AimWeapon"] = function(...)
+
+-- After:
+unitDef.modCategories.ship
+WG.limitidlefps.update()
+callins.AimWeapon = function(...)
+```
+
+### Regex
+
+Both patterns use a negative lookahead to skip Lua 5.1 reserved words, which cannot appear as bare table keys or dot-accessed fields.
+
+```bash
+RESERVED='and|break|do|else|elseif|end|false|for|function|if|in|local|nil|not|or|repeat|return|then|true|until|while'
+
+# Pattern A: table constructor keys -- ["id"] = value  →  id = value
+perl -pi -e "s/\\[\"((?!(?:$RESERVED)\\b)[a-zA-Z_]\\w*)\"\\](\\s*=)/\$1\$2/g" "$file"
+
+# Pattern B: field access -- expr["id"]  →  expr.id
+perl -pi -e "s/([\\w\\]])\\[\"((?!(?:$RESERVED)\\b)[a-zA-Z_]\\w*)\"\\]/\$1.\$2/g" "$file"
+```
+
+Verified behavior:
+
+| Input | Output | Why |
+|-------|--------|-----|
+| `["armck"] =` | `armck =` | valid identifier |
+| `["fogdirty"] =` | `fogdirty =` | valid identifier |
+| `WG["limitidlefps"]` | `WG.limitidlefps` | valid identifier |
+| `unitDef.modCategories["ship"]` | `unitDef.modCategories.ship` | valid identifier |
+| `["end"] =` | `["end"] =` | reserved word, preserved |
+| `["function"] =` | `["function"] =` | reserved word, preserved |
+| `tbl["endgame"]` | `tbl.endgame` | not a reserved word (`\b` boundary) |
+
+### Exclusions
+
+- `common/luaUtilities/` -- third-party code (already in `.styluaignore` and `.luacheckrc` exclude list)
+- `.lux/` -- lux dependency tree
+- `recoil-lua-library/` -- generated type stubs
+
+### Implementation
+
+**Use `bar-lua-codemod` (full-moon AST rewriter), not perl regex.** The full-moon tool gives zero false positives, preserves comments/trivia, and is extensible for future transforms. See [fmt_migrated_full_moon.md](fmt_migrated_full_moon.md) for the complete implementation spec and code.
+
+The perl regex patterns above are retained as a reference and fallback for contributors who can't run the Rust binary.
+
+---
+
+## 2. Trailing Comment Cleanup
+
+Addresses efrec's [comment on debug.lua](https://github.com/beyond-all-reason/Beyond-All-Reason/pull/7199#discussion_r2983447078): "Newly-trailing comments like these probably need to move up onto a new line."
+
+### Problem
+
+When stylua collapses a multi-line `if/end` block onto one line, a comment that was formerly standalone becomes awkwardly trailing:
+
+```lua
+-- Before stylua:
+if r == 37 then
+    r = 38
+end
+-- 37 = %
+
+-- After stylua:
+if r == 37 then
+    r = 38
+end -- 37 = %
+```
+
+### Approach: one-time manual pass
+
+Not worth heavy automation. The heuristic `end\s+--` matches many legitimate trailing comments (e.g., `end -- close inner loop`). The actual problem set is small once you exclude those.
+
+### Finding candidates
+
+```bash
+rg 'end\s+--[^-]' --type lua \
+  --glob '!common/luaUtilities/**' \
+  --glob '!.lux/**' \
+  --glob '!recoil-lua-library/**'
+```
+
+For each hit: if the comment became trailing *because* stylua collapsed a block, move it to the line above. Leave legitimate trailing comments alone.
+
+Known instances from PR review:
+- `common/springUtilities/debug.lua:76` -- `end --debug.getinfo(v).short_src)?`
+- `common/springUtilities/color.lua:37,40,43` -- `end -- 37 = %` (three times)
+
+---
+
+## 3. Type System Bootstrap
+
+### Current state
+
+| Component | Path | Status |
+|-----------|------|--------|
+| Engine API stubs | `recoil-lua-library/library/` | Generated by `just lua::library` via [lua-doc-extractor](https://github.com/rhys-vdw/lua-doc-extractor). Covers `SpringSynced`, `SpringUnsynced`, `SpringShared`, `gl`, `VFS`, etc. |
+| Temporary BAR stubs | `types/Spring.lua` | Hand-written `---@class SpringSynced` with TODO markers. Bridges gaps until recoil-lua-library catches up. |
+| Gadget/Widget types | `types/Gadget.lua`, `types/Widget.lua` | `---@class Gadget : Addon, RulesSyncedCallins` etc. Documents the `local gadget = gadget ---@type Gadget` pattern. |
+| LuaLS config | `.luarc.json` | Points `workspace.library` at `recoil-lua-library`, `types/`, `.lux/`. Maps `VFS.Include` → `require`. |
+| Luacheck globals | `.luacheckrc` | `Spring`, `VFS`, `gl`, `UnitDefs`, `WG`, `GG`, Chili widgets, `math.*`/`table.*` extensions, etc. |
+
+### What needs to happen
+
+**3a. Delete temporary stubs when recoil-lua-library covers them.**
+
+`types/Spring.lua` has two TODO markers:
+- "delete when recoil-lua-library publishes SpringSynced types"
+- "delete when recoil-lua-library publishes TeamData types"
+
+Check coverage: `recoil-lua-library/library/generated/synced.lua` defines `SpringSynced` as a class. If the generated stubs now cover `GetModOptions`, `GetGameFrame`, `GetUnitDefID`, etc., the hand-written versions in `types/Spring.lua` can be removed. The `ResourceData`, `TeamData`, `PlayerData`, and `UnitWrapper` classes are BAR-specific and should stay (or move to a dedicated `types/GameData.lua`).
+
+**3b. Game-specific globals (`UnitDefs`, `FeatureDefs`, `WeaponDefs`, etc.)**
+
+These are engine-exposed Lua globals, but recoil-lua-library does not yet generate `---@class UnitDef` / `---@type table<number, UnitDef> UnitDefs` or the equivalent for features/weapons. The only def-related class currently generated is `UnitDefDimensions` (a helper).
+
+This is an **upstream gap in lua-doc-extractor / `just lua::library`**, not something to hand-maintain in BAR's `types/` directory. The def table structures are defined in the engine C++ and should be extracted the same way `SpringSynced` / `SpringUnsynced` are. `just lua::library` already wipes and regenerates the output directory, so once the extractor handles these, they'll flow through automatically.
+
+Until then, `types/Spring.lua` contains minimal hand-written bridges. These are explicitly temporary.
+
+**3c. Duplicate generated tree -- RESOLVED.**
+
+`recoil-lua-library/library/` contained two nearly-identical trees: `library/generated/` (from `just lua::library`) and `library/RecoilEngine/` (stale CI submodule artifact). Root cause: `just lua::library` cleaned the RecoilEngine build output before generating but never cleaned the BAR destination before copying into it. Fixed in `BAR-Devtools/just/lua.just` by adding `clean_dir` on the BAR destination before `cp -r`, so the output mirrors exactly what the generator produces. `just lua::reset` undoes this.
+
+**3d. Test framework types (deferred).**
+
+LuaCATS/busted and LuaCATS/luassert submodule integration is blocked on [lux#953](https://github.com/lumen-oss/lux/issues/953). Currently resolved via `.lux/` dependency paths in `.luarc.json`.
+
+---
+
+## 4. `bar::fmt-mig` Recipe
+
+The migration script lives as a `just` recipe in `BAR-Devtools/just/bar.just`, conceptually separate from `bar::fmt` (the idempotent stylua pass).
+
+### Recipe body
+
+```just
+# Migration: bracket-to-dot accessors (via bar-lua-codemod) + stylua normalization
+fmt-mig *args: require-bar
+    #!/usr/bin/env bash
+    set -euo pipefail
+    source "$DEVTOOLS_DIR/scripts/common.sh"
+    enter_distrobox
+
+    info "Converting bracket accessors to dot notation..."
+    bar-lua-codemod bracket-to-dot \
+        --path "$BAR_DIR" \
+        --exclude common/luaUtilities \
+        --exclude .lux \
+        --exclude recoil-lua-library
+
+    info "Re-running stylua to normalize formatting..."
+    (cd "$BAR_DIR" && lx --lua-version 5.1 exec stylua . {{args}})
+
+    ok "Migration complete. Review changes with: git diff"
+
+# Author-only: runs fmt-mig + captures stats for PR description
+fmt-mig-author *args: (fmt-mig args)
+    #!/usr/bin/env bash
+    set -euo pipefail
+    source "$DEVTOOLS_DIR/scripts/common.sh"
+
+    info "Scanning for trailing comment candidates..."
+    rg 'end\s+--[^-]' --type lua \
+        --glob '!common/luaUtilities/**' \
+        --glob '!.lux/**' \
+        --glob '!recoil-lua-library/**' \
+        "$BAR_DIR" || true
+
+    info "Checking for reserved word false conversions..."
+    rg '\.end\b|\.function\b|\.local\b|\.if\b|\.then\b|\.else\b|\.for\b|\.while\b|\.return\b|\.nil\b|\.true\b|\.false\b|\.not\b|\.or\b|\.and\b|\.in\b|\.do\b|\.repeat\b|\.until\b|\.break\b|\.elseif\b' \
+        --type lua "$BAR_DIR" || ok "No false conversions found"
+```
+
+### Implementation approach
+
+**Primary: `bar-lua-codemod`** (full-moon Rust tool). Zero false positives, trivia-preserving, extensible. See [fmt_migrated_full_moon.md](fmt_migrated_full_moon.md) for full spec.
+
+**Fallback: perl regex** (patterns in Section 1 above). For contributors who can't run the Rust binary. Near-zero false positive rate for this specific pattern, but regex cannot distinguish syntactic context.
+
+---
+
+## 5. Rebase Workflow for In-Flight Branches
+
+Same approach as the Phase 1 (stylua) migration. After the bracket-to-dot PR merges:
+
+### Step 1: rebase onto master
+
+```bash
+git fetch origin
+git rebase origin/master
+```
+
+### Step 2: at each conflict, take your version and re-run the migration
+
+```bash
+# for pure formatting/accessor conflicts (most of them), take yours:
+git checkout --theirs <conflicted-files>
+
+# for files your branch deletes:
+git rm <file>
+
+# re-run the migration on everything you touched:
+just bar::fmt-mig
+# or without BAR-Devtools:
+# bar-lua-codemod bracket-to-dot --path . --exclude common/luaUtilities && stylua .
+
+# stage and continue:
+git add -A
+git rebase --continue
+```
+
+### Batch shortcut (formatting-only conflicts)
+
+```bash
+# only safe when ALL conflicts are pure formatting, not semantic
+git diff --name-only --diff-filter=U | xargs git checkout --theirs --
+just bar::fmt-mig
+git add -A
+git rebase --continue
+```
+
+The transform is idempotent -- running it on already-converted code is a no-op. Your logical changes survive and the accessor style matches master.
+
+---
+
+## Execution Checklist
+
+- [ ] PR #7199 merged to master (prerequisite)
+- [ ] Run `just bar::fmt-mig` on a clean checkout of master, verify diff looks correct
+- [ ] Spot-check: `bar-lua-codemod` reports zero parse errors and conversion stats look sane
+- [ ] Spot-check: `just bar::fmt-mig-author` verification checks pass (no false reserved word conversions)
+- [ ] Trailing comment cleanup: run the `rg` search from Section 2, manually fix candidates
+- [ ] Open PR, add to `.git-blame-ignore-revs`
+- [ ] Post rebase workflow instructions in PR description / Discord

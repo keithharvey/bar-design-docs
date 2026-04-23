@@ -1,0 +1,2090 @@
+==============================================================
+Guild: Beyond All Reason | BAR
+Channel: 🔒｜dev-discussion / New dev setup, codebase transformation
+==============================================================
+
+[4/17/2026 3:24 AM] watchthefort
+@Contributors as you may be aware from https://discord.com/channels/549281623154229250/724293659809284137/1493238696546275489, there are big changes coming to the codebase.
+
+## Dev Setup
+We will be transitioning to using the [BAR Devtools](https://github.com/beyond-all-reason/BAR-Devtools/) repository to automate the installation and setup of the tools you need to work on the game, engine, Teiserver, and services.
+
+ **We are looking for devs to test migrating to BAR Devtools, *especially those on Windows,* to make the transition for everyone as painless as possible.**
+
+## Game Code
+1. **Package Manager:** We will now be using the Lux package manager to manage 3rd party Lua code. This means no more copy-pasting the code to our codebase and manually maintaining it.
+2. **Linting:** linting means automatically formatting code. We will now have a single unified style in the codebase.
+3. **Spring Split:** The `Spring` table will now be split into three distinct accessors: `SpringShared`, `SpringSynced`, and `SpringUnsynced`.  This will allow detecting errors within the IDE, rather than having to run the game to expose the errors.
+4. **Strong Typing:** The code parser in the IDE will now be able to detect a function being called incorrectly as an error, without having to run the game.
+
+See the overall coordinating issue for details of everything:
+https://github.com/beyond-all-reason/Beyond-All-Reason/issues/7408
+
+## The Plan
+1. Have select group of devs test transitioning to BAR Devtools
+2. Have all devs transition over to using the BAR Devtools setup.
+3. Coordinate session to merge transformation PRs
+5. Re-run migration scripts to regenerate transformation PRs
+5. Merge transformation PRs
+6. Run transforms on outstanding PRs to fix merge conflicts
+7. Proceed as normal
+
+## tl;dr
+**So what do *I* have to do?**
+1. Install BAR Devtools
+2. Wait a bit
+3. Run a couple of commands on your local branches
+
+{Reactions}
+😮 (2) pepethink
+
+[4/17/2026 5:01 AM] ptaq4565
+@Admins
+
+
+[4/17/2026 8:15 AM] nortyspock
+I don't think we need "all" developers switching over; I think a majority will want to switch over because they will find it more convenient to all the components auto-configured.
+
+Unfortunately I'm on Linux or I would be happy to be a test user, but I have found it useful for setting up Teiserver+SPADS testing
+
+
+[4/17/2026 8:23 AM] ubdead.
+For me setting up the component itself, teaches me about how the component works, that way if something breaks, i have an understanding on how to approach fixing it. But i can see the added value for "just wanting to get it going asap"
+
+
+[4/17/2026 8:40 AM] nortyspock
+Sure, if you have time to dive into the details, it's a valuable exercise. 
+
+If you are short on time and just wanna fix one thing that requires updates to (or at least troubleshooting via) Teiserver and SPADS and SPADS-bar-config and Chobby and RecoilEngine... That's a lot of setup, and it's a path I and others want to make smoother so we don't have artificial barriers to improving things.
+
+
+[4/17/2026 8:43 AM] kroiya
+Hold up, so you can't develop bar without wsl now?
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1494629570077266030/1494709910292791467/image.png?ex=69ea3014&is=69e8de94&hm=ff9c4632d9d716986460593731715fdd0b3bd3fb957efc0cffa31b4753b87bb3&
+
+
+[4/17/2026 8:46 AM] nortyspock
+I don't think this setup mode is hard-required, Krolya, you could probably keep going as-is if you install lux and just...
+
+I wish WatchTheFort hadn't phrased it as "everybody will switch over"
+
+
+[4/17/2026 8:47 AM] kroiya
+I also wish you guys stopped for a second, figured out what you're doing, and communicated it clearly
+
+
+[4/17/2026 8:48 AM] nortyspock
+@attean ^^ does the regular bar repo require WSL if you are developing only BAR from its one repo?
+
+
+[4/17/2026 8:48 AM] kroiya
+We had a conversation on this a couple days ago and nowhere was it said that I'm required to configure wsl
+
+
+[4/17/2026 8:54 AM] daniel_demain
+It helps, wsl gives us a unified scripting layer. You can still get the host running in mysys2 but it’s going to be much harder
+
+
+[4/17/2026 8:55 AM] kroiya
+this is kind of a big deal
+
+
+[4/17/2026 8:55 AM] kroiya
+you're making bar impossible to natively develop on windows
+
+{Reactions}
+❓ (2)
+
+[4/17/2026 8:55 AM] kroiya
+that is MASSIVE
+
+
+[4/17/2026 8:56 AM] _lexon
+Its not required to use this so its not impossible
+
+
+[4/17/2026 8:56 AM] daniel_demain
+Not impossible, you just need to install the package manager by hand, we’re trying to give yall the same tools in a working form
+
+
+[4/17/2026 8:56 AM] kroiya
+is it not required to use this? Where are the instructions for not using this?
+
+
+[4/17/2026 8:56 AM] _lexon
+Same as you did so far, no?
+
+
+[4/17/2026 8:56 AM] kroiya
+I run windows, things that don't run on windows are a non-working form
+
+
+[4/17/2026 8:57 AM] kroiya
+I don't have a clue, no one's said anything
+
+
+[4/17/2026 8:58 AM] _lexon
+Some things, like teiserver, dont even work on windows
+
+
+[4/17/2026 8:58 AM] kroiya
+that became apparent to me, yes
+
+
+[4/17/2026 8:58 AM] daniel_demain
+You would need to get Lux working on windows, like I said it’s all possible, but we aren’t probably going to want to maintain 4 versions of that script for every host and emulation layer for windows (msys2), Linux +virtualization is maintainable
+
+
+[4/17/2026 8:58 AM] kroiya
+no good, pump the brakes
+
+
+[4/17/2026 8:59 AM] daniel_demain
+Why? No serious engineering shop in the world would have a problem with this approach, it’s supported in windows, I’m missing the problem with setting up wsl?
+
+
+[4/17/2026 9:00 AM] kroiya
+am I really the only one to whom dropping windows support for game repo development sounds insane?
+
+
+[4/17/2026 9:00 AM] daniel_demain
+It’s not really dropping windows support, it’s just not maintaining it as the first class automated setup
+
+
+[4/17/2026 9:00 AM] daniel_demain
+Which we currently don’t have..
+
+
+[4/17/2026 9:01 AM] _lexon
+People might want to contribute without having to set all these things up or might not have previous experience, until now you could do so with minimal setup, this raises the BAR 😅
+
+
+[4/17/2026 9:01 AM] _lexon
+That said I definitely think this is super useful and of great help especially when setting up multiple components
+
+
+[4/17/2026 9:02 AM] nortyspock
+attean: while neither of us are in a position to maintain it, could a script be written to assist in setup, on windows, of lux and just?
+
+
+[4/17/2026 9:02 AM] kroiya
+it doesn't raise the bar, it launches the bar into the stratosphere on a pair of linux-powered weather balloons
+
+
+[4/17/2026 9:02 AM] kroiya
+someone who knows what they're talking about, please talk sense into everyone who thought this is a remotely acceptable idea :pepeomg:
+
+
+[4/17/2026 9:02 AM] nortyspock
+I'm trying to not interrupt Krolya's workflow
+
+
+[4/17/2026 9:03 AM] daniel_demain
+I do think once this is in place kroyla, it gives a home for msys2 setup.sh, etc, but it's gotta be some sort of linux emulation layer like that, it probably won't live in powershell
+
+
+[4/17/2026 9:03 AM] daniel_demain
+yeah for sure
+
+
+[4/17/2026 9:03 AM] kroiya
+Then again, no. No-go. Or make it entirely optional without organisational change.
+
+
+[4/17/2026 9:04 AM] daniel_demain
+then you get no organizational change.
+
+
+[4/17/2026 9:04 AM] kroiya
+That's preferable to dropping windows support
+
+
+[4/17/2026 9:04 AM] daniel_demain
+"entirely optional" when it comes to code means nobody does it
+
+
+[4/17/2026 9:04 AM] daniel_demain
+this isn't dropping windows support
+
+
+[4/17/2026 9:05 AM] daniel_demain
+it's adding an automation layer
+
+
+[4/17/2026 9:05 AM] kroiya
+This is for all intents and purposes dropping windows support. "Just use wsl" is not a solution.
+
+
+[4/17/2026 9:05 AM] teifion
+WSL is part of windows isn't it?
+
+{Reactions}
+Ayes
+
+[4/17/2026 9:05 AM] daniel_demain
+I'm confused, WSL is the best part of windows 😄
+
+
+[4/17/2026 9:06 AM] daniel_demain
+I'm jooooking, but seriously Windows support and making these tools GOOD under WSL is a huge part of this
+
+
+[4/17/2026 9:06 AM] daniel_demain
+but imagine every single repeated question just disappearing into `just setup::init`
+
+
+[4/17/2026 9:06 AM] daniel_demain
+your vscode works, your language servers all work
+
+
+[4/17/2026 9:06 AM] daniel_demain
+and you can run `just bar::launch` to get bar debug launcher
+
+
+[4/17/2026 9:07 AM] daniel_demain
+that's where we're trying to get to
+
+
+[4/17/2026 9:07 AM] daniel_demain
+on windows too
+
+
+[4/17/2026 9:07 AM] kroiya
+Yeah, just install a whole different operating system and use that instead, no biggie
+
+
+[4/17/2026 9:07 AM] teifion
+That's hyperbole
+
+
+[4/17/2026 9:07 AM] kroiya
+I'm serious, someone please help :PandaWorried:
+
+
+[4/17/2026 9:08 AM] kroiya
+it's really not, wsl isn't trivial
+
+
+[4/17/2026 9:10 AM] qscrew
+WSL is indeed Windows. But I think krolya's point is basically correct. Devtools is much more involved. We shouldn't represent it as the default development process when most people are not going to touch the stack. They just want to write a widget, man.
+
+
+[4/17/2026 9:10 AM] qscrew
+This is just a comms thing.
+
+
+[4/17/2026 9:11 AM] qscrew
+Or more likely they want to fix one specific bug in BAR.
+
+
+[4/17/2026 9:12 AM] daniel_demain
+assuming we push it far enough, wouldn't that be easier for 99% of devs boneless?
+
+
+[4/17/2026 9:12 AM] daniel_demain
+vs learning symlinks etc
+
+
+[4/17/2026 9:12 AM] daniel_demain
+that's my thought, this is just better than mucking with manual
+
+
+[4/17/2026 9:14 AM] nortyspock
+Agree this is a comms problem... 
+
+Again, @kroIya🐭 , I don't think you need to change your personal workflow at all.
+
+perhaps we could communicate a "basic" setup (just bar on windows) and "deluxe" setup (this whole does-everything setup)
+
+
+[4/17/2026 9:15 AM] daniel_demain
+yeah we can always keep both, the problem there is norty, without forcing the Devtools, they lose the scripting layer
+
+
+[4/17/2026 9:15 AM] daniel_demain
+so things like "bar::fmt" or "bar::check", or their language server setup, really causes a schism
+
+
+[4/17/2026 9:16 AM] daniel_demain
+they're going to be doing stupid shit still we could've put guard rails up for
+
+
+[4/17/2026 9:16 AM] daniel_demain
+the unified makefile (BAR-Devtools) is really the win here, we suddenly get automated, shared tooling
+
+
+[4/17/2026 9:17 AM] kroiya
+Requiring I configure wsl will definitely prevent me from doing stupid shit, or any shit
+
+
+[4/17/2026 9:18 AM] daniel_demain
+you get what we're going for here right though kroyla? We want a "setup" that just works
+
+
+[4/17/2026 9:18 AM] daniel_demain
+and that seems viable only on a shared virtualization layer
+
+
+[4/17/2026 9:18 AM] kroiya
+I get what you're going for. I get why you want that. It must not happen
+
+
+[4/17/2026 9:18 AM] daniel_demain
+well ok lol
+
+
+[4/17/2026 9:18 AM] kroiya
+If there's sanity remaining in our ranks
+
+{Reactions}
+🤣
+
+[4/17/2026 9:19 AM] daniel_demain
+idk man, tough problem. Trying to move code quality in some sort of systematic way _without_ a scripting layer seems hard. Doing that scripting layer on windows also seems near impossible to me
+
+
+[4/17/2026 9:19 AM] daniel_demain
+and our current DX setup is a joke
+
+
+[4/17/2026 9:19 AM] daniel_demain
+"do it all manually for days" isn't a great answer
+
+{Reactions}
+this (2)
+
+[4/17/2026 9:22 AM] nortyspock
+I see both Attean and Krolya's points. 
+
+@kroIya🐭 , would you be willing to at least try using @attean 's setup tool and objectively report your experience?
+
+
+[4/17/2026 9:23 AM] daniel_demain
+let's have boneless try it first, I don't want kroyla to get the "we haven't fixed linking yet" experience lol
+
+
+[4/17/2026 9:23 AM] qscrew
+We can fmt/check in commit hooks. If people want to develop without any tooling, that's their own prerogative.
+
+
+[4/17/2026 9:23 AM] kroiya
+My objective experience is that I'm unwilling to try it. I wouldn't even consider trying it if I werent neck deep into bar org
+
+
+[4/17/2026 9:23 AM] kroiya
+This is going to be the objective experience of a lot of windows people, especially the greener ones
+
+
+[4/17/2026 9:25 AM] qscrew
+I have a laptop with dead RAM and am on my way to a hotel so RIP. But I should be back up and running soon.
+
+
+[4/17/2026 9:25 AM] kroiya
+Sometimes you do, indeed, just want to make a widget, man
+
+
+[4/17/2026 9:25 AM] qscrew
+That's right
+
+
+[4/17/2026 9:27 AM] daniel_demain
+I think you still can kroyla, you're just going to be missing a lot of nice-to-haves and be off the beaten path. But that's still viable. You're going to be missing the toys, but you can still type Lua np and run it in the game, if you install all the plugins we recommend it should all work relatively well
+
+
+[4/17/2026 9:28 AM] kroiya
+I'm going to run out of words describing how absurd this is
+
+
+[4/17/2026 9:28 AM] kroiya
+bonkers
+
+
+[4/17/2026 9:31 AM] teifion
+> My objective experience is that I'm unwilling to try it.
+
+I think that says it all, if you're not willing to try it why would anybody be interested in trying to help?
+
+
+[4/17/2026 9:32 AM] kroiya
+You should be interested in not putting roadblocks in people's faces when they want to tinker with the game
+
+
+[4/17/2026 9:32 AM] daniel_demain
+installing wsl is about a 5 minute process, all modern cpus have virtualization technology that make this pretty performant, we require you to install "git", is that an unnacceptable road block? This is _removing_ road blocks kroyla, because we're wiring hard stuff up for inexperienced devs, and all of their tooling
+
+
+[4/17/2026 9:33 AM] kroiya
+you're not an inexperienced dev and it is very apparent you have no context for what it's like to be one
+
+
+[4/17/2026 9:33 AM] daniel_demain
+this removes every argument of "we can't add tools/package manager because newer devs would be intimidated"
+
+
+[4/17/2026 9:33 AM] daniel_demain
+because we do it for you
+
+
+[4/17/2026 9:34 AM] daniel_demain
+that's true krolya
+
+
+[4/17/2026 9:34 AM] kroiya
+thanks, you really shouldn't have
+
+
+[4/17/2026 9:34 AM] kroiya
+cloning a repo off git is massively easier and less involved than using wsl
+
+
+[4/17/2026 9:35 AM] daniel_demain
+is it?
+
+
+[4/17/2026 9:35 AM] kroiya
+yes, it is
+
+
+[4/17/2026 9:35 AM] daniel_demain
+how so?
+
+
+[4/17/2026 9:35 AM] kroiya
+take my word for it, I'm an inexperienced dev
+
+
+[4/17/2026 9:35 AM] flameink
+So will current development setups break after this change gets merged?
+
+
+[4/17/2026 9:35 AM] daniel_demain
+nah flame
+
+
+[4/17/2026 9:35 AM] daniel_demain
+but we would rather you use the common makefile so you get the common tooling
+
+
+[4/17/2026 9:35 AM] daniel_demain
+it all still works the same, this is just the common wiring
+
+
+[4/17/2026 9:35 AM] daniel_demain
+and a prototypical example that "just works"
+
+
+[4/17/2026 9:37 AM] flameink
+But without setting it up, the type checking and everything else will be inactive?
+
+
+[4/17/2026 9:37 AM] teifion
+This is your opportunity to become a more experienced one. One of the characteristics of an experienced dev is the willingness to try new tools so they can offer an expert opinion on them. If you never try anything new you will never be able to improve and the rest of the world (in the context of development) will leave you behind. I've seen it with plenty of devs who did consider themselves experienced.
+
+At the same time, if you don't want to try it then I don't think there should be any _requirement_ for you to try it, just as there is no _requirement_ for you to contribute to the game if you don't want to.
+
+
+[4/17/2026 9:37 AM] daniel_demain
+you would need to go and install the vscode plugins, and set up your user settings manually
+
+
+[4/17/2026 9:38 AM] daniel_demain
+but yeah it should work fine
+
+
+[4/17/2026 9:38 AM] varunda
+this is a dangerous argument. krolya is telling you this process adds too many roadblocks to development, so they doesn't like it
+
+they aren't unwilling to put in effort to doing bar dev, saying that git is a roadblock is just a weird straw man like huh
+
+this argument of "we do it for you" is just weird, like what. it seems more like you're doing it to gain access to tools that you want while making it accessible to others tbh
+
+
+[4/17/2026 9:38 AM] daniel_demain
+it's not really a strawman. We, today, put technical barriers in front of new devs
+
+
+[4/17/2026 9:38 AM] daniel_demain
+that you must install/learn
+
+
+[4/17/2026 9:39 AM] teifion
+That's fair, if he meant it that way then I agree with you.
+
+
+[4/17/2026 9:39 AM] varunda
+my initial thought is I dislike it cause it adds a lot of steps for me to get going. each step you remove is more contributors that want to put in the effort
+
+ultimately tho my opinion is not relevant tho cause I don't do any game work or infra work :3
+
+
+[4/17/2026 9:40 AM] flameink
+I think this is going off the rails a bit. There's no regression to doing it the way people have been doing it before, so it's ok?
+
+
+[4/17/2026 9:41 AM] daniel_demain
+yeah it's mostly ok, but if we allow them not to go through the common setup process and bifurcate the dev community in bar, that's kind of bad. Right now, we don't really have good setup docs for windows anyway. The goal is to simplify ALL of that and have a blessed, working dev setup from a script
+
+
+[4/17/2026 9:42 AM] daniel_demain
+and then secondarily to get us all working toward that common automation layer
+
+
+[4/17/2026 9:42 AM] flameink
+Can we make the script install wsl?
+
+
+[4/17/2026 9:42 AM] daniel_demain
+don't see why not
+
+
+[4/17/2026 9:42 AM] daniel_demain
+we can also have it install msys2 if somebody wanted to go through that pain
+
+
+[4/17/2026 9:42 AM] teifion
+will that mean I can't use it on Linux? 😛 (/jk)
+
+
+[4/17/2026 9:43 AM] daniel_demain
+nah I think it'd just be some sort of switch in setup.sh
+
+
+[4/17/2026 9:43 AM] daniel_demain
+but you would probably need to run it from inside msys2 so we get bash
+
+
+[4/17/2026 9:43 AM] daniel_demain
+idk the details there, but it's possible
+
+
+[4/17/2026 9:43 AM] daniel_demain
+I'd recommend against doing that though, hard
+
+
+[4/17/2026 9:46 AM] daniel_demain
+right now we require linux, and inside that require distrobox, so we're ALL on fedora after setup.sh. That is unbelievably valuable from a simplicity of scripting all of this. We have exactly 1 host environment and we make that work well.
+
+
+[4/17/2026 9:46 AM] kroiya
+> There's no regression to doing it the way people have been doing it before, so it's ok?
+Is there not? I don't have a clear answer on that, attean and Norty seem to be giving contradicting answers
+
+
+[4/17/2026 9:46 AM] daniel_demain
+I'm saying it will technically work, but we probably shouldn't not-force-it
+
+
+[4/17/2026 9:46 AM] daniel_demain
+so yes I am contradicting both boneless and norty with my opinion there
+
+
+[4/17/2026 9:46 AM] daniel_demain
+we _could_ do it, should we?
+
+
+[4/17/2026 9:46 AM] thvle
+Ok just seeing this thread. Its really cool that we want to use my devtools project as a stepping off point for dev experience but idk if its quite in the state yet to push devs onto quite yet. Attean still has a very large PR that I'm working on reviewing that will change quite a bit and non-linux dev use will take some committed time to implement. 
+I will say though.. every single software company ive worked at has built a similar harness to streamline development and its usually designed for linux. So I get that this might come as a shock to some but this is literally the industry standard
+
+{Reactions}
+💯 this (2)
+
+[4/17/2026 9:48 AM] kroiya
+Glad we're a cool open source project and not some industry standard product
+
+
+[4/17/2026 9:48 AM] teifion
+> literally the industry standard
+
+To the extent that in an interview process I ask about their dev setup and would avoid a company off the back of it if it was problematic.
+
+
+[4/17/2026 9:48 AM] daniel_demain
+the industry standards exist in software for good reasons. It's not cool not to have these tools, it's silly
+
+
+[4/17/2026 9:48 AM] kroiya
+It does make sense to have all your devs be highly competent if they're hired to do a job, but this is a completely different environment
+
+
+[4/17/2026 9:49 AM] daniel_demain
+it makes sense to have different layers that different devs of different skills can contribute for and AUTOMATE for your less experienced devs so you're not just churning time and Q&A needlessly.
+
+
+[4/17/2026 9:49 AM] kroiya
+None of you would consder hiring me to write software, trust me
+
+
+[4/17/2026 9:49 AM] thvle
+Who is currently working with a publisher to become a steam published game with a significantly larger playerbase and a much greater business need to keep things streamlined and efficient.
+
+{Reactions}
+this (3)
+
+[4/17/2026 9:50 AM] kayzee7207
+👀
+
+
+[4/17/2026 9:50 AM] flameink
+If I’m getting this right, new/amateur devs can still set up the game the old way. I’m not seeing any real argument not to add some optional tooling
+
+
+[4/17/2026 9:50 AM] daniel_demain
+we're just debating dev policy and docs really Flame. Do we want this to be "The Way" or do we want to be "a way"
+
+
+[4/17/2026 9:50 AM] thvle
+I am an amateur dev, I built this to make my life easier 😅
+
+{Reactions}
+💯
+
+[4/17/2026 9:50 AM] daniel_demain
+eventually
+
+
+[4/17/2026 9:51 AM] kroiya
+this is not presented as optional by the people involved with it, chiefly WTF, the author of the memo
+
+{Reactions}
+this
+
+[4/17/2026 9:51 AM] flameink
+The dev policy needs to be informed by the maturity of the tooling. Once like 90% of people can click one button and get a full working BAR setup, then we can start recommending it as The Way to do it
+
+{Reactions}
+💯 (3)
+
+[4/17/2026 9:51 AM] daniel_demain
+if you make it "a way" things like `just bar::fmt-mig` or `just bar::fmt` become impossible standards to enforce because you know 60% of your contributor base has 0 access to those tools
+
+
+[4/17/2026 9:52 AM] daniel_demain
+so if you get to "the way" for DX you get new options
+
+
+[4/17/2026 9:52 AM] kroiya
+:PandaDerp:
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1494629570077266030/1494727295460446359/image.png?ex=69e99785&is=69e84605&hm=801adc41a4f9a0fb31069baa928f434d01e3a7c510803f2eeb8f65efe5c9731d&
+
+{Reactions}
+🍻
+
+[4/17/2026 9:53 AM] daniel_demain
+no virtualization on your CPU? WIndows 8?
+
+
+[4/17/2026 9:54 AM] thvle
+thats the goal
+
+
+[4/17/2026 9:54 AM] watchthefort
+To clarify one thing: WSL - the Windows Subsystem for Linux, is an official, native Windows component, made by Microsoft
+
+
+[4/17/2026 9:54 AM] thvle
+gotta enable it in windows features probably
+
+
+[4/17/2026 9:54 AM] flameink
+So krolya, the way you can make this better is to just mindlessly try it and report on the first roadblock you hit. It’s on Attean to make sure the setup script works without any effort on your part.
+
+{Reactions}
+💯 (2)
+
+[4/17/2026 9:54 AM] qscrew
+You likely need to set up some feature or turn on memory protection
+
+
+[4/17/2026 9:54 AM] kroiya
+I just did
+
+{Reactions}
+Ayes
+
+[4/17/2026 9:55 AM] kroiya
+Well there you go, shit dont work :peepoShrug:
+
+
+[4/17/2026 9:55 AM] qscrew
+Broke. Unfixable.
+
+
+[4/17/2026 9:55 AM] flameink
+It’s gonna be a while until we file off all the rough edges from the tooling. But that’s the goal
+
+
+[4/17/2026 9:56 AM] kroiya
+I mean, I'll fix it. Will some guy who just wanted to make a widget, man?
+
+
+[4/17/2026 9:57 AM] thvle
+with the right documentation yeah
+
+{Reactions}
+💯
+
+[4/17/2026 9:57 AM] flameink
+You actually shouldn’t fix it yourself. Anything you do to force the setup script to work privately is a bug that attean doesn’t have the chance to fix inside the script
+
+{Reactions}
+HesRightYouKnow this
+
+[4/17/2026 9:58 AM] kroiya
+I don't care who it's made by or how official it is, I'm not running windows out of loyalty to Bill Gates. You're making me install linux to tinker with bar.
+
+
+[4/17/2026 9:58 AM] daniel_demain
+well some of that is going to be docs flameink, or just linking to microsoft's docs that explain how to enable virtualization in your bios
+
+
+[4/17/2026 9:58 AM] teifion
+From the Teiserver side is there anything you can think of that I could better document and improve for this?
+
+
+[4/17/2026 9:58 AM] daniel_demain
+so yeah trying it has value, but yeah wait for boneless or others to iron it out on windows first
+
+
+[4/17/2026 9:59 AM] kroiya
+yes, put in big bold letters at the top that it doesn't work with windows. Would've saved me hours of time
+
+
+[4/17/2026 9:59 AM] daniel_demain
+it's not going to be that krolya, unless you literally have a 15 year old machine, it'll be like "do this to get wsl2"
+
+
+[4/17/2026 9:59 AM] thvle
+it worked on my windows
+
+{Reactions}
+🔥
+
+[4/17/2026 9:59 AM] teifion
+Lol, it does. We have people using Windows and where I worked people used windows too for Elixir apps in general.
+
+
+[4/17/2026 10:00 AM] kroiya
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1494629570077266030/1494729250148712549/image.png?ex=69e99957&is=69e847d7&hm=4290bb98b9db58a0ee358e9ebea6d114be420176573aed58495f57913b7da025&
+
+{Reactions}
+👍
+
+[4/17/2026 10:00 AM] flameink
+Is your concern with installing WSL in principle, or with having to do complicated stuff to start developing? Because the goal is that you don’t have to do complicated stuff to start developing.
+
+{Reactions}
+👍
+
+[4/17/2026 10:01 AM] kroiya
+complicated stuff, chiefly including installing, configuring and using wsl
+
+
+[4/17/2026 10:01 AM] qscrew
+We don't need to make this about krolya specifically.
+
+
+[4/17/2026 10:01 AM] qscrew
+This is about Greater Krolya.
+
+{Reactions}
+💯
+
+[4/17/2026 10:02 AM] qscrew
+We like having hobbyists get involved on the project.
+
+
+[4/17/2026 10:02 AM] kroiya
+and yes, it's about a platonic idea of me, some idiot on windows who wants to fix something small that you big pants developers consider beneath you
+
+{Reactions}
+❤️
+
+[4/17/2026 10:05 AM] teifion
+Glad to hear. I'm leaving the thread so please feel free to ping me here or DM me as desired if you do need anything from me.
+
+
+[4/17/2026 10:08 AM] flameink
+Any software team I’ve been on has two buttons. One button says “build the software” and the other button says “run the tests”. If these buttons don’t just work seamlessly, then the team fucked up.
+
+{Reactions}
+💯 (2)
+
+[4/17/2026 10:09 AM] flameink
+Is there a plan to enforce type checks with git PR hooks, for people who don’t choose to use the tooling?
+
+{Reactions}
+👍
+
+[4/17/2026 10:10 AM] kroiya
+nope x2
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1494629570077266030/1494731902429692075/image.png?ex=69e99bd0&is=69e84a50&hm=210dbce62719b4becd5284d46fec17bd329393fd42e09344b74155777f8fa9b2&
+
+
+[4/17/2026 10:11 AM] kroiya
+I'm guessing it's this part?
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1494629570077266030/1494731977759260774/image.png?ex=69e99be2&is=69e84a62&hm=5e7e523e2ea2e226a6d6c2cf0cfdc3e2963a5ab1c24a667f4b93ef91d763f14f&
+
+
+[4/17/2026 10:13 AM] daniel_demain
+what windows version are you on?
+
+
+[4/17/2026 10:13 AM] thvle
+There are inklings of plans for github actions.
+
+
+[4/17/2026 10:14 AM] daniel_demain
+I wrote  them thule, they're part of https://github.com/beyond-all-reason/Beyond-All-Reason/issues/7408
+
+{Embed}
+https://github.com/beyond-all-reason/Beyond-All-Reason/issues/7408
+BAR type-error cleanup: coordinated merge · Issue #7408 · beyond-...
+BAR type-error cleanup: coordinated merge Merge plan — stacked PRs Each PR shows only its own layer's diff. When a parent merges, GitHub auto-retargets the child to master. master ← fmt ← mig ←...
+https://images-ext-1.discordapp.net/external/7gGb-PKHQfr-5aNPIJgMn12h-PYIjuXXbuMFapZym1U/https/opengraph.githubassets.com/82031ad9e88fb176e92973faad8f0af7fc9368e92d6902a4927f0348f54a1acb/beyond-all-reason/Beyond-All-Reason/issues/7408
+
+
+[4/17/2026 10:14 AM] kroiya
+No idea, unless you mean 11
+
+
+[4/17/2026 10:14 AM] thvle
+Oh there we go, you are more on top of devtools than I am right now 😅
+
+
+[4/17/2026 10:14 AM] daniel_demain
+lint check is already in master we just turned it off in github
+
+
+[4/17/2026 10:15 AM] daniel_demain
+(the result of `just bar::fmt`)
+
+
+[4/17/2026 10:16 AM] daniel_demain
+makes sense lol, but only in this very specific recoil -> lua doc extractor -> recoil-lua-library way
+
+
+[4/17/2026 10:17 AM] kroiya
+One bios delve later, should work this time. Good luck fixing that with a script
+
+
+[4/17/2026 10:18 AM] daniel_demain
+yeah can't fix that one with the script
+
+
+[4/17/2026 10:19 AM] daniel_demain
+and it's pretty common to have that off among gamers
+
+
+[4/17/2026 10:19 AM] daniel_demain
+we can be like "YO GO DO THIS" when it fails though
+
+
+[4/17/2026 10:23 AM] kroiya
+That was wishful thinking
+
+
+[4/17/2026 10:23 AM] thvle
+we can probably fix the doctor script to read all of your system information and tell you what will block you from running the tools and link documentation. Would that be nice?
+
+{Reactions}
+❤️
+
+[4/17/2026 10:24 AM] flameink
+Yeah, there will of course be limits to what the script can do. But it should do as much as it can
+
+
+[4/17/2026 10:24 AM] gromph_
+what a rollercoaster this read was
+
+
+[4/17/2026 10:25 AM] thvle
+Tell me about it
+
+
+[4/17/2026 10:25 AM] gromph_
+WSL is almost 10 years old
+
+
+[4/17/2026 10:25 AM] daniel_demain
+stop it gromph
+
+{Reactions}
+✅
+
+[4/17/2026 10:26 AM] daniel_demain
+(I'm so old)
+
+
+[4/17/2026 10:26 AM] gromph_
+its how i set up teiserver
+
+
+[4/17/2026 10:26 AM] gromph_
+from my perspective having all this ready to go is great. thanks for the work
+
+{Reactions}
+🫂 (3)
+
+[4/17/2026 11:15 AM] _lexon
+To clarify, I meant natively on windows, it works through WSL, thats how I use it
+
+
+[4/17/2026 2:40 PM] xehrath
+I'm mostly on team @kroIya🐭 with all this...(thanks for all the critical questioning)
+
+Once I have a new computer, I can set this all up, no issue.
+
+But if this makes it so I can no longer develop the BAR main repo with a git fork and a basic text editor, you'll be locking me out of BAR dev for 5+ months
+
+
+[4/17/2026 2:46 PM] thvle
+You should still be able to develop on the main repo with a minimal editor, git and the formatter packages. Devtools just makes it easier do install. All we are doing is implementing proper style guides and better linting support
+
+{Reactions}
+👍
+
+[4/17/2026 2:48 PM] xehrath
+minimal editor + git != minimal editor + git + *formatter packages*
+
+{Reactions}
+👍
+
+[4/17/2026 6:30 PM] thvle
+I think the important distinction here is “supported path” vs “possible path.”
+
+I do want to acknowledge the concern here, especially from Windows contributors. If your current setup works, hearing that the project is moving toward a more standardized environment can understandably feel like your workflow is being pushed aside.
+
+At the same time, this change is coming from a real project need, not from a desire to make contribution harder or to tell people their current way of working is wrong. BAR is growing into something that has to be more maintainable and coordinated over time, especially as it becomes more formal and moves closer to a published Steam release.
+
+At that stage, the project needs a setup that is documented, repeatable, and realistic for maintainers to support. The hard part is that every fully supported workflow adds ongoing cost in docs, troubleshooting, onboarding, and debugging. That gets harder to sustain as the project gets bigger.
+
+So I do think some amount of standardization is necessary. That is different from saying other approaches are invalid, or that contributors on different setups do not matter. It is more that the project probably cannot keep treating every workflow as equally first-class forever. It is also much easier to onboard and support new contributors when there is a clearly defined primary path.
+
+I think the main thing that would help here is being very clear about what is required, what is only recommended, and what remains possible but unsupported or best-effort. A lot of the frustration seems to be coming from uncertainty there, which is fixable with clearer communication.
+
+To be concrete: if you are only working in the game repo, we can clearly document what remains possible on Windows today, what requires WSL, and what is supported on a best-effort basis. If we do not have that clarity yet, we should pause on broad wording like “everyone will switch over” until we do. Thats why we are still in a testing phase.
+
+{Reactions}
+💯
+
+[4/17/2026 6:56 PM] johannes_gd
+do i have to care about any of this or can i just keep doing things like im used to
+
+
+[4/17/2026 7:34 PM] chronographer
+One day things will stop working and you will stop contributing but that's okay because someone will be paid will do it. Or something. (I only skimmed)
+
+
+[4/17/2026 7:40 PM] thvle
+We're adding tools to assist with formatting and linting, along with a bash script that spins up the full BAR dev stack locally.
+
+
+[4/17/2026 7:41 PM] thvle
+Dont use the tools if you dont want to.
+
+
+[4/17/2026 9:39 PM] nortyspock
+You don't have to use any of the tools... but once this switches over, you will need to follow the code formatting guidelines (indentation, etc). 
+
+You *can* do that by hand in a basic text editor, it's just the formatter will harshly grade your use of indentation.
+
+{Reactions}
+HesRightYouKnow (2)
+
+[4/18/2026 1:25 AM] xehrath
+Manual work within the constraints of a basic text editor with no addons, is a fine tradeoff in my case. 
+
+I can't run unauthorized scripts or install packages without doing so through a VM, and even then, what I can do is quite limited. 
+
+I can clone a repo and edit text files.
+
+
+[4/18/2026 1:56 AM] ubdead.
+im pretty sure nothing is stopping us from just adjusting the file however we want, the only blocker might be that during a GitHub PR the checks will say "failed" and then it up to the reviewer to decide on whether to merge or not
+
+
+[4/18/2026 2:24 AM] ptaq4565
+You probably don't have to care for balance work that is tweaking numbers. Any actuall coding is going to require proper structure to pass the tests from what I gather.
+
+{Reactions}
+💯
+
+[4/18/2026 2:26 AM] ubdead.
+not really though, it's just a safeguard that you are calling an existing method, and with the correct parameters, including the correct variable type
+
+
+[4/18/2026 2:26 AM] ubdead.
+if you can do that by hand (or your AI is smart enough to not hallucinate any of it) it'll pass just the same
+
+
+[4/18/2026 2:38 AM] ptaq4565
+Anyway. whether we want this or not (sounds like a way better workflow once you learn it) we should take it easy, get a pilot batch of willing devs to try it, come back with all the pains, adjust and only then decide. I will raise this with admins/Marek too for a sanity check. 
+
+My nose tells me this should not really be a massive hurdle for an amateur to adapt to in times where you can have an llm basically walk you through every step of the wsl etc setup and help fix your system specific quirks. Can likely be done with no eyes pasting the instructions and then errors from terminal to chatgpt.
+
+{Reactions}
+💯 (2)
+
+[4/18/2026 2:38 AM] spr.ng
+yea if it turns out there are obstacles you can just revert
+
+
+[4/18/2026 2:39 AM] ptaq4565
+I'll give it a go as well
+
+
+[4/18/2026 2:43 AM] watchthefort
+My main concern is maintainability of the tools, these require a different skillset than developing Lua. Do we have enough people who know how to maintain BAR Devtools?
+
+{Reactions}
+👍 (3)
+
+[4/18/2026 2:43 AM] ptaq4565
+Good question
+
+
+[4/18/2026 2:50 AM] spr.ng
+add BAR-Devtools-Devtools, to help with maintainability of devtools
+
+{Reactions}
+😂 (4)
+
+[4/18/2026 3:03 AM] ptaq4565
+If devtools break and we don't have anyone ready to help, can we just cleanly disable them and temporarily go back to monke?
+
+
+[4/18/2026 3:53 AM] watchthefort
+No, you either use a package manager or you don't, but not both
+
+{Reactions}
+👍 (2)
+
+[4/18/2026 7:03 AM] daniel_demain
+I will support this one live if we do it within the next few months, assuming the windows version proves successful
+
+
+[4/18/2026 8:28 AM] watchthefort
+We don't need to just support it on rollout, we need to support it forever
+
+{Reactions}
+👍
+
+[4/18/2026 10:30 AM] nortyspock
+I'm willing to help support BAR-Devtools at least from Linux support standpoint. I assume Thule is, I hope Attean is. Windows I have less access to but I could sort something out.
+
+BAR-Devtools already  helped Bruno D and krytgames get up and running with basically zero questions asked. It's started to become the second recommendation I make to someone trying to get two systems to talk to each other.  It will be valuable for getting a Publisher team up and running with much less support 😉 and it sounded like it would also unlock several wished-for documentation improvements.
+
+Lua Package manager I'm less familiar with and I don't want to advertise more than I can help with. I think Boneless sounded more willing. We could go back to the fallback option of just "Checking in a copy of the code in a folder and taking on maintenance if necessary, or ditching its functionality as it's not core to the game" (I'm thinking of `busted` unit tests, and also in theory we could go back to the home-rolled i18n library we were using if necessary.) 
+
+The policy engine (required for Sharing Tab) is harder to back out of but unlocks "more useful stuff for less code".
+
+
+[4/18/2026 10:50 AM] daniel_demain
+Yeah I just meant I have a lot of active bandwidth right now I’m willing to invest in this
+
+
+[4/18/2026 10:52 AM] nortyspock
+I think WatchTheFort's question is "who will maintain this 2 years from now?"
+
+
+[4/18/2026 10:54 AM] blackmelon
+tbh, the only answer to very long term support is "do people care about the thing?". If yes, you'll find people, otherwise it'll die
+
+
+[4/18/2026 10:54 AM] blackmelon
+if it proves useful and lots of people use these tools, we'll always have maintainers
+
+{Reactions}
+💯
+
+[4/18/2026 12:13 PM] watchthefort
+> The policy engine (required for Sharing Tab) is harder to back out of but unlocks "more useful stuff for less code".
+????
+
+
+[4/18/2026 12:13 PM] watchthefort
+The what?
+
+
+[4/18/2026 12:16 PM] ubdead.
+its like some architecture layer they came up with that is like a seperate part of the system for game rules
+
+{Reactions}
+this (2)
+
+[4/18/2026 1:25 PM] c____h____o____c____o____b____o
+I will need to try this out as well soon as well, it sounds very handy
+
+
+[4/18/2026 1:42 PM] rebelnode
+Is the sharing tab thing somehow related to the dev tools?
+
+
+[4/18/2026 1:45 PM] nortyspock
+Sorry, nevermind, the Sharing Tab / Policy Engine is just related in my head to the Devtools because Attean keeps building all this tooling *so that* he can more easily work in lua.
+
+Forget I said anything, it's just technically on one big roadmap that Attean has in his head for suggestions to improve the BAR developer experience. 
+
+Back to BAR-Devtools.
+
+{Reactions}
+👍 (2)
+
+[4/19/2026 2:37 AM] twilightsublime
+I'm a Linux user rn but when I used to use Windows WSL was _not_ easy at all to setup
+
+
+[4/19/2026 3:16 AM] c____h____o____c____o____b____o
+Nowadays it's one powershell command, possibly enabling 2 settings
+
+
+[4/19/2026 3:17 AM] twilightsublime
+Really? Alright then
+
+
+[4/19/2026 3:17 AM] twilightsublime
+This was like last year February I think
+
+
+[4/19/2026 3:17 AM] twilightsublime
+When I set up wsl
+
+
+[4/19/2026 3:33 AM] ubdead.
+i think nowadays if you seach for "ubuntu" in the microsoft store,  it will just set it up all by itself, even give you a shortcut on the desktop to start an ubuntu terminal
+
+{Reactions}
+thisplusone
+
+[4/19/2026 3:33 AM] ubdead.
+vscode WSL integration is also top notch
+
+
+[4/19/2026 3:34 AM] ubdead.
+i wish they made it harder for "noobs" to not fall for the windows filesystem / linux filesystem trap though
+
+
+[4/19/2026 3:34 AM] ubdead.
+crossing that boundary is relatively slow, so you generally want to  avoid doing cross traffic as much as possible
+
+
+[4/19/2026 4:50 PM] p2004a
+@Watch The Fort (Quality Lead) are *you* already currently using the BAR-Devtools? If yes, what was *your* personal experience with them? The good/the bad?
+
+
+[4/19/2026 4:52 PM] p2004a
+@attean doesn't introduction of package manager for non-dev dependencies like AFAIU (?) https://github.com/beyond-all-reason/Beyond-All-Reason/pull/7291 does effectively require *every* single existing contributor to use BAR-Devtools/lux?
+
+
+[4/19/2026 4:53 PM] p2004a
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1494629570077266030/1495558092556075198/apm74g.png?ex=69e9fa43&is=69e8a8c3&hm=e12761dae70de4fc23e4d6c7197f85731dea06a78a7d1a77c6048197492c3cbb&
+
+{Reactions}
+🤣 (3) raptuurr (2)
+
+[4/19/2026 5:04 PM] thvle
+Yeah its my baby, I'll support it directly as long as possible
+
+
+[4/19/2026 5:05 PM] thvle
+I didn't expect widespread adoption to be pushed for so soon though honestly
+
+
+[4/19/2026 5:05 PM] thvle
+This thread was a suprise to me
+
+
+[4/21/2026 11:48 AM] daniel_demain
+he is not. I booted my windows machine myself yesterday so I'm going to try to test the windows side myself but Boneless is about to try it I believe, I fully expect it to run like WSL runs BAR fairly easily, but the windows side of this equation has received very little love
+
+
+[4/21/2026 11:50 AM] daniel_demain
+I do think we have the people to support that path and it will reduce the overhead by scripting a lot of this for folks. It also gives us some nice shared scripting, which is why I pushed for an accelerated timeline in requiring them. I think the improvements to the bar code quality side of the equation make committing the bar devs to that layer sooner rather than later very much worth it. We get the happy path in bash for everybody and can suddenly publish tools for everybody.
+
+
+[4/21/2026 11:52 AM] daniel_demain
+I think it's important to note there IS a hybrid solution here, you don't have to have BAR-Devtools manage your individual repo git checkouts, I never do honestly. I manage the repo git state myself and just use the scripting layer after the initial setup
+
+
+[4/21/2026 12:08 PM] p2004a
+@attean can you answer also the above?
+
+
+[4/21/2026 12:13 PM] daniel_demain
+that's correct, this was the answer to "we better make that easy"
+
+
+[4/21/2026 12:14 PM] daniel_demain
+and also brings on kikito i18n with a shim because why not, once you have the package manger and text transform in place. It doesn't go after recoil-lua-library yet though
+
+
+[4/21/2026 12:32 PM] p2004a
+Okey, so my first piece of feedback is that's this is kinda poor taste that:
+
+1. Announcement authoritatively worded "We will be transitioning to using the BAR Devtools repository (...) Have all devs" is made by a person that didn't even try the new tooling, and the decision AFAIK is not actually authoritative
+2. @kroIya🐭 and others get gaslighted into to some degree thinking that they will be able to develop the game as before while it's 100% false and nobody made that immediately clear
+
+A lot of what is proposed here are good ideas that improve code quality: ensuring the annotations make sense, linting formatting. The automation setup layer to help with setting up some things like teiserver is also very welcome and will be helpful for development of many features in many areas. I'm not sure if bundling all of those problems and solutions together is reasonable, at the very fast pace that is proposed here. I'm worried we make 90% of core game devs that do not care about setting up teiserver and so on pay the cost of complexity of setting up tooling that supports that.
+
+{Reactions}
+👍
+
+[4/21/2026 12:38 PM] p2004a
+(I also do not see mention in prs that requiring package manager will break our game release pipeline and players will get broken game if this will be merged as is)
+
+{Reactions}
+👍
+
+[4/21/2026 12:43 PM] p2004a
+As for native window support, this depends on component: You want to add support for native windows development to server side component like recoil-autohost? I will laugh at you, I do not want complexity of supporting that. You want to remove native windows development support from new lobby? Please leave, not gonna happen.
+
+For core game dev? Come on, we have to support this.
+
+
+[4/21/2026 12:43 PM] daniel_demain
+re WTF I think he's just doing his job as far as running that contrib meeting is concerned. We had the AST transforms out there for a month, talked about it, then layered the cake gradually. He's more acting as an orchestrator for others on this one.
+
+
+[4/21/2026 12:47 PM] daniel_demain
+I'm not sure it's a binary choice like that. We have good virtualization support on Windows, why not utilize that for our shared scripting layer? It's still "native windows" in the sense that you're running node or whatever natively if you want to, but I see no harm in 90% of folks never caring and us being able to automate tooling for them via the virtualization layer. We are supporting folks today, but mostly through discord, our support and docs now is pretty minimal for the windows path. This adds first-class "do it this way" that should in theory get people working in Recoil with the same amount of friction as BAR. I don't really view that as us "not supporting" native windows, that's us using the tooling available in the ecosystem now to save ourselves long term maintenance.
+
+
+[4/21/2026 12:57 PM] daniel_demain
+I really do appreciate both you and @kroIya🐭 trying to bring balance to this discussion! I agree with you that if we can't manage to get the DX on Windows to be actually good, that is a blocker and this goes back to just being "a way"
+
+
+[4/21/2026 12:57 PM] p2004a
+> our support and docs now is pretty minimal for the windows path
+
+Majority of BAR contributors are using windows. Majority of BAR contributors work *only* on main game repo. Most examples in readme are windows centric. We even have instructions with screenshots like https://github.com/beyond-all-reason/Beyond-All-Reason/wiki/Basic-Startup-Guide-to-Contributing-With-Github-Desktop which are again, windows centric.
+
+> virtualization layer
+
+That's by definition not native. There are, as you know, **massive** costs related to crossing the system boundary. Either git/tooling performance is shit, or game startup/reload is shit depending on where game files are located. Running linux version of launcher/engine from wsl is not solution here either. It does not work well. This dis-proportionally affects also people with slower machines.
+
+The WSL *is* good, but it's false that it does not have additional cost both in terms of required skill, setup and performance on day to day basis. Those costs must be very well understood.
+
+{Reactions}
+👍 💯
+
+[4/21/2026 1:01 PM] p2004a
+And to be clear, I'm saying all of that as 100% Linux user that dreads every time I have to reboot to e.g. check windows compat for something.
+
+
+[4/21/2026 1:01 PM] daniel_demain
+yeah distrobox makes this setup sing on most modern linux distros, and theoretically there's nothing preventing us from making the scripting layer dump windows-equivalent artifacts where they need to be, worst comes to worst
+
+
+[4/21/2026 1:02 PM] daniel_demain
+but yeah, it's gotta be there first
+
+
+[4/21/2026 1:06 PM] p2004a
+The engine docker-build-v2 at the moment does require using bash, it also objectively sucks on windows, but the change was from "no docs, no scripting, glhf" to "there is *at least* this shitty way that's better then fully manual setup for one-off build". That's different here.
+
+{Reactions}
+👍
+
+[4/21/2026 1:06 PM] maddox_br
+@Watch The Fort (Quality Lead) for Windows-based engine development the instructions aren’t super clear.. I’ll try it out anyways
+
+
+[4/21/2026 1:08 PM] daniel_demain
+pretty similar in my mind though. The windows experience is a paradox of choice and tradeoffs that don't always work with certain combinations of repositories/launchers
+
+
+[4/21/2026 1:10 PM] p2004a
+the thing is again, right now 90% of contributors need like 1 repo. and editor.
+
+
+[4/21/2026 1:12 PM] p2004a
+and the people working on many repos, teiserver etc, have to be and *are* more skilled and they can *tolerate* more complexity
+
+
+[4/21/2026 1:13 PM] p2004a
+so really, if we ignore everything how it's currently setup in bar-devtools. what is the simplest possible solution to add linting, formatting, focusing **only** on main game repo, that's the question I'm really curious about. E.g. can we make it as simple as "please use vscode with this extension, that's all you need".
+
+
+[4/21/2026 1:16 PM] daniel_demain
+not really, because we do need the shared scripting layer if we don't have a mono repo. We need unified code, tooling and the equivalent of docker-build-v2, that works _between_ the repos, because I'm doing stuff like connecting the local DX to the CI equivalent for things like types flowing from Recoil -> Game, docs, etc.
+
+
+[4/21/2026 1:18 PM] p2004a
+recoil types can be vendored or linked as submodule at the moment
+
+{Reactions}
+👍
+
+[4/21/2026 1:18 PM] daniel_demain
+we **could** make the organization decision to NOT do that, and make this purely optional tooling -- but something is definitely lost there and that was part of the ambiguity in the discussion with poor krolya
+
+
+[4/21/2026 1:18 PM] daniel_demain
+you can't really do that for something like stylua, where you're essentially forcing installation of autoformatters. It would technically work, just not great
+
+
+[4/21/2026 1:20 PM] p2004a
+why extension can't install the binaries, just like many lsps do?
+
+
+[4/21/2026 1:20 PM] p2004a
+like, imagine how awesome it would be if we had vscode extension you installed, and were able to click "run" in main game repo, and it automatically figure out how to start the launcher, engine with your local game version without any additional manual setup, that's OP DX for game develpment for new folks
+
+{Reactions}
+💯
+
+[4/21/2026 1:20 PM] daniel_demain
+they can, for EmmyLua that's what we recommend. Kind of depends on the tooling in Lua land what is the best practical advice/scripting approach tool-by-tool
+
+
+[4/21/2026 1:21 PM] nortyspock
+@attean since you are at minimum installing just and lux, would some sort of "just run::format; just run::checks" suggestion in the readme work? Just for the main game repo
+
+
+[4/21/2026 1:21 PM] daniel_demain
+yeah that's basically the vision here, we're just doing it with bash to eliminate host setup for Lx, etc. We want "just bar::launch" to do that for you
+
+
+[4/21/2026 1:22 PM] daniel_demain
+yeah I updated the docs to point at the correct places for "The way" with some common commands in bar readme
+
+
+[4/21/2026 1:22 PM] daniel_demain
+but if it's "a way" that is obviously very easy to revert
+
+
+[4/21/2026 1:23 PM] p2004a
+right, and it can work beautifully.. on *Linux*... 🙂
+
+
+[4/21/2026 1:24 PM] daniel_demain
+and wsl 🙂
+
+
+[4/21/2026 1:24 PM] daniel_demain
+with a performance hit*
+
+
+[4/21/2026 1:25 PM] hectate
+I have no interest in contributing to the engine or game repos at the moment. My skills and knowledge are entirely within the new client and I’m happy there. I haven’t been following closely but if for some reason I have to use WSL to develop and build a Windows binary of the client I would feel like something was off.
+
+{Reactions}
+Ayes
+
+[4/21/2026 1:25 PM] hectate
+So hopefully that’s not what we are talking about here?
+
+
+[4/21/2026 1:25 PM] p2004a
+I will not let that happen for new lobby @Hectate  😛
+
+{Reactions}
+👍
+
+[4/21/2026 1:26 PM] nortyspock
+Glancing at the just GitHub repo, it says "sh" works on Windows... Which seems odd, but if it's true, it could be useful... maybe
+
+
+[4/21/2026 1:27 PM] daniel_demain
+I suspect the new client would benefit from a scripting layer as well, hectate, but yes, we're talking about forcing you to use that common scripting layer. So generating new versions of tachyon and automatically having your typescript bindings show up in the correct place, that sort of thing. Inter-repo coordination layer
+
+
+[4/21/2026 1:28 PM] daniel_demain
+and abstracting away the idea of "host" allows us to write 1 version of that layer.
+
+
+[4/21/2026 1:28 PM] daniel_demain
+the push back appears to be around performance concerns, which is totally valid, but if there are no substantial performance downsides I think it's a clear win
+
+
+[4/21/2026 1:32 PM] hectate
+What benefits to the new client is this scripting layer? We h already have formatting checks that auto-apply upon save. We run formatting, linting, and typechecking upon commits, in case the dev forgot. How does this help us?
+And tachyon is a separate thing imported by the client, already showing up correctly with all types and definitions.
+
+
+[4/21/2026 1:33 PM] daniel_demain
+are you writing docs explaining how to set up node for multiple OSes? How to get started with all of these plugins? Tachyon is a seperate thing, but is it in your dev chain? I get that you work only in the client, but I would argue that's unusual. TeiServer -> New Client is a DX API bridge
+
+
+[4/21/2026 1:33 PM] daniel_demain
+you modify a dto or fix a bug in the server, you need to publish that downstream
+
+
+[4/21/2026 1:34 PM] daniel_demain
+this does that locally like the CI does that on the server
+
+
+[4/21/2026 1:34 PM] daniel_demain
+for everyday people that can't publish new releases of tachyon and are just working on TeiServer/Tachyon themselves
+
+
+[4/21/2026 1:36 PM] daniel_demain
+the inclination to pretend like tachyon is somehow immutable is perplexing to me
+
+
+[4/21/2026 1:37 PM] hectate
+Tachyon isn't immutable. But the client <> protocol <> server relationship is a separation of concerns.
+
+
+[4/21/2026 1:38 PM] daniel_demain
+you can still seperate your concerns as much as you like, but you must tie them together with procedural code that demystifies it completely in a way someone can copy paste, is really what we're saying here
+
+
+[4/21/2026 1:38 PM] hectate
+copy and paste... what? The development tools?
+
+
+[4/21/2026 1:38 PM] daniel_demain
+the bash that does X
+
+
+[4/21/2026 1:38 PM] daniel_demain
+yes
+
+
+[4/21/2026 1:38 PM] thvle
+🤯
+
+
+[4/21/2026 1:39 PM] daniel_demain
+in the case of our extended example probably a `just tachyon::build` or something that emulates the CI release process
+
+
+[4/21/2026 1:40 PM] p2004a
+> are you writing docs explaining how to set up node for multiple OSes
+No, we don't. We point at official node docs/recommend nvm etc. If you want to work on new client, and you don't know how to use node, sorry dude, that's going to be the lowest bar in the world you won't pass.
+
+
+[4/21/2026 1:40 PM] daniel_demain
+sure, but why do we do that for our UI when we don't do that for our Lua?
+
+
+[4/21/2026 1:40 PM] p2004a
+aaand nobody that doesn't work on new client does not have to care about any of that
+
+
+[4/21/2026 1:43 PM] thvle
+Bare bones devtools was only supposed to be a script that spins up a full dev environment exclusively for linux and for people that need to test these services talking to each other, IE security vulnerability validation.
+
+
+[4/21/2026 1:43 PM] p2004a
+as I said, you start from a place where that wasn't required, and only thing that is required is basic git usage, (for which we have already many people complaining anyway). And it's quite different "please install this native windows cli, here are commands" and "please setup wsl, run this thing, pay perf cost"
+
+
+[4/21/2026 1:43 PM] nortyspock
+I look at Teiserver and I have no idea how it truly communicates with new-client , or how Teiserver and new-client agree on the protocol version.
+
+I look at tachyon and I am stumped at how to tell the client there is a new version of the protocol that I might want to iterate on.
+
+I read the issues in the new-client GitHub repo and I can't make head or tail of them, much less if they are fixed or still an ongoing issue.
+
+Now, I am outside my field of expertise, but I basically don't feel I can contribute to new-client when I can barely visualize what needs to be updated for a change to be actually run.
+
+{Reactions}
+💯
+
+[4/21/2026 1:43 PM] hectate
+So, I'm going to go to the top of this thread, and read the justifications. If there is a better-written perspective within this thread or elsewhere, please feel free to point me towards it. As it stands, at this time, I feel like this is a well-meaning but over-reaching initiative. I'm open to being wrong. I'm definitely not the kind of person to say "Well that's the way we've always done it!" - not a Traditionalist. But neither am I an Anarchist. If there is a better way, then there is a reason it is better and I have yet to been shown that.
+
+
+[4/21/2026 1:44 PM] daniel_demain
+very little difference though. WSL setup has official docs which are good and well supported, even on old hardware
+
+
+[4/21/2026 1:47 PM] daniel_demain
+I think this is a _really_ important part of this. We are committing to first-class local-only versions of our CI, which isn't currently opaque, but it is disconnected from the everyday DX in what has clearly lead to silos of knowledge developing. We want to bear hug all of that crap until it is codified and written down _somewhere_ for local dev. I think the best way to do that is to get everybody using it to accomplish their own goals, then sharing back.
+
+
+[4/21/2026 1:48 PM] p2004a
+It sounds like you did *very* little to actually try to do any of that, and yes, there are no specific docs how to do *exactly that*. Why there are no docs like that? 1. Nobody asked for them. 2. People that work on this didn't spend time on it.
+
+{Reactions}
+👎
+
+[4/21/2026 1:50 PM] p2004a
+so I want to be clear, I'm not dismissive, yes, this is area of improvement for docs
+
+
+[4/21/2026 1:50 PM] daniel_demain
+this organization IS code, insomuch as it exists. Every place I've ever been that's blamed the lack of docs actually had a lack of process
+
+
+[4/21/2026 1:51 PM] p2004a
+what process do you miss in this specific case
+
+
+[4/21/2026 1:52 PM] daniel_demain
+the lack of code doing things
+
+
+[4/21/2026 1:53 PM] daniel_demain
+people will not go out of their way to go write docs on a greenfield project, but they will go script something that solves their repeated problem
+
+
+[4/21/2026 1:53 PM] daniel_demain
+we don't currently have a place to write that down
+
+
+[4/21/2026 1:59 PM] nortyspock
+Fully agree I didn't spend more than 2 hours trying to figure out how to get Incus working. I spent probably an hour looking around the new-lobby GitHub trying to understand how to get it working but only got something to talk to Teiserver after BAR-Devtools was created.
+
+Is it a me problem, sure, I didn't play the scavenger hunt long enough to figure out how to set up Teiserver+tachyon+new-lobby, not sure if that's a 5 hour problem or a 10 hour problem but I have no idea how one would go from "I have an idea that touches Teiserver, tachyon, and new-lobby" to "I have working PRs baked, tested and ready for the team"
+
+You can say "upgrade documentation" and that might help, but "just setup::doctor" goes slightly farther and attempts to diagnose what is mis-configured
+
+
+[4/21/2026 2:00 PM] hectate
+OK, so here are my thoughts.
+First, the OP in this thread from WTF is basically a list of "Here's some LUA stuff we are making better." None of that touches client.
+
+Second, looking at the repo for BAR-Devtools there's three references in the README to bar-lobby.
+-- `` spins up Teiserver (lobby server), PostgreSQL, SPADS (autohost), and bar-lobby (game client) with a single command.``
+-- ``├── bar-lobby/                       # ← cloned (gitignored)``
+-- ``bar-lobby -- Electron/Vue.js game client, runs natively on the host (not in Docker)``
+
+What I'm reading here is that the "integration" for ``bar-lobby`` is non-existent. The tooling features for it are non-existent. The benefits are non-existent.
+However, importantly, the DX for a bar-lobby developer will be measurably worse.
+
+So long and short of it for me at this time; if all this is required to develop for the new client then my contributions will dry up and I'll either fork the thing as it exists today or walk away. I have no interest in a bunch of LUA-focused tooling to work in Node.
+If someone wants to open a thread about improving the new-developer experience for the ``bar-lobby`` repo, you are welcome to ping me and I will engage in good faith.
+
+
+[4/21/2026 2:03 PM] p2004a
+Okey, let's step back.
+
+Nobody says that shared tooling/scripts is not helpful.
+
+Nobody said that setting up server side pieces is not PITA.
+
+It all is PITA, that gets slowly improved but it's still PITA.
+
+But come on, there is a large difference in "let's create some helpful scripts" and "to develop, you must use those scripts". That's *all* the problem there is.
+
+{Reactions}
+👍
+
+[4/21/2026 2:05 PM] p2004a
+You want to add a note saying "if you want to set up teiserver+spads locally, this dev tools can be helpful" to new lobby docs? Yes. You want to add note "to develop new lobby, you must install those dev tools, and use those commands", sorry, no, that's not gonna fly.
+
+
+[4/21/2026 2:09 PM] p2004a
+That's why I'm also asking, for BAR main game repo, to add linting/formatting, what is *minimal* set of tool required, what is the simplest possible configuration/change to development workflow. As I said in my literal first message in response here:
+
+> I'm not sure if bundling all of those problems and solutions together is reasonable, at the very fast pace that is proposed here. I'm worried we make 90% of core game devs that do not care about setting up teiserver and so on pay the cost of complexity of setting up tooling that supports that.
+
+and that likewise applies to other areas where you would want to say "you must use this tooling"
+
+{Reactions}
+👍
+
+[4/21/2026 2:11 PM] nortyspock
+Agree with that, gentle suggestions help smooth the path 
+
+The problem is (a) the package manager requirement for Lua made a few people frustrated and concerned they would be unable to contribute.
+
+And (b) the communication was "thou shalt" not "we suggest you may prefer the convenience of..."
+
+{Reactions}
+💯
+
+[4/21/2026 2:15 PM] hectate
+To be clear, my message above is using "required" to mean "if somehow my independent workflow ceases to function". Based on what I've read (e.g. the bar-lobby repo is merely cloned) then there's nothing in this that would change what I am currently doing. At this time.
+
+
+[4/21/2026 2:19 PM] daniel_demain
+So I do think the scripting layer IS the MVP for what you're asking here, for the current Lua ecosystem. Limitations in lux, limitations and conflicts between plugins, we really do need the layer
+
+
+[4/21/2026 2:20 PM] daniel_demain
+I have them all memorized at this point so let me know if you want a breakdown, or check out the bar.just file in my PR, it's got the deviations. But also I'm not sure how I would get out of them installing Lux with that strategy
+
+
+[4/21/2026 2:20 PM] nortyspock
+I agree Hectate, I have not heard anything that would change your workflow if it works for you. 
+
+For the Lua devs, if we add the package manager, their workflow would change.
+
+BAR-Devtools "merely" tries to auto configure all the things so that anyone who works across repos isn't having to read and understand 3 or 4 different readmes and troubleshoot across three repos to even have a working test bench to play with .
+
+
+[4/21/2026 2:21 PM] hectate
+Of course.
+
+And as noted, I'll happily help anyone with questions about how to work with ``bar-lobby``, and take suggestions on how to improve the experience. Anyway, I'm going to go back to lurking.
+
+
+[4/21/2026 2:22 PM] daniel_demain
+hectate it doesn't help you now, but if you participated it would give others _discovery_ into your work
+
+{Reactions}
+❤️
+
+[4/21/2026 2:22 PM] daniel_demain
+but it does take the experts of their given subsystems actually backporting the bash scripts or things that they are doing often backward into BAR-Devtools
+
+
+[4/21/2026 2:23 PM] daniel_demain
+I can do it as I touch a system, but yeah it'll take all of us
+
+
+[4/21/2026 2:24 PM] hectate
+I don't understand what you mean by discovery.
+
+
+[4/21/2026 2:26 PM] daniel_demain
+so when I type "just" I get a breakdown of everything I can do for a given thing, like "client" (new client?) or "bar" or "engine"
+
+
+[4/21/2026 2:27 PM] daniel_demain
+so it's a sort of dev api for all of bar
+
+
+[4/21/2026 2:29 PM] hectate
+But this tooling specifically indicates that the client will have to run natively on the host, meaning the development inside WSL will be non-functional for a Windows dev, no? I can't run ``just client::start`` as a shortcut to ``npm run start`` and expect it to work.
+
+
+[4/21/2026 2:29 PM] daniel_demain
+nah you should be able to
+
+
+[4/21/2026 2:30 PM] daniel_demain
+we do the fancy
+
+
+[4/21/2026 2:31 PM] daniel_demain
+it should be possible to use wsl to pretend like our scripting layer is exposed as windows layer, as Marek was saying, with some potential performance downsides -- but hopefully with enough crowd intelligence around that problem (and  wsl continually improving) we could get those pretty close to nothing
+
+
+[4/21/2026 2:31 PM] daniel_demain
+but that's a "let's see" for me, I had problems on Windows with my current constellation of branches no matter what I did, and it wasn't always clear what was causing insane Chobby caching problems [at least to me]
+
+
+[4/21/2026 2:32 PM] daniel_demain
+certainly for things like the client/node/your area of expertise, that virtualization pass-through should be extremely utilized by the broader community and therefore almost entirely free. A LOT of electron devs out there using WSL I suspect
+
+
+[4/21/2026 2:32 PM] daniel_demain
+Chobby and the engine caching is the big fuck you triple caching problem child
+
+
+[4/21/2026 2:32 PM] daniel_demain
+so filesystem boundary crossing becomes VERY apparent
+
+
+[4/21/2026 2:37 PM] nortyspock
+I don't understand where to even learn where to start when someone stays "add x to tachyon and make it work in Teiserver and new-client" 
+
+I guess the current expectation for new developers on new-client is "try to find the relevant PRs across 3 repos and read them line by line and commit by commit and guess what is going on, lacking a working example system to tinker with"
+
+Which is a tall ask for someone with like 1 spare hour to develop per week.
+
+A working setup would make getting my feet wet a lot easier, and that is what BAR-Devtools attempts to automate.
+
+
+[4/21/2026 2:38 PM] daniel_demain
+but yeah I think custom Chobby+custom engine might end up being kind of crap on Windows under this strategy, or at least certain combination of repos might be crap, and it will still be better, because there's a reproducible way to at least see it work, even with the caching problems. And then at that point new client/the greenfield work becomes kind of awesome, because it will have none of those problems and you get it by running a different command.
+
+
+[4/21/2026 2:40 PM] hectate
+You misunderstand the process. Here's how it works for me.
+1. Some feature is agreed upon among the various devs involved.
+2. We define what it looks like in the protocol, so that the server and client have a clear expectation of how to communicate aspects of the feature.
+3. Separately, server devs and lobby devs work on implementing the feature as defined in the protocol. Nothing on either side happens except via protocol.
+4. Should the implementations of each be finished, either can test against each other. Sometimes bugs are found in the server by the client dev, and sometimes in the client by the server dev.
+
+
+[4/21/2026 2:41 PM] hectate
+As long as the protocol is clearly defined, I have zero concern on how it's done in the server when I'm creating it for the client.
+
+
+[4/21/2026 2:42 PM] daniel_demain
+is that how you typically do it at work hectate?
+
+
+[4/21/2026 2:43 PM] daniel_demain
+strict seperation of UI team and "backend" team?
+
+
+[4/21/2026 2:43 PM] daniel_demain
+in my experience, especially on greenfield work, that approach has a lot of downsides
+
+
+[4/21/2026 2:43 PM] daniel_demain
+slow feedback loops and antipatterns codified because nobody can step back and be like yo why or "this is very NOT performant as structured" without calling a meeting with the other team, where bike shedding ensues
+
+
+[4/21/2026 2:43 PM] nortyspock
+So client is stuck testing blind until server catches up? Do you write your own mocks inside new-client until then?
+
+
+[4/21/2026 2:45 PM] c____h____o____c____o____b____o
+-# what is bikeshedding?
+
+
+[4/21/2026 2:47 PM] daniel_demain
+it is codifying a bit of "immutability" into tachyon, through those very real road blocks impacting your process
+
+[bikeshedding](https://en.wikipedia.org/wiki/Law_of_triviality) is when you have a meeting and people are social animals and want to contribute so they all brainstorm, despite what's actually being necessary is an engineer to think deeply about the API/performance problem/data structure thing driving your UI, write some integration tests, and refactor until the UI makes intuitive sense to them.
+
+{Embed}
+https://en.wikipedia.org/wiki/Law_of_triviality
+Law of triviality
+The law of triviality is C. Northcote Parkinson's 1957 argument that people within an organization commonly give disproportionate weight to trivial issues. Parkinson provides the example of a fictional committee whose job was to approve the plans for a nuclear power plant spending the majority of its time on discussions about relatively minor bu...
+
+
+[4/21/2026 2:50 PM] nortyspock
+"nobody argues when the nuclear engineer tells them what grade of concrete is required for the reactor ...
+
+... but everyone will weigh in on a debate on what color the bike shed should be"
+
+
+[4/21/2026 2:55 PM] kroiya
+I was going to make a really strained analogy, but we can go without
+
+
+[4/21/2026 2:59 PM] daniel_demain
+nah there's no need, we're the result of our experiences. You and Marek are both making points that need to be made in order for us to actually vent everything and move forward and hopefully arrive at some sort of consensus. I had deleted the "Closing thoughts" on this [issue](https://github.com/beyond-all-reason/Beyond-All-Reason/issues/7408) for the last 5 days or so in an attempt to be more concise, but I restored them now. I think they kind of succinctly make the case for why I think this helps in the Beyond-All-Reason codebase. I think this conversation wondered elsewhere, but I think BAR benefits most from this, given where it is right now and where this step takes it.
+
+
+[4/21/2026 2:59 PM] hectate
+I am not a professional developer. Nor am I a server developer. It’s this way because I choose to specialize.
+
+
+[4/21/2026 3:00 PM] c____h____o____c____o____b____o
+THanks for the explanation!
+
+{Reactions}
+💪
+
+[4/21/2026 3:00 PM] hectate
+I simply wait. Usually this is happening in parallel, given our timeframes are across weeks based on volunteer schedules of availability.
+
+
+[4/21/2026 3:02 PM] daniel_demain
+gotcha and that's totally valid man. I'm just giving you my 2c here after making a LOOOOOOOT of UIs and backends, it's better (or at least faster) not to distinguish if you can. You get more elegant drivers for your vms/bus/stores/whatever by forming that design intuition (especially in new systems) in services you can verify in integration tests, on the server, against a real postgresql
+
+
+[4/21/2026 3:02 PM] kroiya
+The points need to be made so that you stop and reconsider what you're doing. Marek seems to have vetoed this for new-lobby, let's hope we find someone else who sees sense to do the same for the game repo.
+
+
+[4/21/2026 3:03 PM] daniel_demain
+well we definitely disagree there krolya, I think this is a good technical direction that solves a lot of problems for us in both places
+
+
+[4/21/2026 3:12 PM] nortyspock
+Right, but... That then forces you to wait until a server dev answers your question about "does the server handle this case?", rather than jumping over to the server side, putting a few print statements in at the point where the message comes over, and seeing what the server actually does.
+
+And that's ok if you're willing to wait, but it shows down the time-to-understanding the issue, and it requires another human to answer your questions about "how does this work" rather than  investigating and answering that yourself.
+
+By automating the setup of all of these cross-communicating systems, I hope we can allow developers to dive deeper into investigating issues before they get stuck.
+
+
+[4/21/2026 3:15 PM] hectate
+Some developers. Not me. 🤷
+
+
+[4/21/2026 3:16 PM] hectate
+I’m not planning to learn elixir or whatever right now. Maybe someday.
+In which case I still wouldn’t need all this? Maybe.
+
+
+[4/21/2026 3:17 PM] daniel_demain
+imagine a subtle bug in a store or something, your calls are out of order or there's too many of them and the server is exploding because you're spamming it. Who debugs that?
+
+
+[4/21/2026 3:18 PM] daniel_demain
+I guess my point is that to some extent, we're definitely on the line for debugging these systems after they release across the entire stack. So we should make the tooling to support that good irrespective of whether or not our process is somewhat disjointed based on the tachyon spec meetings
+
+
+[4/21/2026 3:18 PM] daniel_demain
+I should be able to, in "oh shit" mode, drop into changing tachyon/teiserver/new client, and see live changes locally immediately
+
+{Reactions}
+❤️
+
+[4/21/2026 3:22 PM] hectate
+That’s fair.
+
+{Reactions}
+❤️
+
+[4/21/2026 3:50 PM] thvle
+Can we discuss this without the vitriolic comments
+
+
+[4/21/2026 3:51 PM] flameink
+I'm confused. So can you or can you not still use your old workflow? I get that we want people to use the new scripts. Is there a regression or action required from existing developers?
+
+
+[4/21/2026 4:31 PM] p2004a
+YES YES A TOUSANDS TIMES YES
+
+
+[4/21/2026 4:31 PM] spr.ng
+not if you edit files blindly via github's interface!
+
+
+[4/21/2026 4:31 PM] p2004a
+EVERY. SINGLE. DEVELOPER. WILL. HAVE. TO. ADOPT. NEW. TOOLING. (if the current proposal gets accepted)
+
+{Reactions}
+👍
+
+[4/21/2026 4:32 PM] p2004a
+I hope that's clear enough now 😆
+
+
+[4/21/2026 4:32 PM] damgam
+Eww
+
+
+[4/21/2026 4:34 PM] spr.ng
+is package manager the only mandatory one? stuff like whitespace linter can be approximately ignored, you'll just read a CI complaint on a pushed PR and add a bunch of spaces or something
+
+{Reactions}
+💯
+
+[4/21/2026 4:35 PM] p2004a
+that's what I'm trying to figure out https://discord.com/channels/549281623154229250/1494629570077266030/1496241415947288686
+
+
+[4/21/2026 4:36 PM] damgam
+I'm scared
+
+
+[4/21/2026 4:36 PM] spr.ng
+you're smart you'll adapt
+
+
+[4/21/2026 4:37 PM] damgam
+I can be smart and scared
+
+
+[4/21/2026 4:41 PM] p2004a
+if you suggest that new lobby will be running as linux version, inside of wsl, with linux version of engine, that's IMHO just bad way to develop on windows. And I do not expect many electron devs develop in WSL, that's just very poor experience. WSL is not used much for GUI.
+
+
+[4/21/2026 4:43 PM] damgam
+Anyways i'm just gonna wait till someone tldrs this thread as an announcement. It sounds scary.
+
+
+[4/21/2026 4:43 PM] thvle
+i built the tool and im fuckin confused now.
+
+
+[4/21/2026 4:44 PM] spr.ng
+why?
+
+
+[4/21/2026 4:44 PM] p2004a
+I've looked at I've just looked at https://github.com/beyond-all-reason/BAR-Devtools/blob/master/just/bar.just, and it's very not clear to my why all of those used tools can't be run natively easily on windows. What's missing.
+
+
+[4/21/2026 4:44 PM] thvle
+Because its been turned into something I didnt design it to be
+
+
+[4/21/2026 4:45 PM] spr.ng
+thats ok, thats the entire story of bar
+
+
+[4/21/2026 4:45 PM] thvle
+Devtools was just a bash script to spin up several repos for cross repo dev. Thats it. This additional linting/package manager stuff is way out of that scope
+
+
+[4/21/2026 4:46 PM] thvle
+So I am trying my best to understand why its taken this entire new route with atteans PR
+
+
+[4/21/2026 4:46 PM] thvle
+bc I was never looped in
+
+
+[4/21/2026 4:46 PM] p2004a
+> This additional linting/package manager stuff is way out of that scope
+
+That's why I'm asking what is the minimal stuff required for each goal, to me it sounds like repo local shit, that can be orchestrated by dev-tools is somebody desires to do it for whatever reson, but shouldn't be required to use dev-tools themselves
+
+
+[4/21/2026 4:46 PM] spr.ng
+because attean likes tools and people build upon each others work all the time
+
+{Reactions}
+👍
+
+[4/21/2026 4:47 PM] thvle
+Thats the intention, its just to make local dev easier specifically for those like me that need everything running locally to test security changes. Not for every single dev
+
+
+[4/21/2026 4:47 PM] thvle
+Normal BAR devs dont need that
+
+
+[4/21/2026 4:48 PM] p2004a
+Yeah, and for example, I have different needs, so my automation to set it up looked different. (all in incus, because I want to have as close to prod setup as possible in all possible ways, not just applications part, whole vm)
+
+
+[4/21/2026 4:49 PM] thvle
+Right and we have devtools configured with Incus for that prod adjacent setup. I fail to see why this needs to be the orchestration layer for org wide dev tooling, thats something you'd get with a monorepo
+
+
+[4/21/2026 4:49 PM] thvle
+Theres a need for that tooling yes but not in the scope of devtools
+
+
+[4/21/2026 4:49 PM] thvle
+and maybe it needs to be renamed to reflect this
+
+
+[4/21/2026 5:08 PM] flameink
+Thank you for clarifying! @attean I think we need a strong justification for each mandatory tool/workflow change that is being introduced.
+Linting is good but can be handled as a PR merge requirement. Which parts are mandatory and why?
+
+
+[4/21/2026 5:08 PM] p2004a
+And sorry for my ignorance, but for example for code formatting, which would be quite annoying with enforcement in CI, we seem to use https://github.com/JohnnyMorganz/StyLua, which has vscode extension https://marketplace.visualstudio.com/items?itemName=JohnnyMorganz.stylua
+
+For typececking, https://github.com/EmmyLuaLs/emmylua-analyzer-rust, which has vscode extension https://marketplace.visualstudio.com/items?itemName=tangzx.emmylua
+
+the lux package manager doesn't at the moment have vscode extension (we could vibe one), but I would like to see how many external non-dev dependencies do we even have/want to replace, and if it's justified vs vendoring. Vendoring is what enabled 0 impact on current dev workflow.
+
+
+[4/21/2026 7:03 PM] daniel_demain
+Yeah marek, lux plus plugins are almost there as ide+local config +unified script layer+tell people to copy paste some settings. But lux has some limitations around some of its command wrappers and concerns about how easy it would be for newer devs to install right now — I would have an easier time pitching cargo or something because it’s at least extremely mature. Honestly the scripting layer removes all of that by giving us the ability to predictably have those things setup quickly, and add custom tooling and requirements in there too. We could do the dev setup docs you’re advocating for, but honestly the script itself with its suggestions and source code is also kind of the blueprint to doing all of this yourself anyway
+
+
+[4/21/2026 7:07 PM] nortyspock
+@attean  I think you might need to also address Marek's implied point on "why not vendor the libraries by dumping all the library code in a folder? that way we wouldn't need to teach people to use a package manager"
+
+
+[4/21/2026 7:08 PM] daniel_demain
+That suggestion saw significant pushback with imo well founded concerns about bitrot
+
+
+[4/21/2026 7:08 PM] nortyspock
+ah, ok
+
+
+[4/21/2026 7:08 PM] daniel_demain
+Remember the unit testing pr? We tried to embed the luacats types. Round and round
+
+
+[4/21/2026 7:08 PM] nortyspock
+so we should bring that up every time someone asks "why package manager"
+
+{Reactions}
+💯
+
+[4/21/2026 7:12 PM] daniel_demain
+One more thing worth noting here is as much as possible, we do NOT lean on bar devtools and do try to put everything local. The scripts exist for discovery and setup, so they should be incredibly thin at the slice bar cares about
+
+
+[4/21/2026 7:18 PM] daniel_demain
+But it will be nice once the scripts exist. Wait ‘lx check’ does not work, why? What does ‘just bar:: check’ do exactly? The differences in our project, being coded specifically for recoil, versus the rest of the lua ecosystem which seems to be following the luarocks conventions, makes the custom scripting layer almost necessary, at least as a migration strategy. To me it just makes sense, this is where we write our custom glue and we train everyone to look there once
+
+
+[4/21/2026 7:31 PM] nortyspock
+On the point of "code formatting is annoying to enforce in CI" ... **where else** would you enforce it? You might hope that everyone will install vscode and use the extension you recommend, but the only place to monitor for "does the code match the style guide" is going to be "on the PR", which is CI.
+
+It's done in Teiserver -- the code must match `mix format` or it's not going to merge.
+
+{Reactions}
+👍 this
+
+[4/22/2026 3:19 AM] p2004a
+Yes all *enforcement* needs to be in CI. There is simply no other possibility.
+
+The enforcement is annoying when there is no default trivial way for everybody to do it in local code editor. So e.g. local setup of tooling is annoying, so people push code to CI without doing local styling run, get error from CI, have to fix things up manually. That's not a good workflow.
+
+{Reactions}
+💯
+
+[4/22/2026 3:21 AM] p2004a
+From who? Where? I'm happy to read previous discussion, please at least link them. Can you please list the libraries you would like to migrate from current vendored state to management with package manager? The package manager doesn't have to be all perfect smooth sailing, people will run into behavior similar to what they get currently with submodules "why this shit doesn't work, what's missing, come on", "you didn't run package manager to pull latest deps", I've seen this over and over in people trying to work on new lobby, where npm *is* standard.
+
+
+[4/22/2026 3:28 AM] p2004a
+I'm interested in the simplest possible solution, targeting simplest possible setup that works well for 90% of contributors with minimal disruptions. You aren't only proposing adding styling/linting/typechecking but also proposing implementation. It's the current proposed implementation that I have strong doubts about. And I know that *your* implementation looks like that because you also have some goals beyond this basic stuff, and there I'm not sure we are aligned at all as org. That's why I'm asking about "what if we required extension only?", but if installation/config of some of those tools is annoying and impossible, I would again look into simple solutions like powershell script you can double click to run that does particular thing, e.g. install dependencies, run formatting across whole code base.
+
+
+[4/22/2026 3:34 AM] p2004a
+The "scripting layer" you describe simply does not have to be exactly single one, shared for all the repos, with all the constraints all the repos put on it. If 90% people work on single repo, it might be very preferable for all scripting for that particular repo to be part of that repo, tailored for that repo specifically. The cross-repo orchestration you want to have, that will be helpful for some folks, for some tasks, can be build upon that repo local layer.
+
+{Reactions}
+👍
+
+[4/22/2026 3:37 AM] p2004a
+And yes, lua tooling is in very poor shape, similarly to c++ tooling and so on. Python is meh, but there is at least uv recently which works great, but it's not *standard*. In rust and node there is no question at all that if you want to contribute to such repos you use cargo/npm and that's all you need to know. Because of "poor tooling" in lua, custom scripts might be required, but how simple can we possibly make it, that's the goal.
+
+
+[4/22/2026 5:36 AM] nortyspock
+@attean , if we put bitrot aside,  what would the "requires minimum developer touch because everything is vendored" solution look like? Would it address Marek's concerns about developer training?
+
+(I guess I'm thinking: "they want to be a long term project, one that may outlast the packages they use, so maybe vendoring is the right step")
+
+
+[4/22/2026 6:38 AM] smarkert
+A suggestion: instead of adding package manager setup to the game repo, and requiring devs to install the package manager, how about updating the committed packages with a workflow, similar to dependabot?
+
+
+[4/22/2026 7:44 AM] dario_w
+TLDR (well some). Will that force all of contributors old/new to install WSL2 and run linux on win, just to contribute? Or is this kind of optional for some contributors in this or that part of the game dev process? Personally im win user and not lin , i can install wsl2 etc(checked), but do I have to to stay on the loop or not? Didn't really seen proper answer to this simple as sun or black and white YES or NO, not greyish or partially yes and partially no or maybe we shall see etc>
+Will old/new contributors be forced to use it to help making BAR or can win user leave wsl2 and lin and keep doing the way it was for so many years. I know publisher blahblah stuff, just asking about topic. 
+Thx
+
+
+[4/22/2026 8:30 AM] daniel_demain
+In short, yes you would need to make sure you had the ability to type check, lint, format with stylua, and match the project’s committed standards files. This should be mostly very easy to do if we go for it and there’s some debate. Marek I’ll put together a specific breakdown to your questions shortly
+
+
+[4/22/2026 8:36 AM] p2004a
+https://discord.com/channels/549281623154229250/1494629570077266030/1496277315062202418
+
+
+[4/22/2026 8:37 AM] p2004a
+That's exactly what vendoring means
+
+
+[4/22/2026 8:42 AM] p2004a
+e.g. golang build/package manager supports such mode of operation natively https://go.dev/ref/mod#vendoring
+
+
+[4/22/2026 8:44 AM] p2004a
+in engine we vendor plenty of dependencies for different reasons and most often they aren't just a straight copy of source code but are included as git submodules
+
+
+[4/22/2026 8:48 AM] smarkert
+strange term. but seems a straight forward way to avoid package setup
+
+
+[4/22/2026 8:48 AM] smarkert
+could CI do formatting/linting commits?
+
+
+[4/22/2026 8:49 AM] p2004a
+linting/typechecking it's impossible to fix all issues automatically, but the formatting is interesting idea to consider
+
+
+[4/22/2026 8:50 AM] smarkert
+typechecking yeah, probably not possible. but formatting i've tried on a project. it's a small inconvenience, but avoids the annoying failed builds if just checking
+
+
+==============================================================
+Exported 435 message(s)
+==============================================================

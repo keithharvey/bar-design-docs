@@ -1,6 +1,6 @@
 # Sharing Tab — PR Map
 
-Everything below exists to make the **Sharing Tab** technically sound. Unit tests were a hard requirement to do something like waterfill economy in-game, and the type system improvements keep the test mocks from drifting.
+My goal was to make an actual domain layer (and therefore a real framework for many Co-op "experiments" to run in parallel). Everything below exists to make that technically sound. Unit tests were a hard requirement to do something like waterfill economy in-game, and the type system improvements keep the test mocks from drifting.
 
 `|_` = "required by the PR above it" (dependency flows upward)
 
