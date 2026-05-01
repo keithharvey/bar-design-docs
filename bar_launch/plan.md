@@ -99,22 +99,21 @@ The user runs the script, pastes the result table into this plan as a "Probe res
 ## Probe results
 
 Run on a Windows 11 / Ubuntu-24.04 WSL2 host on 2026-05-01. Raw JSON in
-`probes/probe-{i,ii,iii}.json` next to this plan. The (ii) and (iii) runs
-were hand-coordinated; the (iii) max of 58.7 s and (ii)'s ~10 s sustained
-median both deserve verification via `probe_wsl_sync.py auto --arch all
---iterations 3`, which removes the hand-coordination noise and pools
-samples with the top 1% trimmed. **TODO:** rerun + replace these rows
-from `probes/probe-{ii,iii}-auto.json`.
+`probes/` next to this plan. (i) is a single `rsync` run (no auto orchestrator
+— the rsync architecture has no Windows side to coordinate with); (ii) and
+(iii) are aggregated via `probe_wsl_sync.py auto --arch all --iterations 3`,
+which pools sustained-loop samples across runs and trims the top 1% so a
+single Plan9 / Defender stall doesn't dominate the central tendency.
 
-| Scenario              | (0) NTFS-local baseline    | (i) WSL rsync → /mnt/c     | (ii) Windows direct UNC reads | (iii) Windows watch+copy from UNC |
-|-----------------------|----------------------------|----------------------------|-------------------------------|-----------------------------------|
-| (a) cold (3000 files) | _todo_                     | 26.22 s                    | 29.44 s (read; 2829 files)    | 41.55 s                           |
-| (b) inc 1 file        | _todo_                     | 8.108 s                    | 28.73 s (warm reread)         | 47.328 s                          |
-| (c) inc 50 files      | _todo_                     | 8.075 s                    | n/a                           | 5.313 s                           |
-| (d) sustained median  | _todo_                     | **7314 ms**                | **9963 ms**                   | **100 ms** ✅                     |
-| (d) sustained p95     | _todo_                     | 11090 ms                   | 16014 ms                      | 178 ms                            |
-| (d) sustained max     | _todo_                     | 11870 ms                   | 16441 ms                      | 58754 ms ⚠                        |
-| (d) samples           | _todo_                     | 298 (poll-rsync @ 200 ms)  | 218                           | 275                               |
+| Scenario                         | (0) NTFS-local baseline   | (i) WSL rsync → /mnt/c     | (ii) Windows direct UNC reads | (iii) Windows watch+copy from UNC |
+|----------------------------------|---------------------------|----------------------------|-------------------------------|-----------------------------------|
+| (a) cold (3000 files)            | _todo_                    | 26.22 s                    | 31.6 s (read, mean of 3)      | 43.6 s (copy, mean of 3)          |
+| (b) inc 1 file / warm reread     | _todo_                    | 8.108 s                    | 31.22 s (warm reread, mean)   | n/a (auto skips)                  |
+| (c) inc 50 files                 | _todo_                    | 8.075 s                    | n/a                           | n/a (auto skips)                  |
+| (d) sustained median             | _todo_                    | 7314 ms                    | **77.4 ms** ✅                | **109.5 ms** ✅                   |
+| (d) sustained p95                | _todo_                    | 11090 ms                   | 127.4 ms                      | 179.3 ms                          |
+| (d) sustained max (trimmed/raw)  | _todo_                    | — / 11870 ms               | 141.3 / 176.1 ms              | 197.6 / 215.1 ms                  |
+| (d) samples                      | _todo_                    | 298 (poll-rsync @ 200 ms)  | 891 / 900 (3 auto iters)      | 891 / 900 (3 auto iters)          |
 
 > **(0) NTFS-local baseline** is a no-WSL control: tree generated on `C:\` and
 > read by the same Windows Python harness. Establishes the floor for the
@@ -123,29 +122,59 @@ from `probes/probe-{ii,iii}-auto.json`.
 
 ### Reading the table
 
-- **Architecture (iii) is the only one that meets the <500 ms target** for
-  sustained median latency, by ~70× over (i) and ~100× over (ii). This is
-  the architecture the decision matrix tells us to commit to.
-- (i)'s 7.3 s sustained median rules out the originally-planned WSL-side
-  rsync + watchexec pipeline. The tight rsync incremental scenarios (b)/(c)
-  finish in ~8 s, but inside the sustained loop the poll-rsync@200 ms
-  propagator can't keep up with the 5 touches/sec workload.
-- (ii)'s ~10 s sustained median confirms the folklore: direct
-  `\\wsl$\…` reads are unusable for runtime IO on the Plan9 bridge. Useful
-  only as a baseline.
-- ⚠ **(iii)'s 58754 ms max** is a single ~58 s stall. p95 (178 ms) shows
-  the rest of the run is well-behaved — the max is one outlier event, most
-  likely a Plan9 server hiccup or a Defender scan stall on the local NTFS
-  copy. Live with it for now; if it recurs in the real launcher flow,
-  investigate excluding `<chosen-dir>/` from Defender.
-- (iii)'s cold (a) and inc-1 (b) are *slower* than (i)'s. The win is
-  entirely in the sustained scenario — copy bandwidth is plan9-bound
-  either way, but a Windows-side watcher reacts to changes far faster than
-  a 200 ms-poll rsync loop.
+- **Both (ii) and (iii) clear the <500 ms decision-matrix threshold by
+  ~5×.** The relative ranking flipped from the noisy single-shot hand runs:
+  in the auto run (ii)'s median is 77.4 ms (vs. ~10 s hand-run) and (iii)'s
+  is 109.5 ms (vs. ~100 ms hand-run, with a 58 s outlier). The hand-run
+  noise was almost entirely hand-coordination overhead between the WSL
+  touch loop and the Windows-side measurer; the auto orchestrator's
+  ready-flag handshake removes it.
+- **The hand-run (iii) 58754 ms max did not reproduce** in 900 auto-run
+  samples (max_raw 215.1 ms). Treat the 58 s figure as a one-off Plan9 /
+  Defender stall on a cold cache, not a structural concern. We retain the
+  earlier "exclude `<chosen-dir>/` from Defender if it recurs in the real
+  launcher flow" mitigation as a backstop.
+- (i)'s 7.3 s sustained median still rules it out for the sustained edit
+  loop. The poll-rsync@200 ms propagator can't keep up with 5 touches/sec —
+  events queue up, then per-tree rsync scans dominate. The originally-
+  planned WSL-side rsync + watchexec pipeline is dead.
+- (i)'s incremental rsync (b)/(c) at ~8 s confirms that the bottleneck for
+  (i) is the propagator, not rsync's own cost: a 1- or 50-file rsync
+  finishes in seconds, but the 200 ms poll cadence multiplied by the
+  rescan-everything cost makes the sustained-loop median 7 s.
+- (ii) wins (iii) on raw probe latency by ~30 ms. (ii) is a single Plan9
+  round-trip per file; (iii) does Plan9 read + local NTFS write on each
+  event. **(iii) is still the chosen architecture** because the probe
+  measures dev edit-loop latency, not engine runtime read patterns. See
+  the Decision block below for why that distinction matters.
 
 ### Decision
 
 **Phase 3 sync architecture: (iii) — Windows-side watch + copy.**
+
+The probe's (d) measurement is a 64-byte marker read — a lightweight smoke
+test for the propagation layer, not the actual engine workload. Real BAR
+runtime IO is per-frame Lua reads totalling hundreds of MB across the
+session, and the substrate that reads gets is what matters for game-load
+and gameplay smoothness:
+
+- **Architecture (ii)** leaves the engine reading `\\wsl$\…` directly at
+  gameplay rate. Marek's independently-measured Test 1 in
+  `bifurcated_types/dev_setup_restructured.md` (game source on WSL,
+  symlinked to a Windows install) shows 7m30s cold loads and 4m10s warm
+  loads with mid-game freezes — that's the same Plan9 read path the engine
+  would walk under (ii). A 77 ms probe latency does not buy us out of that
+  cost; it just confirms Plan9 is *fast enough* for sparse 5-touches/sec
+  marker reads.
+- **Architecture (iii)** isolates the engine from Plan9 entirely. The
+  engine reads from Windows-local NTFS at native speed (≈24 s warm load
+  per Test 1's all-Windows baseline). The only Plan9 crossing happens on
+  the dev edit loop, which the probe shows tolerates the boundary at
+  ~109 ms median.
+
+So we trade ~30 ms median dev-loop latency for ~3.5 minutes of game-load
+time per warm restart. (iii) wins decisively once the comparison is on
+the right axis.
 
 Concrete consequences for the Phase 3 sections below:
 
