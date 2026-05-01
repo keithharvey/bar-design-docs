@@ -82,6 +82,8 @@ For each architecture, four scenarios:
 
 The script is platform-aware (`platform.system()` + `/proc/version` check) and ships subcommands: `--setup` (WSL), `--rsync` (WSL), `--win-read` (Windows Python), `--win-watch` (Windows Python), `--win-baseline` (Windows Python, scenario (0)), and `--wsl-touch-loop` (WSL helper paired with the Windows-side measuring runs). A separate `--all` subcommand prints step-by-step run instructions so the user can copy/paste the right commands into the right shell on the right side.
 
+For (ii) and (iii) there is also an `auto` subcommand (WSL): it launches the Windows-side measurer over WSL2 interop (`py.exe -3 \\wsl$\<distro>\...\probe_wsl_sync.py win-{read,watch}`) with `--non-interactive --ready-flag <flag>`, polls the flag to know when Windows has reached the (d) phase, drives the touch loop in-process, then collects the JSON. Designed to remove the hand-coordinated 3-second wait and the manual touches between (a)/(b)/(c) — the original sources of measurement noise. Runs `--iterations N` (default 3), pools the raw (d) latency samples across runs, drops the top 1% (`--trim-pct 0.01`) before reporting median/p95, and keeps the un-trimmed `max_ms_raw` so one-off Plan9 / Defender stalls remain visible without dominating the central tendency.
+
 ## Decision matrix the probe feeds
 
 | Outcome of probe                                                          | Phase 3 architecture                                            |
@@ -97,7 +99,12 @@ The user runs the script, pastes the result table into this plan as a "Probe res
 ## Probe results
 
 Run on a Windows 11 / Ubuntu-24.04 WSL2 host on 2026-05-01. Raw JSON in
-`probes/probe-{i,ii,iii}.json` next to this plan.
+`probes/probe-{i,ii,iii}.json` next to this plan. The (ii) and (iii) runs
+were hand-coordinated; the (iii) max of 58.7 s and (ii)'s ~10 s sustained
+median both deserve verification via `probe_wsl_sync.py auto --arch all
+--iterations 3`, which removes the hand-coordination noise and pools
+samples with the top 1% trimmed. **TODO:** rerun + replace these rows
+from `probes/probe-{ii,iii}-auto.json`.
 
 | Scenario              | (0) NTFS-local baseline    | (i) WSL rsync → /mnt/c     | (ii) Windows direct UNC reads | (iii) Windows watch+copy from UNC |
 |-----------------------|----------------------------|----------------------------|-------------------------------|-----------------------------------|
