@@ -66,8 +66,9 @@ Throwaway diagnostic. Run on the user's Windows/WSL2 box once. No production cod
 
 ## P1.1 — `scripts/probe_wsl_sync.py`
 
-A standalone Python script with subcommands selectable per host (refuses to run a Windows-only mode from WSL or vice versa). Generates a synthetic tree on WSL ext4 mimicking BYAR-Chobby's shape (~3000 small Lua files, ~200KB each, ~50 dirs), then measures three architectures:
+A standalone Python script with subcommands selectable per host (refuses to run a Windows-only mode from WSL or vice versa). Generates a synthetic tree on WSL ext4 mimicking BYAR-Chobby's shape (~3000 small Lua files, ~200KB each, ~50 dirs), then measures three architectures plus a no-WSL baseline:
 
+- **(0) NTFS-local baseline.** Tree generated directly on Windows-local NTFS; Windows-side process reads it. No WSL, no Plan9, no sync. Anchors the floor: separates "Plan9 / sync overhead" from "this workload is just IO-heavy." Run with `--win-baseline` (Windows Python).
 - **(i) `WSL ext4 → /mnt/c/...` via rsync.** From inside WSL: `rsync -a --delete --inplace src/ /mnt/c/Users/<u>/AppData/Local/BAR-DevSync-probe/`. Engine reads NTFS local. The "obvious" architecture.
 - **(ii) Direct `\\wsl$\<distro>\...` reads from Windows.** Baseline only. We already know the game runs unacceptably under this setup; we measure it to anchor the other numbers, not as a candidate architecture.
 - **(iii) Windows-side watch + copy from `\\wsl$\<distro>\...` → Windows-local NTFS.** Windows process polls the UNC tree for changes and copies them locally. Tests whether the plan9 server emits useful change-detection signals to Windows-side fsevents at all, and at what latency.
@@ -79,7 +80,7 @@ For each architecture, four scenarios:
 - **c) Incremental update**, 50 files changed.
 - **d) Sustained loop**: WSL side touches 5 random files every 1s for 60s; the measuring side records end-to-end latency from "file written WSL-side" to "new content readable on the target side." Reports median, p95, max.
 
-The script is platform-aware (`platform.system()` + `/proc/version` check) and ships subcommands: `--setup` (WSL), `--rsync` (WSL), `--win-read` (Windows Python), `--win-watch` (Windows Python), and `--wsl-touch-loop` (WSL helper paired with the Windows-side measuring runs). A separate `--all` subcommand prints step-by-step run instructions so the user can copy/paste the right commands into the right shell on the right side.
+The script is platform-aware (`platform.system()` + `/proc/version` check) and ships subcommands: `--setup` (WSL), `--rsync` (WSL), `--win-read` (Windows Python), `--win-watch` (Windows Python), `--win-baseline` (Windows Python, scenario (0)), and `--wsl-touch-loop` (WSL helper paired with the Windows-side measuring runs). A separate `--all` subcommand prints step-by-step run instructions so the user can copy/paste the right commands into the right shell on the right side.
 
 ## Decision matrix the probe feeds
 
@@ -98,15 +99,20 @@ The user runs the script, pastes the result table into this plan as a "Probe res
 Run on a Windows 11 / Ubuntu-24.04 WSL2 host on 2026-05-01. Raw JSON in
 `probes/probe-{i,ii,iii}.json` next to this plan.
 
-| Scenario              | (i) WSL rsync → /mnt/c     | (ii) Windows direct UNC reads | (iii) Windows watch+copy from UNC |
-|-----------------------|----------------------------|-------------------------------|-----------------------------------|
-| (a) cold (3000 files) | 26.22 s                    | 29.44 s (read; 2829 files)    | 41.55 s                           |
-| (b) inc 1 file        | 8.108 s                    | 28.73 s (warm reread)         | 47.328 s                          |
-| (c) inc 50 files      | 8.075 s                    | n/a                           | 5.313 s                           |
-| (d) sustained median  | **7314 ms**                | **9963 ms**                   | **100 ms** ✅                     |
-| (d) sustained p95     | 11090 ms                   | 16014 ms                      | 178 ms                            |
-| (d) sustained max     | 11870 ms                   | 16441 ms                      | 58754 ms ⚠                        |
-| (d) samples           | 298 (poll-rsync @ 200 ms)  | 218                           | 275                               |
+| Scenario              | (0) NTFS-local baseline    | (i) WSL rsync → /mnt/c     | (ii) Windows direct UNC reads | (iii) Windows watch+copy from UNC |
+|-----------------------|----------------------------|----------------------------|-------------------------------|-----------------------------------|
+| (a) cold (3000 files) | _todo_                     | 26.22 s                    | 29.44 s (read; 2829 files)    | 41.55 s                           |
+| (b) inc 1 file        | _todo_                     | 8.108 s                    | 28.73 s (warm reread)         | 47.328 s                          |
+| (c) inc 50 files      | _todo_                     | 8.075 s                    | n/a                           | 5.313 s                           |
+| (d) sustained median  | _todo_                     | **7314 ms**                | **9963 ms**                   | **100 ms** ✅                     |
+| (d) sustained p95     | _todo_                     | 11090 ms                   | 16014 ms                      | 178 ms                            |
+| (d) sustained max     | _todo_                     | 11870 ms                   | 16441 ms                      | 58754 ms ⚠                        |
+| (d) samples           | _todo_                     | 298 (poll-rsync @ 200 ms)  | 218                           | 275                               |
+
+> **(0) NTFS-local baseline** is a no-WSL control: tree generated on `C:\` and
+> read by the same Windows Python harness. Establishes the floor for the
+> chosen-arch (iii) numbers — anything in (iii) above the baseline is sync /
+> Plan9 overhead, not raw IO cost. Pending; run with `--win-baseline`.
 
 ### Reading the table
 
