@@ -1,0 +1,15 @@
+{
+  "architecture": "i_rsync_wsl_to_mntc",
+  "src": "/home/daniel/bar-probe-src",
+  "dst": "/mnt/c/Users/keith/AppData/Local/BAR-DevSync-probe",
+  "a_cold_copy_s": 26.22,
+  "b_inc1_s": 8.108,
+  "c_inc50_s": 8.075,
+  "d_propagator": "poll-rsync@200ms",
+  "d_sustained": {
+    "n": 298,
+    "median_ms": 7313.8,
+    "p95_ms": 11090.2,
+    "max_ms": 11870.3
+  }
+}

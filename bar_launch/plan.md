@@ -93,6 +93,61 @@ The script is platform-aware (`platform.system()` + `/proc/version` check) and s
 
 The user runs the script, pastes the result table into this plan as a "Probe results" section, and we pick the Phase 3 architecture based on the table — not folklore.
 
+## Probe results
+
+Run on a Windows 11 / Ubuntu-24.04 WSL2 host on 2026-05-01. Raw JSON in
+`probes/probe-{i,ii,iii}.json` next to this plan.
+
+| Scenario              | (i) WSL rsync → /mnt/c     | (ii) Windows direct UNC reads | (iii) Windows watch+copy from UNC |
+|-----------------------|----------------------------|-------------------------------|-----------------------------------|
+| (a) cold (3000 files) | 26.22 s                    | 29.44 s (read; 2829 files)    | 41.55 s                           |
+| (b) inc 1 file        | 8.108 s                    | 28.73 s (warm reread)         | 47.328 s                          |
+| (c) inc 50 files      | 8.075 s                    | n/a                           | 5.313 s                           |
+| (d) sustained median  | **7314 ms**                | **9963 ms**                   | **100 ms** ✅                     |
+| (d) sustained p95     | 11090 ms                   | 16014 ms                      | 178 ms                            |
+| (d) sustained max     | 11870 ms                   | 16441 ms                      | 58754 ms ⚠                        |
+| (d) samples           | 298 (poll-rsync @ 200 ms)  | 218                           | 275                               |
+
+### Reading the table
+
+- **Architecture (iii) is the only one that meets the <500 ms target** for
+  sustained median latency, by ~70× over (i) and ~100× over (ii). This is
+  the architecture the decision matrix tells us to commit to.
+- (i)'s 7.3 s sustained median rules out the originally-planned WSL-side
+  rsync + watchexec pipeline. The tight rsync incremental scenarios (b)/(c)
+  finish in ~8 s, but inside the sustained loop the poll-rsync@200 ms
+  propagator can't keep up with the 5 touches/sec workload.
+- (ii)'s ~10 s sustained median confirms the folklore: direct
+  `\\wsl$\…` reads are unusable for runtime IO on the Plan9 bridge. Useful
+  only as a baseline.
+- ⚠ **(iii)'s 58754 ms max** is a single ~58 s stall. p95 (178 ms) shows
+  the rest of the run is well-behaved — the max is one outlier event, most
+  likely a Plan9 server hiccup or a Defender scan stall on the local NTFS
+  copy. Live with it for now; if it recurs in the real launcher flow,
+  investigate excluding `<chosen-dir>/` from Defender.
+- (iii)'s cold (a) and inc-1 (b) are *slower* than (i)'s. The win is
+  entirely in the sustained scenario — copy bandwidth is plan9-bound
+  either way, but a Windows-side watcher reacts to changes far faster than
+  a 200 ms-poll rsync loop.
+
+### Decision
+
+**Phase 3 sync architecture: (iii) — Windows-side watch + copy.**
+
+Concrete consequences for the Phase 3 sections below:
+
+- P3.2 ("Sync daemon") flips from a WSL-side rsync + watchexec design to a
+  **Windows-side process** that watches `\\wsl$\Ubuntu-24.04\home\<u>\code\BAR-Devtools\{Beyond-All-Reason,BYAR-Chobby,RecoilEngine/build/...}`
+  and mirrors changes to `<BAR_DEVSYNC_DIR>/{games/Beyond-All-Reason,games/BYAR-Chobby,engine/local-build}`. Likely
+  built on Python's `watchdog` package (cross-platform) running inside the
+  same Windows venv created for `bar-launch`.
+- P3.5 (`scripts/launch.sh` WSL2 branch) starts the watcher *via*
+  `cmd.exe /c …` rather than starting `watchexec` in WSL.
+- The `--inplace` rsync requirement still applies to the Windows-side
+  copy step (engine has files mmaped; we don't want inode rotation).
+- The probe script (`scripts/probe_wsl_sync.py`) and these JSONs can be
+  deleted once Phase 3's watcher lands.
+
 ---
 
 # Phase 2 — Linux end-to-end

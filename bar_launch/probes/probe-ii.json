@@ -1,0 +1,13 @@
+{
+  "architecture": "ii_unc_direct_reads",
+  "src": "\\\\wsl$\\Ubuntu-24.04\\home\\daniel\\bar-probe-src",
+  "a_cold_read_s": 29.44,
+  "a_cold_read_files": 2829,
+  "b_warm_reread_s": 28.73,
+  "d_sustained": {
+    "n": 218,
+    "median_ms": 9962.9,
+    "p95_ms": 16013.8,
+    "max_ms": 16440.6
+  }
+}

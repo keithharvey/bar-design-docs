@@ -1,0 +1,15 @@
+{
+  "architecture": "iii_win_watch_unc_to_local",
+  "src": "\\\\wsl$\\Ubuntu-24.04\\home\\daniel\\bar-probe-src",
+  "dst": "C:\\Users\\keith\\AppData\\Local\\BAR-DevSync-probe-winlocal",
+  "a_cold_copy_s": 41.55,
+  "a_cold_copy_files": 3000,
+  "b_inc1_s": 47.328,
+  "c_inc50_s": 5.313,
+  "d_sustained": {
+    "n": 275,
+    "median_ms": 99.6,
+    "p95_ms": 178.0,
+    "max_ms": 58753.5
+  }
+}
