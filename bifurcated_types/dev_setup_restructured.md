@@ -133,7 +133,7 @@ Future deps go through normal review.
 - **B. Windows-native game/engine + WSL for toolchain only.** Edit, build, and run the game on Windows native. Cross to WSL only to run lint/format/type-check/test commands. Source-of-truth for game Lua lives in WSL ext4; the engine, running natively on Windows, needs to read those files at gameplay rate. **How the live source crosses the boundary is a sub-decision** with three live answers — call them B.1, B.2, B.3 — measured in Tests 4–5 below:
   - **B.1 — Pure symlink.** Windows symlink: `<install>/data/BAR.sdd → \\wsl$\<distro>\home\<u>\code\Beyond-All-Reason`. Simplest possible mechanism; this is the path Marek's Test 1 measures, and the result (7m30s cold load, 4m10s warm, mid-game freezes) rules it out.
   - **B.2 — Direct UNC reads at runtime.** No symlink, no copy: configure the engine to read directly from `\\wsl$\<distro>\…`. Probe Test 5 says the dev edit loop is fast under this scheme (77 ms median), but Test 1 shows the engine itself can't read this way at gameplay rate — same Plan9 path, same 7m30s game-load problem.
-  - **B.3 — Windows-side watch + copy.** A small watcher process on the Windows side observes `\\wsl$\…` source dirs and mirrors changes to a Windows-local NTFS sync target; the engine reads the local NTFS copy. Probe Test 5 shows the dev edit loop tolerates this at 109 ms median (≈30 ms slower than B.2), and the engine reads from native NTFS — i.e. ≈24 s warm load per Test 1's all-Windows baseline. **This is the recommended sub-option.** Implementation sketch in `bar_launch/plan.md` P3.2 / P3.5.
+  - **B.3 — Watch + copy → Windows-local NTFS.** A small watcher observes the WSL source tree and mirrors changes to a Windows-local NTFS sync target; the engine reads the local NTFS copy. Probe Test 5 shows the dev edit loop tolerates this at 109 ms median (≈30 ms slower than B.2) for the watcher-on-Windows variant, and the engine reads from native NTFS — i.e. ≈24 s warm load per Test 1's all-Windows baseline. **This is the recommended sub-option.** *Open sub-axis (added 2026-05-04): which side runs the watcher.* `win-watchdog-unc` (watcher on Windows) **is ruled out as a Phase-3 candidate** — Plan 9 doesn't deliver inotify across the boundary, so any watcher library on Windows degrades to polling regardless of how it advertises itself. Its 109 ms number stays in the tables as the *ceiling* for the watcher-on-Windows class, not as a live option. The actual Phase-3 candidates are the watcher-on-WSL designs: `wsl-watchdog-mntc` / `wsl-inotifywait-mntc` (single-process, copy through /mnt/c) and `wsl-detect-win-copy` (split-brain reference; WSL detects, Windows copies). Numbers pending; the (iv)-vs-(v) comparison decides whether B.3 ships single-process or split-brain. Implementation sketch in `bar_launch/plan.md` P3.2 / P3.5.
 - **C. Everything in WSL.** Edit, build, and run inside WSL. *(Rejected: 16 GiB-RAM machines crash, GPU passthrough is fragile, and it forces a Linux shell on contributors who don't want one.)*
 - **D. PowerShell-everywhere.** Write all recipes in PowerShell Core, which runs on Linux too. Avoids WSL entirely.
 
@@ -201,29 +201,40 @@ Marek measured WSL↔Windows boundary-crossing costs on his hardware (laptop, AM
 | Native Windows, files on Windows | ~0.9s |
 | WSL, files on Windows (cross) | ~16s |
 
-**Test 4 — Architecture probe: cold tree copy and warm re-read across the live-source-crossing options.** Setup: `BAR-Devtools/scripts/probe_wsl_sync.py` generates a synthetic ~3000-file Lua tree (~600 MB, mimicking BYAR-Chobby's shape) on WSL ext4, then measures cold full-tree copy/read time across the three Option-B sub-mechanisms. Different Windows host than Marek's (Daniel's hardware, Windows 11 + Ubuntu-24.04 WSL2, 2026-05-01). 3 iterations per architecture for (ii) and (iii); (i) is a single hand run.
+**Test 4 — Architecture probe: cold tree copy and warm re-read across the live-source-crossing options.** Setup: `BAR-Devtools/scripts/probe_wsl_sync.py` generates a synthetic ~3000-file Lua tree (~600 MB, mimicking BYAR-Chobby's shape) on WSL ext4, then measures cold full-tree copy/read time across the candidate sync architectures. Different Windows host than Marek's (Daniel's hardware, Windows 11 + Ubuntu-24.04 WSL2, 2026-05-01). 3 iterations per architecture for `win-unc-read`/`win-watchdog-unc`; `wsl-rsync-mntc` is a single hand run; `wsl-watchdog-mntc`, `wsl-inotifywait-mntc`, and `wsl-detect-win-copy` are single-iteration runs from 2026-05-04, n=300 events each (the auto-orchestrator only cross-iterates arms that need `\\wsl$\…` Windows-side coordination).
 
-| Architecture | (a) Cold full-tree | (b) Warm re-read of same tree |
-|---|---|---|
-| (i) WSL ext4 → /mnt/c via rsync | 26.22s | 8.108s (rsync incremental, no changed files) |
-| (ii) Direct `\\wsl$\…` reads from Windows (B.2) | ~31.6s (read-only, mean of 3) | ~31.2s (mean of 3) |
-| (iii) Windows-side watch + copy from `\\wsl$\…` (B.3) | ~43.6s (copy, mean of 3) | n/a (auto-orchestrator skips) |
+Each row is named by a stateless architecture id `<watcher-host>-<event-source>-<destination>`; the parenthetical roman numeral is the historical probe-arm number, kept for cross-reference.
+
+| Architecture | Roman | Sub-option | (a) Cold full-tree | (b) Warm re-read |
+|---|---|---|---|---|
+| `wsl-rsync-mntc` — WSL ext4 → /mnt/c via rsync | (i) | — | 26.22s | 8.108s (rsync incremental, no changed files) |
+| `win-unc-read` — direct `\\wsl$\…` reads from Windows | (ii) | B.2 | ~31.6s (read-only, 3-iter mean) | ~31.2s (3-iter mean) |
+| `win-watchdog-unc` — watcher on Windows, copy from `\\wsl$\…` *(ruled out as Phase-3 candidate; retained as ceiling data point — see caveat)* | (iii) | B.3, watcher-on-Windows | ~43.6s (3-iter mean) | n/a (auto-orchestrator skips) |
+| `wsl-watchdog-mntc` — watcher on WSL (python-watchdog), copy → /mnt/c | (iv) | B.3, watcher-on-WSL | 28.5s | n/a (single-process; no warm re-read step) |
+| `wsl-inotifywait-mntc` — watcher on WSL (inotifywait), copy → /mnt/c | (vi) | B.3, watcher-on-WSL | 28.4s | n/a (single-process; no warm re-read step) |
+| `wsl-detect-win-copy` — WSL inotifywait → UNC-visible event log → Windows python tails + copies UNC→local NTFS | (v) | B.3, split-brain reference | 28.4s | n/a (split-brain; no warm re-read step) |
 
 The decision-relevant figure is (ii)'s warm re-read: it stays at ~31s because *re-reading* through Plan9 still requires a per-file round-trip. Any architecture where the engine re-reads source files over `\\wsl$\…` per gameplay-frame multiplies that 31s read by however many frames touch fresh files. This isolates the cause of Test 1's 7m30s game load to per-file Plan9 read latency, not to one-time sync overhead.
 
 **Test 5 — Architecture probe: sustained dev edit-loop latency.** Same probe script. WSL-side touches 5 random files per second for 60s; the measuring side records end-to-end latency from "file written WSL-side" to "fresh content readable on the Windows side." For (ii) and (iii), 3 iterations pooled, top 1% trimmed (the trim drops single-event Plan9/Defender stalls so they don't swamp the central tendency, but raw max is preserved for visibility). For (i), a single run — there's no Windows-side handshake to coordinate, so the auto orchestrator doesn't apply.
 
-| Architecture | Median (ms) | p95 (ms) | Max trimmed (ms) | Max raw (ms) | n / propagator |
-|---|---|---|---|---|---|
-| (i) WSL → /mnt/c via rsync (poll-rsync @ 200ms) | 7314 | 11090 | — | 11870 | 298 (single hand run) |
-| (ii) Direct `\\wsl$\…` reads (B.2) | **77.4** | 127.4 | 141.3 | 176.1 | 891 / 900 (3 auto iters) |
-| (iii) Windows-side watch + copy (B.3) | **109.5** | 179.3 | 197.6 | 215.1 | 891 / 900 (3 auto iters) |
+| Architecture | Roman | Median (ms) | p95 (ms) | Max trimmed (ms) | Max raw (ms) | n / propagator |
+|---|---|---|---|---|---|---|
+| `wsl-rsync-mntc` (poll-rsync @ 200ms) | (i) | 7314 | 11090 | — | 11870 | 298 (single hand run) |
+| `win-unc-read` (B.2) | (ii) | **77.4** | 127.4 | 141.3 | 176.1 | 891 / 900 (3 auto iters) |
+| `win-watchdog-unc` (B.3, watcher-on-Windows; log-driven poll baseline — *ruled out as candidate, kept as ceiling*) | (iii) | **109.5** | 179.3 | 197.6 | 215.1 | 891 / 900 (3 auto iters) |
+| `wsl-watchdog-mntc` (B.3, watcher-on-WSL; python-watchdog) | (iv) | **97.6** | 160.0 | 175.0 | 181.0 | 297 / 300 |
+| `wsl-inotifywait-mntc` (B.3, watcher-on-WSL; inotifywait \| python copy) | (vi) | **76.0** | 117.9 | 134.5 | 143.1 | 297 / 300 |
+| `wsl-detect-win-copy` (B.3, split-brain reference; inotifywait → UNC log → Win copier) | (v) | **114.9** | 172.5 | 191.1 | 205.2 | 297 / 300 |
 
 Reading:
 
 - **B.2 and B.3 both clear a <500 ms dev-loop threshold** by ~5×. (i)'s rsync-poll architecture does not — at 5 touches/sec the 200 ms poll batches events and the per-tree rescan dominates. So *any* WSL-side-rsync design is dead for sustained edit loops, regardless of which Option-B sub-mechanism we pick.
 - **B.2 wins B.3 on raw probe latency by ~30 ms.** B.2 is one Plan9 round-trip per file; B.3 is Plan9 read + local NTFS write per event. The probe shows the cost of the extra write step.
 - **B.3 wins on what-the-engine-reads-from.** Pairing Test 5 with Test 1: B.2 leaves the engine on Plan9 at gameplay rate (Test 1: 7m30s cold load); B.3 puts the engine on Windows-local NTFS (Test 1: ~24s cold load). B.3's extra ~30 ms median dev-loop latency buys a ~3.5-minute reduction in warm restart time per session.
+- **Caveat on `win-watchdog-unc`'s detection layer (added 2026-05-04).** The (iii) auto-orchestrator drives the Windows-side copier from a WSL-written touch log — explicit log-driven polling, *not* native filesystem events. The Phase-3 production `sync.py` was assumed to do better via `watchdog.observers.Observer`, but Plan 9 does not deliver inotify events to Windows, so that path silently degrades to `PollingObserver` semantics regardless. `win-watchdog-unc`'s 109 ms median therefore reflects the real ceiling for any watcher-on-Windows design — it cannot be improved by "adding fsevents," because the OS layer doesn't have any to give. The watcher-on-WSL arms (iv) and (vi) confirm this: with native inotify on ext4 and writes through /mnt/c, `wsl-watchdog-mntc` lands at 97.6 ms and `wsl-inotifywait-mntc` lands at 76.0 ms — *faster* than (iii) on every percentile despite the extra /mnt/c hop, because they're event-driven instead of poll-driven.
+- **`wsl-detect-win-copy` (split-brain) as reference, not winner.** Detection on WSL (inotifywait), copy on Windows (`shutil.copyfile` from `\\wsl$\…` to local NTFS), with a UNC-visible event-log file as the IPC channel. Median 114.9 ms — *slower* than both single-process WSL-side arms. UNC reads + local-NTFS writes cost more than direct /mnt/c writes, and the IPC complexity (event log + Windows-side python tail) buys nothing. The comparison hardens the recommendation around the single-process `wsl-watchdog-mntc` / `wsl-inotifywait-mntc` family; the split-brain design is documented as a measured-and-rejected alternative, not deferred.
+- **Production pick: `wsl-watchdog-mntc` (iv).** Phase 3 ships with python-watchdog rather than the marginally-faster `wsl-inotifywait-mntc` (vi). The 76 vs 98 ms gap is well below the <500 ms dev-loop target on both arms, and watchdog gives us a single-process Python sync daemon (`scripts/sync.py`) that integrates naturally with `pair_state` (atomic-rename JSON) + Watchman delta queries on cold restart. The inotifywait pipeline saves ~22 ms median but forces a bash + python coprocess split that doubles the moving parts in the daemon.
 - **Methodology footnote.** The probe is a synthetic workload (sequenced touches, 64-byte marker payloads). Real BAR Lua reload involves more files at lower frequency, but is bursty in a way the probe approximates poorly. Read the medians as *floor* numbers the production sync daemon won't beat, not as wall-clock predictions of game-load time. Test 1 is the right reference for game-load wall-clock; Test 5 is the right reference for dev edit-loop responsiveness.
 
 **Implications for Decision 3:**
@@ -234,7 +245,8 @@ Reading:
 - **Test 4** isolates the cost driver behind Test 1: per-file Plan9 read latency, not one-time sync overhead. (ii)'s warm re-read still costs ~31 s for the 3000-file tree, which is what makes B.2 a non-starter for the runtime path even though its dev edit loop tests fast.
 - **Test 5** establishes that the dev edit loop is fine under B.2 *or* B.3 (both well under a 500 ms target); the choice between them is determined by Test 1 / Test 4 on the runtime side, not by edit-loop latency. (i) is also ruled out for the dev edit loop here, but that's already covered by Test 3.
 
-**Action item carried by Daniel/attean:** Tests 4 and 5 above are the first instrumented-sync results on the second hardware profile this action item asked for; the comparison against Marek's measurements is now in. A `bar_launch/plan.md` Probe results section holds the full numbers, raw JSONs, and the implementation sketch under P3.2 / P3.5. Open follow-up: a (0) NTFS-local baseline (tree generated directly on `C:\`, no WSL involvement) is still pending — it would establish the floor for B.3's cold-copy and edit-loop numbers.
+**Action item carried by Daniel/attean:** Tests 4 and 5 above are the instrumented-sync results on the second hardware profile this action item asked for; the comparison against Marek's measurements is now in. Raw JSONs live at `BAR-Devtools/probes/probe-{i,iv,v,vi}.json`. The Phase 3 sync daemon (`BAR-Devtools/scripts/sync.py`) implements arm (iv) `wsl-watchdog-mntc`. Remaining open follow-up:
+  - A (0) NTFS-local baseline (tree generated directly on `C:\`, no WSL involvement) — would establish the floor for B.3's cold-copy and edit-loop numbers. Not load-bearing for the Phase-3 architecture pick — every B.3 arm is already <200 ms p95 and the production daemon also leans on Watchman for incremental cold copies, which the synthetic probe doesn't model.
 
 ---
 

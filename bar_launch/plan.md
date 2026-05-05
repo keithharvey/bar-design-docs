@@ -232,7 +232,7 @@ The dropdown today is genuinely cryptic. A representative slice of what `modinfo
 The reason these are confusing is that they leak three orthogonal axes into one string:
 
 1. **What you want to play** — the menu/lobby (Chobby), the game (BAR), or a replay.
-2. **Which version** — bleeding-edge from `rapid://...:test`, a specific cached release (`$VERSION` is a literal placeholder the engine substitutes from rapid metadata at runtime), or your local checkout.
+2. **Which version** — bleeding-edge from `rapid://...:test`, a specific cached release (`$VERSION` is a literal placeholder that rapid's pack pipeline substitutes at archive-build time, e.g. to `test-3548-a453477`; a raw checkout keeps the literal, and spring registers it as `<name> $VERSION` — which is what chobby's `byar-dev` gameConfig expects), or your local checkout.
 3. **How it boots** — through the AppImage launcher (handles downloads, splash, auto-update) or straight into the engine (faster, no download retry logic, breaks if anything's missing).
 
 Proposal: **invert the UI to be intent-first, with a "show technical details" affordance.**
