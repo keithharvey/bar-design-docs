@@ -1,15 +1,14 @@
-# Recording clipboard
+## Scene 1.5 — Nerd Font
 
-Snippets to paste into the demo machine *off-camera*. Open this file in
-its own window on the recording PC; the script lives in `video_script.md`
-and stays closed so you can't accidentally glance at it on a take.
+```
+winget install --id DEVCOM.JetBrainsMonoNerdFont
+```
+
+Windows Terminal → Settings → Ubuntu profile → Appearance → Font face → `JetBrainsMono Nerd Font`. Save.
+
+Verify in Ubuntu: `echo -e "    "` shows solid glyphs, not tofu boxes.
 
 ## `repos.local.conf` (paste in BEFORE the recorded `just setup::init`)
-
-The video clones from `beyond-all-reason/BAR-Devtools` to stay timeless,
-but for now the launch + editor work lives on a fork branch. After
-`git clone … && cd BAR-Devtools` and *before* the recorded
-`just setup::init`, drop this in:
 
 ```
 # Per-user overrides of repos.conf (gitignored).
@@ -20,42 +19,27 @@ bar_debug_launcher   git@github.com:keithharvey/bar_debug_launcher.git cli
 RecoilEngine         git@github.com:keithharvey/RecoilEngine.git         fix/archivescanner-empty-pool-roots-crash
 ```
 
-Save as `repos.local.conf` in the BAR-Devtools repo root.
-
-Cut the take here so the recording resumes from `just setup::init` and
-the viewer never sees the override file.
-
 ---
 
 ## Scene 6 — paste-able demo edits
 
-Rehearse both before recording; verify exact line numbers on your branch.
-
-**Widget edit — magenta metal bar.** Open
-`Beyond-All-Reason/luaui/Widgets/gui_top_bar.lua`. Find the metal-bar
-color constant (something like `local metalColor = {0.7, 0.75, 0.79, 1}`)
-and replace with:
+**Widget edit — magenta banner overlay.** Open
+`Beyond-All-Reason/luaui/Widgets/gui_top_bar.lua`. (line 1730)
 
 ```lua
-local metalColor = {1, 0, 1, 1}  -- DEMO: hot magenta
+	gl.Color(1, 0, 1, 1)
+	gl.Rect(0, vsy - 50, vsx, vsy)   -- magenta band across the top
+	gl.Color(1, 1, 1, 1)
 ```
 
-Reload in engine chat: `/luaui reload gui_top_bar`. The metal/energy bar
-turns magenta — impossible to miss on camera.
-Backup: change `"Metal"` → `"GLORP"` in the same file.
-
-**Gadget edit — drop a marker on reload.** In any unsynced
-`Beyond-All-Reason/luarules/Gadgets/gui_*.lua`, add inside a draw or
-update callback:
+**Gadget edit — drop a labeled marker.** Open
+`Beyond-All-Reason/luarules/gadgets/gui_display_dps.lua` (unsynced).
+Find `function gadget:GameStart()` or `function gadget:Initialize()`,
 
 ```lua
-Spring.MarkerAddPoint(Spring.GetCameraPosition(), "HELLO FROM GADGET RELOAD", true)
+local cx, cy, cz = Spring.GetCameraPosition()
+Spring.MarkerAddPoint(cx, cy, cz, "HELLO FROM GADGET RELOAD", true)
 ```
-
-Reload: `/luarules reload <gadget_name>`. A labeled marker plops at the
-camera position — visible and spam-able. If the gadget has no per-frame
-callback, fall back to a `Spring.Echo("...")` at init and show the
-engine console with `` Ctrl-` ``.
 
 ---
 

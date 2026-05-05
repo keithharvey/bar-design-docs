@@ -15,6 +15,7 @@ Target runtime: **12–16 min**. Container/engine builds will be cut later.
 
 ## Pre-flight (before recording)
 
+- **Nerd Font installed on Windows** so starship's glyphs render. Quickest path: `winget install --id DEVCOM.JetBrainsMonoNerdFont` (or download from <https://www.nerdfonts.com/font-downloads>). Then in Windows Terminal → Settings → your profile → Appearance → Font face → `JetBrainsMono Nerd Font`. Confirm by running `echo -e "    "` — you should see solid glyphs, not boxes.
 - VS Code installed on **Windows** (not via WSL — Windows install ships the `code` CLI Remote-WSL bridges back).
 - Remote-WSL extension installed once (avoids the 60s "Installing VS Code Server" stall).
 - `wsl --shutdown` + `wsl --unregister Ubuntu-24.04` + reinstall fresh — only way to actually catch missing prereqs.
@@ -43,6 +44,20 @@ wsl -l -v
 ```
 - "Wiped my WSL. Going from nothing to a full BAR dev env — engine, server, autohost, client, working Lua + C++ editor — in one session."
 - Only the fresh Ubuntu should be listed. If anything else, **stop the take**.
+
+## Scene 1.5 — Nerd Font (~45s)
+
+In a Windows PowerShell pane:
+
+```
+winget install --id DEVCOM.JetBrainsMonoNerdFont
+```
+
+Windows Terminal → Settings → Ubuntu profile → Appearance → Font face → `JetBrainsMono Nerd Font`. Save.
+
+- Starship and the dev container emit Unicode glyphs (git branch, status icons, lock symbols). Without a Nerd Font they render as tofu boxes.
+- Font lives on **Windows**, not in the container — container emits codepoints, host terminal renders them.
+- Verify: back in Ubuntu, `echo -e "    "` shows solid glyphs.
 
 ## Scene 2 — Bootstrap `just` (~1m)
 
