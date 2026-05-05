@@ -15,11 +15,11 @@ Target runtime: **12–16 min**. Container/engine builds will be cut later.
 
 ## Pre-flight (before recording)
 
-- **Nerd Font installed on Windows** so starship's glyphs render. Quickest path: `winget install --id DEVCOM.JetBrainsMonoNerdFont` (or download from <https://www.nerdfonts.com/font-downloads>). Then in Windows Terminal → Settings → your profile → Appearance → Font face → `JetBrainsMono Nerd Font`. Confirm by running `echo -e "    "` — you should see solid glyphs, not boxes.
 - VS Code installed on **Windows** (not via WSL — Windows install ships the `code` CLI Remote-WSL bridges back).
 - Remote-WSL extension installed once (avoids the 60s "Installing VS Code Server" stall).
 - `wsl --shutdown` + `wsl --unregister Ubuntu-24.04` + reinstall fresh — only way to actually catch missing prereqs.
-- Pre-launch BAR from Steam once (DirectX/system DLLs).
+- **BAR installed via the official installer** to `C:\Program Files\Beyond-All-Reason\` and launched once. Two reasons: (a) confirms DirectX/VC++ runtimes are present, (b) `link::all` will drop NTFS junctions into `C:\Program Files\Beyond-All-Reason\data\` pointing back at the dev sync target — that dir has to exist. Co-installed with the per-user dev install we set up later; don't uninstall it.
+- **Uninstall the Nerd Font** you installed last take (Settings → Personalization → Fonts → JetBrainsMono Nerd Font → Uninstall). Scene 1.5 demonstrates the install fresh.
 - Close everything except a fresh Ubuntu terminal. No Discord, no notifications.
 - OBS: 1080p / 30fps. Mic check.
 - Decide split-pane layout (engine + sync logs) **before** recording.
@@ -29,7 +29,7 @@ Target runtime: **12–16 min**. Container/engine builds will be cut later.
 |---|---|
 | Lua hover/completion | `Beyond-All-Reason/luaui/Widgets/cmd_attack_aoe.lua` |
 | Widget reload demo | `Beyond-All-Reason/luaui/Widgets/gui_top_bar.lua` |
-| Gadget reload demo | any unsynced gadget under `Beyond-All-Reason/luarules/Gadgets/gui_*.lua` |
+| Gadget reload demo | `Beyond-All-Reason/luarules/gadgets/gui_display_dps.lua` |
 | C++ clangd | `RecoilEngine/rts/Game/Game.cpp` |
 | C++ header hover | `RecoilEngine/rts/Sim/Units/Unit.h` |
 
@@ -80,8 +80,9 @@ just setup::init
 - Front-loads every interactive question at the top — features, SSH choice, springsettings, editor wiring, extension install — **then runs unattended**.
 - If a prompt fires mid-build, that's a regression. Stop and file it.
 - Answers to pick: all four features, SSH `op` if 1Password else `manual`, yes symlinks, yes editor, yes extensions, yes uninstall sumneko if asked.
-- During distrobox build: container is the toolchain habitat (emmylua_ls, emmylua_check, clangd, stylua, lx, watchman). Exported to host PATH but actually run inside.
+- During distrobox build: container is the toolchain habitat (emmylua_ls, emmylua_check, clangd, stylua, lx, watchman). Exported to host PATH via `distrobox-export` but actually run inside.
 - During engine build: Recoil builds **for Windows natively**, which is why the sync target is Windows-side.
+- One UAC prompt during the symlinks step — that's wiring our dev install into BAR's data dir. Click Yes.
 - At end: read the summary block aloud — that's the value just delivered.
 
 ## Scene 4 — Lua + EmmyLua (~2m)
@@ -121,11 +122,11 @@ Second pane:
 just bar::sync-logs
 ```
 - Left = dev shell, right = sync log.
-- **Widget edit:** in `gui_top_bar.lua`, swap the metal-bar color to magenta `{1, 0, 1, 1}`. Save.
-- Sync-log line appears <100ms — read it: "bytes I just saved are on Windows side."
-- In engine: `Enter` → `/luaui reload gui_top_bar` → top bar turns magenta.
-- **Gadget edit:** add a `Spring.MarkerAddPoint(..., "HELLO FROM GADGET RELOAD", true)` line to your chosen unsynced gadget. Save → log line → `/luarules reload <gadget>` → marker appears.
-- "Edit, save, reload — three seconds, no rebuild. Old SMB-over-WSL setup took ~1s per file. Probe data in `bar-design-docs/bar_launch/probes/`."
+- **Widget edit:** in `gui_top_bar.lua`, inject the magenta banner snippet at the top of `widget:DrawScreen()` (line 1730). Snippet in `recording_clipboard.md`. Save.
+- Sync-log line appears with a latency suffix: `mirrored luaui/Widgets/gui_top_bar.lua (87ms)`. Read it: "edit-to-Windows in 87 milliseconds — that's the architecture earning its keep." The 100ms floor is the coalesce window; below that is just the rsync delta.
+- In engine: `Enter` → `/luaui reload gui_top_bar` → magenta band across the top.
+- **Gadget edit:** in `gui_display_dps.lua`, add the `Spring.MarkerAddPoint(...)` snippet (clipboard). Save → another `mirrored ... (Nms)` log line → `/luarules reload gui_display_dps` → labeled marker drops at camera position, visible in 3D and on the minimap.
+- "Edit, save, reload — sub-second sync, manual reload, no rebuild. Old SMB-over-WSL setup took ~1s per file. Probe data in `bar-design-docs/bar_launch/probes/`."
 
 ## Scene 7 — `bar::stop` (~30s)
 
@@ -159,6 +160,8 @@ just bar::stop
 | Clangd red squiggles everywhere | `compile_commands.json` symlink missing | `just setup::editor` |
 | Clangd 60s+ hover delay | First-time index | Pre-warm before recording |
 | Sync-log doesn't show saved file | Watchman not started / daemon died / path not watched | `cat $BAR_DEVSYNC_DIR/.bar-launch/sync.log` |
+| UAC prompt times out / cancelled during setup::init | Distracted, missed the dialog | Re-run `just link::all` to retry the symlink step alone |
+| First `bar::launch` does a 60-90s "cold copy" | Expected — it's the watchman clock seed | Subsequent launches go through the incremental branch (sub-second) |
 | `/luaui reload` does nothing visible | Wrong widget name or non-visible edit | Different widget; rehearse |
 | `bar::launch` exits, no engine window | Sync didn't finish or shim is stale | `just bar::regen-shim`, retry |
 | `bar::stop` "killed" but PID survives | Different user / AV | Narrate as known caveat |
