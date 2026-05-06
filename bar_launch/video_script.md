@@ -1,13 +1,17 @@
+
 # `just bar::launch` demo — recording script
 
-Talking-points format: command first, then bullets of what to cover while
-it runs. Ramble freely; the bullets are the things that *must* land.
+* Show system settings
 
-The demo proves four things:
-1. Fresh WSL2 → running engine in one session.
-2. Editor integration is one recipe (Lua via emmylua, C++ via clangd).
-3. Real dev loop: edit Lua, save, hot-reload, see it.
-4. `bar::launch` / `bar::stop` are symmetric and idempotent.
+* The demo proves four things:
+
+    1. Fresh WSL2 → running engine in one session.
+
+    2. Editor integration
+
+    3. Real dev loop: edit Lua, save, hot-reload, see it.
+
+    4. `bar::launch` / `bar::stop` are symmetric and idempotent.
 
 Target runtime: **12–16 min**. Container/engine builds will be cut later.
 
@@ -16,12 +20,13 @@ Target runtime: **12–16 min**. Container/engine builds will be cut later.
 ## Pre-flight (before recording)
 
 - VS Code installed on **Windows** (not via WSL — Windows install ships the `code` CLI Remote-WSL bridges back).
-- Remote-WSL extension installed once (avoids the 60s "Installing VS Code Server" stall).
+- Remote-WSL extension removed (reinstall live from PowerShell: `code --install-extension ms-vscode-remote.remote-wsl`) — or just rely on `setup::init` to wire it.
 - `wsl --shutdown` + `wsl --unregister Ubuntu-24.04` + reinstall fresh — only way to actually catch missing prereqs.
 - **BAR installed via the official installer** to `C:\Program Files\Beyond-All-Reason\` and launched once. Two reasons: (a) confirms DirectX/VC++ runtimes are present, (b) `link::all` will drop NTFS junctions into `C:\Program Files\Beyond-All-Reason\data\` pointing back at the dev sync target — that dir has to exist. Co-installed with the per-user dev install we set up later; don't uninstall it.
 - **Uninstall the Nerd Font** you installed last take (Settings → Personalization → Fonts → JetBrainsMono Nerd Font → Uninstall). Scene 1.5 demonstrates the install fresh.
 - Close everything except a fresh Ubuntu terminal. No Discord, no notifications.
-- OBS: 1080p / 30fps. Mic check.
+- Open System Settings
+- Bind a global hotkey to start recording (CTRTL+f9) and pause recording (CTRL+F10)
 - Decide split-pane layout (engine + sync logs) **before** recording.
 - Pin the demo files in advance — don't hunt on camera:
 
@@ -42,7 +47,7 @@ The actual edit snippets to paste live in `recording_clipboard.md`.
 ```
 wsl -l -v
 ```
-- "Wiped my WSL. Going from nothing to a full BAR dev env — engine, server, autohost, client, working Lua + C++ editor — in one session."
+- "Wiped WSL, visual studio code, and . Going to use the new dev tools to set my environment up like I would normally."
 - Only the fresh Ubuntu should be listed. If anything else, **stop the take**.
 
 ## Scene 1.5 — Nerd Font (~45s)
@@ -62,7 +67,8 @@ Windows Terminal → Settings → Ubuntu profile → Appearance → Font face �
 ## Scene 2 — Bootstrap `just` (~1m)
 
 ```
-git clone https://github.com/beyond-all-reason/BAR-Devtools.git
+git clone https://github.com/keithharvey/BAR-Devtools.git
+git remote add upstream https://github.com/beyond-all-reason/BAR-Devtools.git
 cd BAR-Devtools
 bash scripts/bootstrap.sh
 exec "$SHELL" -l
@@ -100,7 +106,7 @@ code .
 
 ## Scene 5 — C++ + clangd (~2m)
 
-- Open the C++ demo file.
+- Open the C++ demo file. LuaSyncedCtrl.cpp
 - Hover a method → full type sig. Go-to-Definition → jumps cross-file. `unit->` → autocomplete.
 - Clangd needs `compile_commands.json`; setup::editor ran cmake with `-DCMAKE_EXPORT_COMPILE_COMMANDS=ON` and symlinked it into the repo root.
 - If indexing, let it finish — first run takes a couple minutes.
