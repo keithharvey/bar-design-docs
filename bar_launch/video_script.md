@@ -47,7 +47,8 @@ The actual edit snippets to paste live in `recording_clipboard.md`.
 ```
 wsl -l -v
 ```
-- "Wiped WSL, visual studio code, and . Going to use the new dev tools to set my environment up like I would normally."
+
+- "Wiped WSL. Going to use the new dev tools to set my environment up like I would normally."
 - Only the fresh Ubuntu should be listed. If anything else, **stop the take**.
 
 ## Scene 1.5 — Nerd Font (~45s)
@@ -61,8 +62,6 @@ winget install --id DEVCOM.JetBrainsMonoNerdFont
 Windows Terminal → Settings → Ubuntu profile → Appearance → Font face → `JetBrainsMono Nerd Font`. Save.
 
 - Starship and the dev container emit Unicode glyphs (git branch, status icons, lock symbols). Without a Nerd Font they render as tofu boxes.
-- Font lives on **Windows**, not in the container — container emits codepoints, host terminal renders them.
-- Verify: back in Ubuntu, `echo -e "    "` shows solid glyphs.
 
 ## Scene 2 — Bootstrap `just` (~1m)
 
@@ -84,8 +83,6 @@ just --version
 just setup::init
 ```
 - Front-loads every interactive question at the top — features, SSH choice, springsettings, editor wiring, extension install — **then runs unattended**.
-- If a prompt fires mid-build, that's a regression. Stop and file it.
-- Answers to pick: all four features, SSH `op` if 1Password else `manual`, yes symlinks, yes editor, yes extensions, yes uninstall sumneko if asked.
 - During distrobox build: container is the toolchain habitat (emmylua_ls, emmylua_check, clangd, stylua, lx, watchman). Exported to host PATH via `distrobox-export` but actually run inside.
 - During engine build: Recoil builds **for Windows natively**, which is why the sync target is Windows-side.
 - One UAC prompt during the symlinks step — that's wiring our dev install into BAR's data dir. Click Yes.

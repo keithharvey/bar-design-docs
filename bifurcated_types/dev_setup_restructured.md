@@ -1,7 +1,7 @@
-# Dev Setup (RFC)
+# BAR Repo Dev Setup (RFC)
 
 *Authors:* Daniel/attean. *Contributors:* Marek, FlameInk.
-*Last update:* Apr 26, 2026
+*Last update:* May 4, 2026
 
 This is an RFC, not a decision. It enumerates the problems we have today, the options for addressing each, and the recommendations. Each decision below is independently reviewable — adopting one does not require adopting the others.
 
@@ -9,11 +9,11 @@ See the overall coordinating issue for context: [Beyond-All-Reason/issues/7408](
 
 ## Review table
 
-To be filled in manually by people that reviewed the document and the content looks correct to them. LGTM does not mean approval of the proposed solution, merely accuracy of the document.
+To be filled in manually by people that reviewed the document and the content looks correct to them. **LGTM does not mean approval** of the proposed solution, merely accuracy of the document that feedback is represented.
 
 | Reviewer | Date | Status | Notes |
 |---|---|---|---|
-| Marek | Apr 26, 2026 | Waiting | Waiting for confirmation there is no feedback / no-changes after I made changes to the doc |
+| Marek | May 3, 2026 | Waiting | Just waiting for doc to become stable. |
 | Thule | Apr 24, 2026 | Pending | |
 | *(put your name here)* | | Pending | |
 
@@ -40,7 +40,7 @@ This proposal bundles five separable decisions. Each can be adopted, rejected, o
 |---|---|---|
 | 1 | Lua package manager (Lux) | Continue vendoring + submodules |
 | 2 | Cross-host toolchain consistency mechanism | Continue per-host install |
-| 3 | Where contributors run the toolchain on Windows | WSL is currently implicit; alternatives are mingw/native |
+| 3 | Where contributors run the toolchain on Windows | WSL is currently implicit; alternatives are msys2/native |
 | 4 | Task runner (`just`) | Currently in BAR-Devtools |
 | 5 | Where the shared scripts/recipes live (BAR-Devtools repo vs in-tree) | Currently in BAR-Devtools |
 
@@ -66,6 +66,7 @@ This proposal bundles five separable decisions. Each can be adopted, rejected, o
 | Branch merge conflicts | Conflicts in vendored files contributors didn't write | Lockfile conflicts trivially resolvable | Same as A |
 | Publish side (recoil-lua-library) | Doesn't address | Native | Doesn't address |
 | Contributor install cost | None | One-time `lx install` (hidden behind setup); `lx sync` when packages drift | None |
+| Supported by deployment infra | Yes | No — deployment computes version changes by inspecting git-tracked files; non-git-tracked `.lux/` requires infra work to support. Hard blocker until resolved. | Yes |
 
 ### Verified concerns
 
@@ -77,7 +78,7 @@ This proposal bundles five separable decisions. Each can be adopted, rejected, o
 - **Marek/p2004a — A (Status quo) / unconvinced of B:** At the current number of dependencies we have, adding a package manager might be just not worth it. This is not Node.js/Rust world where it's required, a lot of issues with current way of dealing with dependencies might be a matter of better repo hygiene. I've played a bit with Lux, it's pre v1, and quite immature making some parts of the setup more annoying than they could be. But that's just opinion: if we decide to add a package manager, especially given how messy Lux is, having scripts in repo that set all up correctly is effectively a *requirement* and manual setup is not viable at all.
 - **FlameInk (Nikita) — A or C (maintainer-only vendoring):** Not yet convinced making every contributor install `lx` is justified. Position: a single maintainer runs `lx`, commits the resulting `lib/` to the repo; other contributors `git pull` and have what they need without ever touching the package manager. The PR-review-noise cost can be mitigated via PR descriptions naming dependency directories; blame fidelity rarely matters for library code in practice. *Open question raised:* if Decision 3 mandates WSL anyway, the per-contributor `lx install` cost is moot — `lx` is already in the container.
 - **Watch Fort — B is acceptable**, sequence packaging one-at-a-time after toolchain lands. "Rip 1 package at a time after this lands" — consistent with the deferred entries (`—`) in the Specific Deps table below.
-- **Boneless** — against vendoring third-party code (per PR #5902 review, pending verification). Specific positions on package-manager-vs-vendoring need re-reading from the review thread before being characterized further.
+- **Boneless** — against vendoring third-party code (per PR #5902 review, pending verification). Specific positions on package-manager-vs-vendoring need re-reading from the review thread before being characterized further. *(See Open Question #5.)*
 - **Sprunk** — *"i don't think i've weighed in on any actual details, but on earlier discord discussions i have been supportive towards the general effort. keep in mind i am entirely unaffected by the changes though so am happy to take arbitrarily bad tradeoffs just to see what happens"* ([quote](https://discord.com/channels/549281623154229250/1494629570077266030/1496954973555134576)).
 
 ### Specific deps
@@ -88,7 +89,7 @@ Candidates for Lux migration. The **"In this PR stack?"** column tracks what's d
 |---|---|---|---|
 | `kikito/i18n.lua` | Vendored, drifted from upstream | Lux dep (consume existing rock; on `lux-i18n` branch in PR attached to tracking issue) | ✓ |
 | `recoil-lua-library` | Git submodule | Lux git dep. Later possibly a lua rock published by Recoil | — |
-| `common/luaUtilities/json.lua` | Vendored, drift status unknown | `dkjson` rock (already a test dep) | — |
+| `common/luaUtilities/json.lua` | Vendored, drift status unknown | `dkjson` rock (already a test dep). Out of scope. | — |
 | `common/luaUtilities/serpent.lua` | Vendored | Upstream `serpent` rock | — |
 | `common/luaUtilities/base64.lua`, `utf8.lua` | Vendored | TBD per package | — |
 
@@ -104,22 +105,22 @@ Future deps go through normal review.
 ### Options
 
 - **A. Status quo (no shared mechanism).** When tools are adopted, each contributor installs stylua/luacheck/EmmyLua/`lx` at whatever version their extension manager has.
-- **B. Containerized toolchain (distrobox in both cases — running natively on Linux, inside WSL on Windows).** Tools live inside a container at versions pinned to match CI. Editor on the host calls into the container.
+- **B. Shared scripts setting up toolchain.** Some scripting layer (Decision 3) automatically installs and sets up core project dependencies and tools. Most basic-users don't need to care much about details.
 - **C. Pinned versions per-host with thorough docs.** Each contributor installs the exact pinned version themselves.
 
 ### Tradeoffs
 
-| Axis | A: Per-host | B: Container | C: Pinned per-host |
+| Axis | A: Per-host | B: Shared scripts | C: Pinned per-host |
 |---|---|---|---|
 | Reproducibility of CI failures locally | Variable | Reliable | Possible (relies on contributor diligence) |
-| Initial install complexity | Variable | One container install | High — N tools at specific versions |
-| Per-tool update cost | Per-contributor | One container rebuild | Per-contributor |
-| Works without any new infra | Yes | No (needs distrobox/WSL) | Yes |
+| Initial install complexity | Variable | Running provided scripting layer | High — N tools at specific versions |
+| Per-tool update cost | Per-contributor | Re-running scripting | Per-contributor |
+| Works without any new infra | Yes | No | Yes |
 
 ### Recommendation(s)
 
-- **Daniel/attean — B (Containerized toolchain):** Per-host has worked historically because there was nothing to be consistent with; once CI gates exist, per-host produces "works on my machine" failures.
-- **Marek/p2004a — cross-cutting framing:** The shared scripting layer (BAR-Devtools) is fine to exist; the actual dispute is whether BAR-the-game-repo takes a hard dep on it. That makes Decision 2 a question of "do contributors *need* the container at all", which is bound up with Decision 3's answer. *(No specific A/B/C position stated.)*
+- **Daniel/attean — B:** Per-host has worked historically because there was nothing to be consistent with; once CI gates exist, per-host produces "works on my machine" failures.
+- **Marek/p2004a — B:** If we adopt a package manager (Decision 1), and if we require styling, then given the complexity of setting up those tools manually, B is a requirement. That is entirely separate from whatever shape BAR-Devtools takes — i.e. *a* solution is needed, not necessarily the currently-presented one.
 
 ---
 
@@ -129,11 +130,10 @@ Future deps go through normal review.
 
 ### Options
 
-- **A. Windows-native + mingw/msys2.** All tools installed natively on Windows, possibly via msys2 for the bash-flavored ones. No virtualization.
-- **B. Windows-native game/engine + WSL for toolchain only.** Edit, build, and run the game on Windows native. Cross to WSL only to run lint/format/type-check/test commands. Source-of-truth for game Lua lives in WSL ext4; the engine, running natively on Windows, needs to read those files at gameplay rate. **How the live source crosses the boundary is a sub-decision** with three live answers — call them B.1, B.2, B.3 — measured in Tests 4–5 below:
-  - **B.1 — Pure symlink.** Windows symlink: `<install>/data/BAR.sdd → \\wsl$\<distro>\home\<u>\code\Beyond-All-Reason`. Simplest possible mechanism; this is the path Marek's Test 1 measures, and the result (7m30s cold load, 4m10s warm, mid-game freezes) rules it out.
-  - **B.2 — Direct UNC reads at runtime.** No symlink, no copy: configure the engine to read directly from `\\wsl$\<distro>\…`. Probe Test 5 says the dev edit loop is fast under this scheme (77 ms median), but Test 1 shows the engine itself can't read this way at gameplay rate — same Plan9 path, same 7m30s game-load problem.
-  - **B.3 — Watch + copy → Windows-local NTFS.** A small watcher observes the WSL source tree and mirrors changes to a Windows-local NTFS sync target; the engine reads the local NTFS copy. Probe Test 5 shows the dev edit loop tolerates this at 109 ms median (≈30 ms slower than B.2) for the watcher-on-Windows variant, and the engine reads from native NTFS — i.e. ≈24 s warm load per Test 1's all-Windows baseline. **This is the recommended sub-option.** *Open sub-axis (added 2026-05-04): which side runs the watcher.* `win-watchdog-unc` (watcher on Windows) **is ruled out as a Phase-3 candidate** — Plan 9 doesn't deliver inotify across the boundary, so any watcher library on Windows degrades to polling regardless of how it advertises itself. Its 109 ms number stays in the tables as the *ceiling* for the watcher-on-Windows class, not as a live option. The actual Phase-3 candidates are the watcher-on-WSL designs: `wsl-watchdog-mntc` / `wsl-inotifywait-mntc` (single-process, copy through /mnt/c) and `wsl-detect-win-copy` (split-brain reference; WSL detects, Windows copies). Numbers pending; the (iv)-vs-(v) comparison decides whether B.3 ships single-process or split-brain. Implementation sketch in `bar_launch/plan.md` P3.2 / P3.5.
+- **A. Windows-native + msys2.** All tools installed natively on Windows, possibly via msys2 for the bash-flavored ones. No virtualization.
+- **B. Windows-native game/engine + WSL for toolchain only.** Edit, build, and run the game on Windows native. Cross to WSL only to run lint/format/type-check/test commands. Source-of-truth for game Lua lives in WSL ext4; the engine, running natively on Windows, needs to read those files at gameplay rate. **How the live source crosses the boundary is a sub-decision** with two substrate-level answers — call them B.1 and B.2 — measured in Tests 5–6 below:
+  - **~~B.1 — Engine reads from `\\wsl$\…` (Plan9/9P).~~** Any setup where the runtime read path crosses into WSL ext4 via the 9P server: Windows symlink to `\\wsl$\<distro>\…`, direct UNC reads configured in the engine, or any "native WSL driver" mount that's still 9P under the hood. Marek's Test 1 measures the symlink variant (7m30s cold, 4m10s warm, freezes mid-load); Test 5's (ii) measures the direct-UNC variant (~31s warm re-read of a 3000-file tree). Both bottom out in per-file Plan9 round-trips at gameplay rate. **Ruled out by Test 1.**
+  - **B.2 — Engine reads from Windows-local NTFS (mirror of WSL source).** Engine reads native NTFS; a propagation layer keeps a Windows-local copy in sync with the WSL ext4 source-of-truth. Propagation mechanism is an implementation detail with its own measurements: Test 5's (iii) measures Windows-side watch+copy at ~43.6 s cold full-tree copy, Test 6's (iii) measures it at 109 ms median sustained edit-loop latency. (Test 6's (i) WSL-side rsync also lands engine on local NTFS, but its 7.3 s sustained-loop median rules it out for the sustained-edit case.) Engine-side cold load matches Test 1's all-Windows baseline (~24 s warm). **This is the recommended sub-option.** Within B.2, the propagation question has further sub-detail — see Sub-tradeoffs and Test 6 below for the (iii)/(iv)/(v)/(vi) comparison. *Open sub-axis (added 2026-05-04): which side runs the watcher.* `win-watchdog-unc` (watcher on Windows) **is ruled out as a Phase-3 candidate** — Plan 9 doesn't deliver inotify across the boundary, so any watcher library on Windows degrades to polling regardless of how it advertises itself. Its 109 ms number stays in the tables as the *ceiling* for the watcher-on-Windows class, not as a live option. The actual Phase-3 candidates are the watcher-on-WSL designs: `wsl-watchdog-mntc` / `wsl-inotifywait-mntc` (single-process, copy through /mnt/c) and `wsl-detect-win-copy` (split-brain reference; WSL detects, Windows copies). The (iv)-vs-(v) comparison decides whether B.2 ships single-process or split-brain. Implementation sketch in `bar_launch/plan.md` P3.2 / P3.5.
 - **C. Everything in WSL.** Edit, build, and run inside WSL. *(Rejected: 16 GiB-RAM machines crash, GPU passthrough is fragile, and it forces a Linux shell on contributors who don't want one.)*
 - **D. PowerShell-everywhere.** Write all recipes in PowerShell Core, which runs on Linux too. Avoids WSL entirely.
 
@@ -150,31 +150,49 @@ Future deps go through normal review.
 
 #### Sub-tradeoffs within Option B (live-source-crossing mechanism)
 
-| Axis | B.1: Symlink | B.2: UNC reads | B.3: Watch + copy |
-|---|---|---|---|
-| Engine read substrate | `\\wsl$\…` Plan9 | `\\wsl$\…` Plan9 | Windows-local NTFS |
-| Game cold load (per Test 1 substrate equivalence) | **7m30s** (measured) | ~7m30s (same Plan9 path) | ~24s (NTFS path) |
-| Edit-loop median latency (per Test 5) | n/a — filesystem semantics, not a propagation step | 77 ms | 109 ms |
-| Implementation cost | None (just `mklink /D`) | None (no sync layer) | Small Windows-side watcher process |
-| Dev source-of-truth | WSL ext4 | WSL ext4 | WSL ext4 (Windows copy is read-only mirror) |
-| Failure mode if Plan9 hiccups | Game freeze (Test 1) | Game freeze | Edit-loop latency spike; gameplay unaffected |
+| Axis | B.1: Engine on Plan9 | B.2: Engine on Windows-local NTFS |
+|---|---|---|
+| Propagation mechanisms that land here | Windows symlink to `\\wsl$\…`, direct UNC reads, "native WSL driver" mounts (all 9P under the hood) | Windows-side watch+copy (recommended), watcher-on-WSL (production pick), WSL-side rsync (ruled out for edit loop) |
+| Game cold load (per Test 1 substrate equivalence) | **7m30s** (symlink, measured); ~7m30s expected for any Plan9 variant | ~24s (matches all-Windows NTFS baseline) |
+| Engine read cost per file at runtime | One or more Plan9 round-trips per read (Test 5 (ii): ~31s warm re-read of 3000-file tree) | Native NTFS read |
+| Edit-loop median latency (per Test 6) | 77 ms (Test 6 (ii) — direct UNC variant) | 76–115 ms across (iii)/(iv)/(v)/(vi); 7.3 s for (i) rsync-poll (ruled out) |
+| Implementation cost | None (just `mklink /D`) | Small watcher process (WSL-side or Windows-side) |
+| Dev source-of-truth | WSL ext4 | WSL ext4 (Windows copy is read-only mirror) |
+| Failure mode if Plan9 hiccups | Game freeze mid-frame (Test 1's repeated freezes) | Delay before /luarules or /luaui reload effects appear in-game; live gameplay unaffected (engine isn't on Plan9) |
 
 ### Recommendation(s)
 
-- **Daniel/attean — B (Windows-native game/engine + WSL for toolchain only), specifically B.3 (Windows-side watch + copy):** Game/engine stay Windows-native where the platform support and runtime characteristics are best; toolchain (lint, format, type-check, test, codemod, package install) runs in WSL where the tools' native habitat is. The live-source-crossing problem inside Option B is solved by sub-option B.3 — a small Windows-side watcher mirrors `\\wsl$\…` to local NTFS so the engine reads from native NTFS at gameplay rate, while the dev edit loop tolerates the Plan9 boundary at ~109 ms median (Tests 4–5 below; full numbers and implementation sketch in `bar_launch/plan.md` Probe results and P3.2 / P3.5). B.1 (pure symlink) and B.2 (direct UNC reads) are ruled out by Test 1's game-load measurement: both leave the engine reading source files through Plan9, which produces 7m30s cold loads. Option A remains a real fallback if WSL friction proves too high overall. Option D is technically viable but requires writing all recipes twice in practice (bash + PowerShell, since most of the underlying tools have bash-shaped entry points).
-- **Marek/p2004a — D (PowerShell / dual native).** I don't like the idea of making the development not-accessible or less performant for the majority of our contributors, especially the less technical ones. I don't like WSL because it's not only system complexity and overhead (additional tens of GiB of disc, virtualization, containers and so on just to run a few tools) but also with high probability of constant performance impact (e.g. formatting potentially taking tens of seconds vs <1s).
+- **Daniel/attean — B (Windows-native game/engine + WSL for toolchain only), specifically B.2 (engine on Windows-local NTFS):** Game/engine stay Windows-native where the platform support and runtime characteristics are best; toolchain (lint, format, type-check, test, codemod, package install) runs in WSL where the tools' native habitat is. The live-source-crossing problem inside Option B is solved by sub-option B.2 — a small watcher mirrors `\\wsl$\…` to local NTFS so the engine reads from native NTFS at gameplay rate, while the dev edit loop tolerates the boundary at ~76–115 ms median (Tests 5–6 below; full numbers and implementation sketch in `bar_launch/plan.md` Probe results and P3.2 / P3.5). B.1 (any "engine on Plan9" mechanism — symlink, direct UNC reads, native-driver mounts) is ruled out by Test 1's game-load measurement: leaving the engine reading source files through Plan9 produces 7m30s cold loads. Option A remains a real fallback if WSL friction proves too high overall.
 
-  Even if more complex in implementation, "PowerShell"-only or "PowerShell for Windows + bash for Linux" is viable and provides the smoothest experience for Windows users: NONE additional setup — you fork the repo, you double-click `install.cmd` in Windows Explorer and you are 100% done.
+  - **On Option D specifically.** Mechanically viable, per Marek's [PR #7533](https://github.com/beyond-all-reason/Beyond-All-Reason/pull/7533). Decisions 3 and 4 are separable in principle but coupled in practice via contributor workflow. Lint, format, type-check, integration tests, and codemod are operations a BAR contributor uses every day — they're *BAR contributor concerns*. They happen to be hosted in BAR-Devtools because that's where shared tooling lives, but where the implementation files sit is an organizational question; what substrate they require is a runtime question, and that's what drives the Decision 3 analysis.
 
-  To not speak entirely out of my ass I've built a Proof-of-Concept that works like that for the package manager: [PR #7533](https://github.com/beyond-all-reason/Beyond-All-Reason/pull/7533). (Yeah, it's not pretty, but that's not what I'm optimizing for.)
+    The load-bearing example today is **codemod**, which uses cargo + Rust because that was the best substrate for the tooling it needed (full-moon parser). But codemod is just the first instance of a pattern I expect to recur: every future dev tool will face the same "what substrate fits this best?" question, and the answers will be heterogeneous — Rust for one, Python for another, Go for a third. A unified bash + Linux substrate makes the BAR ↔ BAR-Devtools edge blurry in the helpful direction for all of them: new tools land wherever they fit best, contributors invoke them through the same shell regardless of what's underneath, and the line between "this lives in BAR" and "this lives in BAR-Devtools" stops being a contributor-facing distinction. Less maintenance per new tool (a reliable dev container acting as "host", no twin-implementation tax for a PowerShell half-measure), less contributor friction (one shell to learn, one set of conventions), tighter feedback when adding tooling. Integration tests are the firm-substrate case — they need Docker, BAR-Devtools provides that today, BAR doesn't host it or handle setting up that tooling (bit of a strawman because we **could** do that independent of BAR-Devtools, but I'm not certain anyone wants to maintain that) — but the substrate need is BAR's regardless of repo location.
 
-  To be honest, the current description of option A is a little bit not-defined-enough for me to say whether it's viable or not.
-- **FlameInk (Nikita) — open question:** Which BAR-Devtools tools actually require WSL/distrobox vs. running natively on Windows? The answer determines how much of the per-contributor cost calculus in Decision 1 still holds. *(Threads into Open Question below about mingw/msys2 viability.)*
+    Going PowerShell-native on Decision 3 while keeping cross-repo tooling Linux-substrate-shaped means contributors live in two shells (PowerShell for edit/build/run, Linux for everything else), and adding new tooling has to pick a side or be implemented twice. The consistent alternative is going PowerShell-native on the cross-repo tooling too — rewriting the integration pipeline, the CI, Lux, and codemod orchestration in PowerShell. That's consistent by construction (no parallel implementations), but the downside is *what* it's consistent on; that lands in the contributor-pool note below.
+
+    One additional contributor-pool note: bash literacy is broader than PowerShell literacy in the OSS contributor pool. Most active contributors have bash on hand (Linux native, Git Bash or WSL2 on Windows); PowerShell is Windows-default but typically not installed on Linux/macOS, even though PowerShell Core is technically cross-platform. Picking PowerShell for shared tooling raises the entry bar for contributors generally; WSL2 raises it for Windows contributors only, in a path Microsoft ships and supports natively.
+
+    Admittedly, this recommendation is predicting (and conflating) an outcome for Decision 4 (even though 4 is a little narrow focusing on `just` — we could rewrite that decision or add a Decision 6 to better decide "does BAR have isolated tooling or re-use the scripting layer") — that cross-repo tooling stays Linux-substrate-shaped. Flipping that — committing to PowerShell-native cross-repo tooling — would change the Decision 3 analysis, but it's that flip, not Decision 3 in isolation, that's the load-bearing question. Most of this conflation comes from reaching for a comprehensive, unified tooling story — one dispatch interface, heterogeneous recipes underneath. I think that makes sense for BAR's needs today — but when we include the entire project's scripting and maintenance needs it becomes a landslide. Removing seams for contributors has real benefits, and the unified-tooling pull is what keeps merging Decisions 3 and 4 in my head, even though they're separable in principle.
+
+- **Marek/p2004a — preferred D (PowerShell / dual native), B.2 fully conditional on feedback and testing.** I don't like the idea of making the development not-accessible or less performant for the majority of our contributors, especially the less technical ones. I don't like WSL because of system complexity and overhead (additional tens of GiB of disc, virtualization, containers and so on just to run a few tools for the main game repo). B.2 should — with more work — be able to mitigate most of the performance impact by introducing additional running services and live-replicating files from WSL2, but it is more complicated, there are corner cases like mirror modifications that need additional handling logic, etc.
+
+  "PowerShell"-only or "PowerShell for Windows + bash for Linux" is viable and provides the smoothest experience for Windows users: NONE additional setup — you fork the repo, you double-click `install.cmd` in Windows Explorer and you are 100% done. To not speak entirely out of my ass I've built a Proof-of-Concept that works like that for the package manager: [PR #7533](https://github.com/beyond-all-reason/Beyond-All-Reason/pull/7533). (Yeah, it's not pretty, but that's not what I'm optimizing for.)
+
+  The current description of option A is a little bit not-defined-enough for me to say whether it's viable or not. It is highly dependent on how implementation will look like.
+
+  But:
+  - if we get in practice consistent positive feedback for the proposed B.2 tooling from the majority of contributors, especially the less technical ones,
+  - folks do not run into issues and the overheads end up being acceptable in practice,
+  - the complexity doesn't blow up due to complexities with reliable synchronization (it's all custom code that needs to be maintained!),
+
+  …then Option B.2 is viable and has some benefits: there are already people that want to work on *that specific solution*, and there are fewer people experienced with PowerShell (though that's mitigated greatly with LLMs).
+
+- **FlameInk (Nikita) — open question:** Which BAR-Devtools tools actually require WSL/distrobox vs. running natively on Windows? The answer determines how much of the per-contributor cost calculus in Decision 1 still holds. *(Threads into Open Question below about msys2 viability.)*
 
 ### Open questions
 
 - What's the actual filesystem-perf cost of WSL ↔ Windows for BAR's build/test loop today? *(Marek measured a baseline on his hardware — see [Cost of crossing the WSL boundary](#cost-of-crossing-the-wsl-boundary). Daniel to add an option-B baseline + workaround attempts on his hardware as a jumping-off point for performance improvements.)*
-- Is `mingw/msys2` viable for `lx`, `emmylua_check`, and `clangd` natively on Windows without WSL? *(Daniel to investigate.)*
+- Is msys2 viable for `lx`, `emmylua_check`, and `clangd` natively on Windows without WSL? *(Daniel to investigate.)*
 
 ### Cost of crossing the WSL boundary
 
@@ -201,52 +219,67 @@ Marek measured WSL↔Windows boundary-crossing costs on his hardware (laptop, AM
 | Native Windows, files on Windows | ~0.9s |
 | WSL, files on Windows (cross) | ~16s |
 
-**Test 4 — Architecture probe: cold tree copy and warm re-read across the live-source-crossing options.** Setup: `BAR-Devtools/scripts/probe_wsl_sync.py` generates a synthetic ~3000-file Lua tree (~600 MB, mimicking BYAR-Chobby's shape) on WSL ext4, then measures cold full-tree copy/read time across the candidate sync architectures. Different Windows host than Marek's (Daniel's hardware, Windows 11 + Ubuntu-24.04 WSL2, 2026-05-01). 3 iterations per architecture for `win-unc-read`/`win-watchdog-unc`; `wsl-rsync-mntc` is a single hand run; `wsl-watchdog-mntc`, `wsl-inotifywait-mntc`, and `wsl-detect-win-copy` are single-iteration runs from 2026-05-04, n=300 events each (the auto-orchestrator only cross-iterates arms that need `\\wsl$\…` Windows-side coordination).
+**Test 4 — Sync game files from WSL to Windows drive via rsync.** Marek's hardware. Optimized for the Windows target — excluding `.git` metadata, dropping permission/timestamp comparison, syncing on modification timestamp + size:
+
+```
+rsync -rltv --omit-dir-times --whole-file --inplace \
+    --exclude='/.git' --filter=':- .gitignore' --delete-after \
+    /home/p2004a/Workspace/BAR/Beyond-All-Reason/ \
+    /mnt/c/Users/marek/Workspace/Beyond-All-Reason-copied/
+```
+
+| Run | Runtime |
+|---|---|
+| Initial file copy | ~9m10s |
+| Repeated runs, no files modified (sync-status check) | ~2m0s |
+
+**Test 5 — Architecture probe: cold tree copy and warm re-read across the live-source-crossing options.** Setup: `BAR-Devtools/scripts/probe_wsl_sync.py` generates a synthetic ~3000-file Lua tree (~600 MB, mimicking BYAR-Chobby's shape) on WSL ext4, then measures cold full-tree copy/read time across the candidate sync architectures. Different Windows host than Marek's (Daniel's hardware, Windows 11 + Ubuntu-24.04 WSL2, 2026-05-01). 3 iterations per architecture for `win-unc-read`/`win-watchdog-unc`; `wsl-rsync-mntc` is a single hand run; `wsl-watchdog-mntc`, `wsl-inotifywait-mntc`, and `wsl-detect-win-copy` are single-iteration runs from 2026-05-04, n=300 events each (the auto-orchestrator only cross-iterates arms that need `\\wsl$\…` Windows-side coordination).
 
 Each row is named by a stateless architecture id `<watcher-host>-<event-source>-<destination>`; the parenthetical roman numeral is the historical probe-arm number, kept for cross-reference.
 
 | Architecture | Roman | Sub-option | (a) Cold full-tree | (b) Warm re-read |
 |---|---|---|---|---|
-| `wsl-rsync-mntc` — WSL ext4 → /mnt/c via rsync | (i) | — | 26.22s | 8.108s (rsync incremental, no changed files) |
-| `win-unc-read` — direct `\\wsl$\…` reads from Windows | (ii) | B.2 | ~31.6s (read-only, 3-iter mean) | ~31.2s (3-iter mean) |
-| `win-watchdog-unc` — watcher on Windows, copy from `\\wsl$\…` *(ruled out as Phase-3 candidate; retained as ceiling data point — see caveat)* | (iii) | B.3, watcher-on-Windows | ~43.6s (3-iter mean) | n/a (auto-orchestrator skips) |
-| `wsl-watchdog-mntc` — watcher on WSL (python-watchdog), copy → /mnt/c | (iv) | B.3, watcher-on-WSL | 28.5s | n/a (single-process; no warm re-read step) |
-| `wsl-inotifywait-mntc` — watcher on WSL (inotifywait), copy → /mnt/c | (vi) | B.3, watcher-on-WSL | 28.4s | n/a (single-process; no warm re-read step) |
-| `wsl-detect-win-copy` — WSL inotifywait → UNC-visible event log → Windows python tails + copies UNC→local NTFS | (v) | B.3, split-brain reference | 28.4s | n/a (split-brain; no warm re-read step) |
+| `wsl-rsync-mntc` — WSL ext4 → /mnt/c via rsync | (i) | B.2, WSL-side rsync | 26.22s | 8.108s (rsync incremental, no changed files) |
+| `win-unc-read` — direct `\\wsl$\…` reads from Windows | (ii) | B.1 (Plan9 substrate) | ~31.6s (read-only, 3-iter mean) | ~31.2s (3-iter mean) |
+| `win-watchdog-unc` — watcher on Windows, copy from `\\wsl$\…` *(ruled out as Phase-3 candidate; retained as ceiling data point — see caveat)* | (iii) | B.2, watcher-on-Windows | ~43.6s (3-iter mean) | n/a (auto-orchestrator skips) |
+| `wsl-watchdog-mntc` — watcher on WSL (python-watchdog), copy → /mnt/c | (iv) | B.2, watcher-on-WSL | 28.5s | n/a (single-process; no warm re-read step) |
+| `wsl-inotifywait-mntc` — watcher on WSL (inotifywait), copy → /mnt/c | (vi) | B.2, watcher-on-WSL | 28.4s | n/a (single-process; no warm re-read step) |
+| `wsl-detect-win-copy` — WSL inotifywait → UNC-visible event log → Windows python tails + copies UNC→local NTFS | (v) | B.2, split-brain reference | 28.4s | n/a (split-brain; no warm re-read step) |
 
 The decision-relevant figure is (ii)'s warm re-read: it stays at ~31s because *re-reading* through Plan9 still requires a per-file round-trip. Any architecture where the engine re-reads source files over `\\wsl$\…` per gameplay-frame multiplies that 31s read by however many frames touch fresh files. This isolates the cause of Test 1's 7m30s game load to per-file Plan9 read latency, not to one-time sync overhead.
 
-**Test 5 — Architecture probe: sustained dev edit-loop latency.** Same probe script. WSL-side touches 5 random files per second for 60s; the measuring side records end-to-end latency from "file written WSL-side" to "fresh content readable on the Windows side." For (ii) and (iii), 3 iterations pooled, top 1% trimmed (the trim drops single-event Plan9/Defender stalls so they don't swamp the central tendency, but raw max is preserved for visibility). For (i), a single run — there's no Windows-side handshake to coordinate, so the auto orchestrator doesn't apply.
+**Test 6 — Architecture probe: sustained dev edit-loop latency.** Same probe script. WSL-side touches 5 random files per second for 60s; the measuring side records end-to-end latency from "file written WSL-side" to "fresh content readable on the Windows side." For (ii) and (iii), 3 iterations pooled, top 1% trimmed (the trim drops single-event Plan9/Defender stalls so they don't swamp the central tendency, but raw max is preserved for visibility). For (i), a single run — there's no Windows-side handshake to coordinate, so the auto orchestrator doesn't apply.
 
 | Architecture | Roman | Median (ms) | p95 (ms) | Max trimmed (ms) | Max raw (ms) | n / propagator |
 |---|---|---|---|---|---|---|
 | `wsl-rsync-mntc` (poll-rsync @ 200ms) | (i) | 7314 | 11090 | — | 11870 | 298 (single hand run) |
-| `win-unc-read` (B.2) | (ii) | **77.4** | 127.4 | 141.3 | 176.1 | 891 / 900 (3 auto iters) |
-| `win-watchdog-unc` (B.3, watcher-on-Windows; log-driven poll baseline — *ruled out as candidate, kept as ceiling*) | (iii) | **109.5** | 179.3 | 197.6 | 215.1 | 891 / 900 (3 auto iters) |
-| `wsl-watchdog-mntc` (B.3, watcher-on-WSL; python-watchdog) | (iv) | **97.6** | 160.0 | 175.0 | 181.0 | 297 / 300 |
-| `wsl-inotifywait-mntc` (B.3, watcher-on-WSL; inotifywait \| python copy) | (vi) | **76.0** | 117.9 | 134.5 | 143.1 | 297 / 300 |
-| `wsl-detect-win-copy` (B.3, split-brain reference; inotifywait → UNC log → Win copier) | (v) | **114.9** | 172.5 | 191.1 | 205.2 | 297 / 300 |
+| `win-unc-read` (B.1) | (ii) | **77.4** | 127.4 | 141.3 | 176.1 | 891 / 900 (3 auto iters) |
+| `win-watchdog-unc` (B.2, watcher-on-Windows; log-driven poll baseline — *ruled out as candidate, kept as ceiling*) | (iii) | **109.5** | 179.3 | 197.6 | 215.1 | 891 / 900 (3 auto iters) |
+| `wsl-watchdog-mntc` (B.2, watcher-on-WSL; python-watchdog) | (iv) | **97.6** | 160.0 | 175.0 | 181.0 | 297 / 300 |
+| `wsl-inotifywait-mntc` (B.2, watcher-on-WSL; inotifywait \| python copy) | (vi) | **76.0** | 117.9 | 134.5 | 143.1 | 297 / 300 |
+| `wsl-detect-win-copy` (B.2, split-brain reference; inotifywait → UNC log → Win copier) | (v) | **114.9** | 172.5 | 191.1 | 205.2 | 297 / 300 |
 
 Reading:
 
-- **B.2 and B.3 both clear a <500 ms dev-loop threshold** by ~5×. (i)'s rsync-poll architecture does not — at 5 touches/sec the 200 ms poll batches events and the per-tree rescan dominates. So *any* WSL-side-rsync design is dead for sustained edit loops, regardless of which Option-B sub-mechanism we pick.
-- **B.2 wins B.3 on raw probe latency by ~30 ms.** B.2 is one Plan9 round-trip per file; B.3 is Plan9 read + local NTFS write per event. The probe shows the cost of the extra write step.
-- **B.3 wins on what-the-engine-reads-from.** Pairing Test 5 with Test 1: B.2 leaves the engine on Plan9 at gameplay rate (Test 1: 7m30s cold load); B.3 puts the engine on Windows-local NTFS (Test 1: ~24s cold load). B.3's extra ~30 ms median dev-loop latency buys a ~3.5-minute reduction in warm restart time per session.
+- **(ii) and the watch+copy arms (iii)/(iv)/(v)/(vi) all clear a <500 ms dev-loop threshold** by ~5×. (i)'s rsync-poll architecture does not — at 5 touches/sec the 200 ms poll batches events and the per-tree rescan dominates. So *any* WSL-side-rsync design is dead for sustained edit loops, regardless of which Option-B substrate we pick.
+- **B.1 (UNC-read) wins watch+copy on raw probe latency by ~30 ms.** (ii) is one Plan9 round-trip per file; the watch+copy arms are Plan9 read + local NTFS write per event (or inotify + /mnt/c write for the WSL-side variants). The probe shows the cost of the extra write step.
+- **The dev-loop ranking inverts under runtime substrate.** Pairing Test 6 with Test 1: B.1 leaves the engine on Plan9 at gameplay rate (Test 1: 7m30s cold load); B.2 puts the engine on Windows-local NTFS (Test 1: ~24s cold load). The extra ~30 ms median dev-loop latency buys a ~3.5-minute reduction in warm restart time per session, which is why B.2 (watch+copy) is the recommended sub-option even though B.1 is faster on the dev loop in isolation.
 - **Caveat on `win-watchdog-unc`'s detection layer (added 2026-05-04).** The (iii) auto-orchestrator drives the Windows-side copier from a WSL-written touch log — explicit log-driven polling, *not* native filesystem events. The Phase-3 production `sync.py` was assumed to do better via `watchdog.observers.Observer`, but Plan 9 does not deliver inotify events to Windows, so that path silently degrades to `PollingObserver` semantics regardless. `win-watchdog-unc`'s 109 ms median therefore reflects the real ceiling for any watcher-on-Windows design — it cannot be improved by "adding fsevents," because the OS layer doesn't have any to give. The watcher-on-WSL arms (iv) and (vi) confirm this: with native inotify on ext4 and writes through /mnt/c, `wsl-watchdog-mntc` lands at 97.6 ms and `wsl-inotifywait-mntc` lands at 76.0 ms — *faster* than (iii) on every percentile despite the extra /mnt/c hop, because they're event-driven instead of poll-driven.
 - **`wsl-detect-win-copy` (split-brain) as reference, not winner.** Detection on WSL (inotifywait), copy on Windows (`shutil.copyfile` from `\\wsl$\…` to local NTFS), with a UNC-visible event-log file as the IPC channel. Median 114.9 ms — *slower* than both single-process WSL-side arms. UNC reads + local-NTFS writes cost more than direct /mnt/c writes, and the IPC complexity (event log + Windows-side python tail) buys nothing. The comparison hardens the recommendation around the single-process `wsl-watchdog-mntc` / `wsl-inotifywait-mntc` family; the split-brain design is documented as a measured-and-rejected alternative, not deferred.
 - **Production pick: `wsl-watchdog-mntc` (iv).** Phase 3 ships with python-watchdog rather than the marginally-faster `wsl-inotifywait-mntc` (vi). The 76 vs 98 ms gap is well below the <500 ms dev-loop target on both arms, and watchdog gives us a single-process Python sync daemon (`scripts/sync.py`) that integrates naturally with `pair_state` (atomic-rename JSON) + Watchman delta queries on cold restart. The inotifywait pipeline saves ~22 ms median but forces a bash + python coprocess split that doubles the moving parts in the daemon.
-- **Methodology footnote.** The probe is a synthetic workload (sequenced touches, 64-byte marker payloads). Real BAR Lua reload involves more files at lower frequency, but is bursty in a way the probe approximates poorly. Read the medians as *floor* numbers the production sync daemon won't beat, not as wall-clock predictions of game-load time. Test 1 is the right reference for game-load wall-clock; Test 5 is the right reference for dev edit-loop responsiveness.
+- **Methodology footnote.** The probe is a synthetic workload (sequenced touches, 64-byte marker payloads). Real BAR Lua reload involves more files at lower frequency, but is bursty in a way the probe approximates poorly. Read the medians as *floor* numbers the production sync daemon won't beat, not as wall-clock predictions of game-load time. Test 1 is the right reference for game-load wall-clock; Test 6 is the right reference for dev edit-loop responsiveness.
 
 **Implications for Decision 3:**
 
-- **Test 1** is decisive for the *runtime* path: any path that has the engine read source files across the WSL↔Windows boundary at game-load time is a non-starter. Inside Option B this rules out B.1 (pure symlink) and B.2 (direct UNC reads); B.3 (Windows-side watch + copy) is the only sub-option that puts the engine on Windows-local NTFS at gameplay rate.
+- **Test 1** is decisive for the *runtime* path: any path that has the engine read source files across the WSL↔Windows boundary at game-load time is a non-starter. Inside Option B this rules out B.1 (any "engine on Plan9" mechanism — symlink, direct UNC reads, native-driver mounts); B.2 (engine on Windows-local NTFS via watch+copy) is the only sub-option that puts the engine on Windows-local NTFS at gameplay rate.
 - **Test 2** is not directly relevant to Option B as proposed — Option B runs the engine natively on Windows (cross-compiled via `docker-build-v2`), not inside WSL. The 1–2 fps figure applies to a "run the AppImage in WSL" path nobody is advocating; included here for completeness.
 - **Test 3** is the cost driver for *developer* loop tools: anything inside WSL that walks the BAR tree (`bar::check-errors`, `bar::lint`, `bar::test`, the codemod) reads source files. If those files live on NTFS and the tool runs on ext4, every recipe is ~17× slower. Implication: BAR source repo should live inside WSL (`~/Beyond-All-Reason`, ext4), with sync-out to the Windows install dir for the runtime path.
-- **Test 4** isolates the cost driver behind Test 1: per-file Plan9 read latency, not one-time sync overhead. (ii)'s warm re-read still costs ~31 s for the 3000-file tree, which is what makes B.2 a non-starter for the runtime path even though its dev edit loop tests fast.
-- **Test 5** establishes that the dev edit loop is fine under B.2 *or* B.3 (both well under a 500 ms target); the choice between them is determined by Test 1 / Test 4 on the runtime side, not by edit-loop latency. (i) is also ruled out for the dev edit loop here, but that's already covered by Test 3.
+- **Test 4** establishes the WSL→Windows rsync sync-cost ceiling on Marek's hardware: 9m10s initial copy, ~2m for repeated no-change runs. Together with Test 6's (i) sustained-loop result this rules out WSL-side rsync as a live propagation mechanism for B.2.
+- **Test 5** isolates the cost driver behind Test 1: per-file Plan9 read latency, not one-time sync overhead. (ii)'s warm re-read still costs ~31 s for the 3000-file tree, which is what makes B.1 a non-starter for the runtime path even though its dev edit loop tests fast.
+- **Test 6** establishes that the dev edit loop is fine under B.1 *or* B.2 (both well under a 500 ms target); the choice between them is determined by Test 1 / Test 5 on the runtime side, not by edit-loop latency. (i) is also ruled out for the dev edit loop here, but that's already covered by Test 4.
 
-**Action item carried by Daniel/attean:** Tests 4 and 5 above are the instrumented-sync results on the second hardware profile this action item asked for; the comparison against Marek's measurements is now in. Raw JSONs live at `BAR-Devtools/probes/probe-{i,iv,v,vi}.json`. The Phase 3 sync daemon (`BAR-Devtools/scripts/sync.py`) implements arm (iv) `wsl-watchdog-mntc`. Remaining open follow-up:
-  - A (0) NTFS-local baseline (tree generated directly on `C:\`, no WSL involvement) — would establish the floor for B.3's cold-copy and edit-loop numbers. Not load-bearing for the Phase-3 architecture pick — every B.3 arm is already <200 ms p95 and the production daemon also leans on Watchman for incremental cold copies, which the synthetic probe doesn't model.
+**Action item carried by Daniel/attean:** Tests 5 and 6 above are the instrumented-sync results on the second hardware profile this action item asked for; the comparison against Marek's measurements is now in. Raw JSONs live at `BAR-Devtools/probes/probe-{i,iv,v,vi}.json`. The Phase 3 sync daemon (`BAR-Devtools/scripts/sync.py`) implements arm (iv) `wsl-watchdog-mntc`. Remaining open follow-up:
+  - A (0) NTFS-local baseline (tree generated directly on `C:\`, no WSL involvement) — would establish the floor for B.2's cold-copy and edit-loop numbers. Not load-bearing for the Phase-3 architecture pick — every B.2 watch+copy arm is already <200 ms p95 and the production daemon also leans on Watchman for incremental cold copies, which the synthetic probe doesn't model.
 
 ---
 
@@ -331,7 +364,7 @@ These are CI-side decisions about the BAR codebase itself, not about contributor
 |---|---|---|
 | `just setup::init` | One-shot: container, tools, editor extensions, settings | First-time setup |
 | `just setup::editor` | Editor integration only (LSPs, extensions, settings) | Editor reinstall |
-| `just bar::test` | Unit + integration tests | Before PR |
+| `just bar::test` | Unit + integration tests | Before PR (also runs in CI) |
 | `just bar::check` | Type-check (EmmyLua) | Before PR (also runs in CI) |
 | `just bar::fmt` | Format (stylua) | Before PR (also runs in CI) |
 | `just bar::lint` | Lint (luacheck) | Before PR (also runs in CI) |
@@ -444,8 +477,8 @@ BAR-Devtools installs both via `cargo binstall` (which fetches prebuilt binaries
 Consolidated from the per-decision sections:
 
 1. ~~Does `lx` require MSVC unconditionally on Windows?~~ **Verified: no.** See Decision 1 → Verified concerns. Only fires for rocks with C sources or when Lua isn't already installed; BAR's deps are pure-Lua and msys2/WSL provide Lua 5.1.
-2. What is the actual filesystem-perf cost of WSL ↔ Windows for BAR's build/test loop today? *(Marek measured a baseline on his hardware — see Tests 1–3. Daniel added Tests 4–5 on a second hardware profile, which give an instrumented comparison of B.1/B.2/B.3. Still open: a (0) NTFS-local control to anchor the floor, plus a third hardware profile if anyone has time.)*
-3. Is `mingw/msys2` viable as a Windows-native alternative to WSL for `lx`, `emmylua_check`, and `clangd`? *(Daniel to investigate.)*
+2. What is the actual filesystem-perf cost of WSL ↔ Windows for BAR's build/test loop today? *(Marek measured a baseline on his hardware — see Tests 1–4. Daniel added Tests 5–6 on a second hardware profile, which give an instrumented comparison of B.1 vs B.2. Still open: a (0) NTFS-local control to anchor the floor, plus a third hardware profile if anyone has time.)*
+3. Is msys2 viable as a Windows-native alternative to WSL for `lx`, `emmylua_check`, and `clangd`? *(Daniel to investigate.)*
 4. How many third-party Lua deps does BAR realistically grow to over the next 12 months? *(Stakeholders to estimate; affects cost-benefit of Decision 1.)*
 5. If `recoil-lua-library` moves to Lux, what's the migration path for downstream consumers (CircuitAI, other Recoil-based games)? *(Recoil maintainers' input needed.)*
 
@@ -489,19 +522,16 @@ The PR itself is good work: SHA pinning, no-admin repo-local install, the `_run.
   - **Closure under tool addition.** The PoC achieves *reproducibility* of an already-pinned set of tools via SHA + lockfile — that's real and it's what the PowerShell PoC already gives us today. What the container path adds is that the property carries automatically for any new tool: `apt install -y X` extends the set without writing a new bootstrap module per tool. The PoC pattern requires roughly N × per-tool-bootstrap as the toolchain grows; the container is closed under addition. That's the property comparison; "WSL is reproducible, PoC is not" was a false framing on my part.
   - **Single-implementation contribution surface.** When I said "anyone can extend rather than just consume," I didn't mean licensing — both paths are open source by construction. I meant practical contribution friction: a single implementation means a fix lands once, in one place, in the language the existing contributor pool is already comfortable with (bash). A bifurcated scripting layer (bash *and* PowerShell as parallel trees) means writing fixes twice, testing twice, and triaging which side a bug lives in. The "half of the codebase" framing assumed that bifurcation case — bash on Linux + PowerShell on Windows. If the proposal were instead PowerShell-only as the *single* implementation across both platforms, then "half" is wrong; it'd be the whole. But that's a much larger commitment (rewriting the existing bash recipes in PowerShell) that should be costed separately.
 
-  Even with some hacky rsync workarounds to manage the WSL boundary cost (see Marek's measurements above), I read the trade as still favoring WSL — but the boundary-cost data shifts the implementation work the WSL path needs to do. The promised second-hardware-profile baseline is now in (Tests 4–5 above): the watch+copy workaround (B.3) lands the dev edit loop at 109 ms median while keeping the engine on Windows-local NTFS, so the runtime path stays close to the all-Windows baseline. That's the workaround-quality number the trade was waiting on.
+  Even with some hacky rsync workarounds to manage the WSL boundary cost (see Marek's measurements above), I read the trade as still favoring WSL — but the boundary-cost data shifts the implementation work the WSL path needs to do. The promised second-hardware-profile baseline is now in (Tests 5–6 above): the watch+copy workaround (B.2) lands the dev edit loop at 109 ms median while keeping the engine on Windows-local NTFS, so the runtime path stays close to the all-Windows baseline. That's the workaround-quality number the trade was waiting on.
 - **Where this leaves the disagreement.** Decoupled from "should cross-repo orchestration be native" (we agree it shouldn't) and from "is mandatory adoption acceptable" (we agree organic adoption is preferable; the question is whether BAR-the-game-repo's CI gates create de-facto mandatory adoption). The remaining live question is: *for the main-repo day-to-day surface, can a Windows-native path stay maintainable as the toolchain grows past one tool?* That's an empirical question better answered by the msys2-viability investigation (Open Question #3) than by re-arguing principles.
 
 ### Marek (p2004a)
 
-Per-decision positions are inline under each Decision's Recommendation(s) section. These are cross-cutting positions that span multiple decisions.
+Per-decision positions are inline under each Decision's Recommendation(s) section. These are cross-cutting positions that inform multiple decisions or sit outside any one of them.
 
-- **The cross-repo scripting layer (BAR-Devtools) is fine to exist; the dispute is whether BAR-the-game-repo takes a hard dep on it.** Frames Decisions 2, 3, and 5 collectively.
-- **Distinct scopes: cross-repo orchestration vs. main-repo day-to-day workflow.** Marek explicitly does *not* care whether BAR-Devtools' cross-repo orchestration is Windows-native — that surface affects 90%+ of main-repo contributors not at all. The position is about main-repo dev tooling specifically: lint, format, type-check, test, codemod, package install. Argues against making *that* surface require WSL/distrobox; supports organic adoption of cross-repo tooling for those who want it.
-- **PowerShell-cross-repo is not the proposal.** Marek concurs that the pattern in [PR #7533](https://github.com/beyond-all-reason/Beyond-All-Reason/pull/7533) is not the right shape for cross-repo tooling and is not maintainable at that scale. The PoC is scoped to demonstrating that the *main-repo* surface can install a single tool (`lx`) without mandating WSL.
-- **Mandatory vs. organic adoption.** Cross-repo orchestration tooling should not be a requirement of contributing to the main game repo; organic adoption by contributors who find it valuable is the right shape. The question this raises for the proposal: do the proposed CI gates create *de-facto* mandatory adoption of BAR-Devtools, even if it isn't formally required?
-- **Optimize for the majority Windows contributor base** — they're also the least experienced; simplicity for them outweighs elegance for Linux contributors. Frames evaluation criteria across all decisions involving contributor-facing tooling.
-- **`common/luaUtilities` repackaging needs a stronger motivation.** If something is genuinely useful, it should end up provided by the engine. Affects the Specific Deps table direction in Decision 1.
+- **Optimize for the majority Windows contributor base and less experienced folks** — simplicity, usability, and performance impact outweigh in my mind the "single scripting layer" cleanness and neatness of having to write only scripting for Linux.
+- **The cross-repo scripting layer (BAR-Devtools) is fine to exist — it can be helpful; the dispute is whether BAR-the-game-repo takes a hard dep on it.** The useful tooling is … useful. Just don't force people to adopt it; prefer organic growth and organic adoption via providing better experience, not forcing because there is no alternative.
+- **PowerShell-on-Linux is a real alternative** that would avoid WSL friction for Windows contributors. Duplicating implementation and having a PowerShell implementation for Windows + bash implementation for Linux *could* maybe also be viable.
 
 ### WatchTheFort
 

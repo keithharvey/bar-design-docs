@@ -1,6 +1,12 @@
 ## Scene 1 — Open
-
 ```
+@"
+[wsl2]
+memory=8GB
+processors=4                                                                                                       
+swap=12GB                
+"@ | Set-Content $env:USERPROFILE\.wslconfig; wsl --shutdown
+
 wsl -l -v
 ```
 
