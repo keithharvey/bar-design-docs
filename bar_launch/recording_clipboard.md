@@ -9,9 +9,9 @@ Get-ComputerInfo
 
 @"
 [wsl2]
-memory=8GB
-processors=4                                                                                                       
-swap=12GB                
+memory=12GB
+swap=8GB
+processors=4
 "@ | Set-Content $env:USERPROFILE\.wslconfig; wsl --shutdown
 
 wsl -l -v
@@ -23,8 +23,6 @@ wsl --install -d Ubuntu-24.04
 
 ### Starship (in Ubuntu, after bootstrap)
 
-
-In Ubuntu:
 ```sh
 curl -sS https://starship.rs/install.sh | sh
 echo 'eval "$(starship init bash)"' >> ~/.bashrc && exec bash
@@ -39,12 +37,10 @@ mkdir code
 cd code
 git clone https://github.com/keithharvey/BAR-Devtools.git
 cd BAR-Devtools
-git remote add upstream git@github.com:beyond-all-reason/BAR-Devtools.git
 
 cat > repos.local.conf <<'EOF'
 @local_root ~/code
 @protocol ssh
-
 bar_debug_launcher   git@github.com:keithharvey/bar_debug_launcher.git  cli
 RecoilEngine         git@github.com:keithharvey/RecoilEngine.git         fix/archivescanner-empty-pool-roots-crash
 EOF
@@ -55,7 +51,6 @@ exec "$SHELL" -l
 just --version
 ```
 
-## `repos.local.conf` (paste in BEFORE the recorded `just setup::init`)
 
 ## Scene 3 — `just setup::init`
 
@@ -67,18 +62,15 @@ just setup::init
 
 ```sh
 just bar::launch
-```
-
-Second pane:
-
-```sh
+just bar::log
+## second pane
 just bar::sync-logs
 ```
 ## Scene 5 — Lua + EmmyLua
 
 ```sh
-cd Beyond-All-Reason
-code .
+cd ~/code
+code RecoilEngine/ Beyond-All-Reason/
 ```
 
 ## Scene 6 - the dev loop
