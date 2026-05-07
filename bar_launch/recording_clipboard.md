@@ -12,7 +12,7 @@ Get-ComputerInfo
 memory=12GB
 swap=8GB
 processors=4
-"@ | Set-Content $env:USERPROFILE\.wslconfig; wsl --shutdown
+"@ | Set-Content $env:USERPROFILE\.wslconfig;
 
 wsl -l -v
 wsl --install -d Ubuntu-24.04
@@ -21,7 +21,7 @@ wsl --install -d Ubuntu-24.04
 
 **Start a new terminal**
 
-### Starship (in Ubuntu, after bootstrap)
+### Starship
 
 ```sh
 curl -sS https://starship.rs/install.sh | sh
@@ -66,12 +66,14 @@ just bar::log
 ## second pane
 just bar::sync-logs
 ```
-## Scene 5 — Lua + EmmyLua
+## Scene 5 — Lua + EmmyLua + clangd
 
 ```sh
 cd ~/code
 code RecoilEngine/ Beyond-All-Reason/
 ```
+
+Open "gui_top_bar.lua", show Problems/EmmyLua working
 
 ## Scene 6 - the dev loop
 ---
