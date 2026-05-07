@@ -81,6 +81,7 @@ just --version
 
 ```
 just setup::init
+just bar::launch
 ```
 - Front-loads every interactive question at the top — features, SSH choice, springsettings, editor wiring, extension install — **then runs unattended**.
 - During distrobox build: container is the toolchain habitat (emmylua_ls, emmylua_check, clangd, stylua, lx, watchman). Exported to host PATH via `distrobox-export` but actually run inside.

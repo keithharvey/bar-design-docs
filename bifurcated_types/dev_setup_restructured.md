@@ -120,7 +120,7 @@ Future deps go through normal review.
 ### Recommendation(s)
 
 - **Daniel/attean — B:** Per-host has worked historically because there was nothing to be consistent with; once CI gates exist, per-host produces "works on my machine" failures.
-- **Marek/p2004a — B:** If we adopt a package manager (Decision 1), and if we require styling, then given the complexity of setting up those tools manually, B is a requirement. That is entirely separate from whatever shape BAR-Devtools takes — i.e. *a* solution is needed, not necessarily the currently-presented one.
+- **Marek/p2004a — cross-cutting framing:** The shared scripting layer (BAR-Devtools) is fine to exist; the actual dispute is whether BAR-the-game-repo takes a hard dep on it. That makes Decision 2 a question of "do contributors *need* the container at all", which is bound up with Decision 3's answer. *(No specific A/B/C position stated.)*
 
 ---
 
@@ -174,19 +174,13 @@ Future deps go through normal review.
 
     Admittedly, this recommendation is predicting (and conflating) an outcome for Decision 4 (even though 4 is a little narrow focusing on `just` — we could rewrite that decision or add a Decision 6 to better decide "does BAR have isolated tooling or re-use the scripting layer") — that cross-repo tooling stays Linux-substrate-shaped. Flipping that — committing to PowerShell-native cross-repo tooling — would change the Decision 3 analysis, but it's that flip, not Decision 3 in isolation, that's the load-bearing question. Most of this conflation comes from reaching for a comprehensive, unified tooling story — one dispatch interface, heterogeneous recipes underneath. I think that makes sense for BAR's needs today — but when we include the entire project's scripting and maintenance needs it becomes a landslide. Removing seams for contributors has real benefits, and the unified-tooling pull is what keeps merging Decisions 3 and 4 in my head, even though they're separable in principle.
 
-- **Marek/p2004a — preferred D (PowerShell / dual native), B.2 fully conditional on feedback and testing.** I don't like the idea of making the development not-accessible or less performant for the majority of our contributors, especially the less technical ones. I don't like WSL because of system complexity and overhead (additional tens of GiB of disc, virtualization, containers and so on just to run a few tools for the main game repo). B.2 should — with more work — be able to mitigate most of the performance impact by introducing additional running services and live-replicating files from WSL2, but it is more complicated, there are corner cases like mirror modifications that need additional handling logic, etc.
+- **Marek/p2004a — D (PowerShell / dual native).** I don't like the idea of making the development not-accessible or less performant for the majority of our contributors, especially the less technical ones. I don't like WSL because it's not only system complexity and overhead (additional tens of GiB of disc, virtualization, containers and so on just to run a few tools) but also with high probability of constant performance impact (e.g. formatting potentially taking tens of seconds vs <1s).
 
-  "PowerShell"-only or "PowerShell for Windows + bash for Linux" is viable and provides the smoothest experience for Windows users: NONE additional setup — you fork the repo, you double-click `install.cmd` in Windows Explorer and you are 100% done. To not speak entirely out of my ass I've built a Proof-of-Concept that works like that for the package manager: [PR #7533](https://github.com/beyond-all-reason/Beyond-All-Reason/pull/7533). (Yeah, it's not pretty, but that's not what I'm optimizing for.)
+  Even if more complex in implementation, "PowerShell"-only or "PowerShell for Windows + bash for Linux" is viable and provides the smoothest experience for Windows users: NONE additional setup — you fork the repo, you double-click `install.cmd` in Windows Explorer and you are 100% done.
 
-  The current description of option A is a little bit not-defined-enough for me to say whether it's viable or not. It is highly dependent on how implementation will look like.
+  To not speak entirely out of my ass I've built a Proof-of-Concept that works like that for the package manager: [PR #7533](https://github.com/beyond-all-reason/Beyond-All-Reason/pull/7533). (Yeah, it's not pretty, but that's not what I'm optimizing for.)
 
-  But:
-  - if we get in practice consistent positive feedback for the proposed B.2 tooling from the majority of contributors, especially the less technical ones,
-  - folks do not run into issues and the overheads end up being acceptable in practice,
-  - the complexity doesn't blow up due to complexities with reliable synchronization (it's all custom code that needs to be maintained!),
-
-  …then Option B.2 is viable and has some benefits: there are already people that want to work on *that specific solution*, and there are fewer people experienced with PowerShell (though that's mitigated greatly with LLMs).
-
+  To be honest, the current description of option A is a little bit not-defined-enough for me to say whether it's viable or not.
 - **FlameInk (Nikita) — open question:** Which BAR-Devtools tools actually require WSL/distrobox vs. running natively on Windows? The answer determines how much of the per-contributor cost calculus in Decision 1 still holds. *(Threads into Open Question below about msys2 viability.)*
 
 ### Open questions
@@ -527,11 +521,14 @@ The PR itself is good work: SHA pinning, no-admin repo-local install, the `_run.
 
 ### Marek (p2004a)
 
-Per-decision positions are inline under each Decision's Recommendation(s) section. These are cross-cutting positions that inform multiple decisions or sit outside any one of them.
+Per-decision positions are inline under each Decision's Recommendation(s) section. These are cross-cutting positions that span multiple decisions.
 
-- **Optimize for the majority Windows contributor base and less experienced folks** — simplicity, usability, and performance impact outweigh in my mind the "single scripting layer" cleanness and neatness of having to write only scripting for Linux.
-- **The cross-repo scripting layer (BAR-Devtools) is fine to exist — it can be helpful; the dispute is whether BAR-the-game-repo takes a hard dep on it.** The useful tooling is … useful. Just don't force people to adopt it; prefer organic growth and organic adoption via providing better experience, not forcing because there is no alternative.
-- **PowerShell-on-Linux is a real alternative** that would avoid WSL friction for Windows contributors. Duplicating implementation and having a PowerShell implementation for Windows + bash implementation for Linux *could* maybe also be viable.
+- **The cross-repo scripting layer (BAR-Devtools) is fine to exist; the dispute is whether BAR-the-game-repo takes a hard dep on it.** Frames Decisions 2, 3, and 5 collectively.
+- **Distinct scopes: cross-repo orchestration vs. main-repo day-to-day workflow.** Marek explicitly does *not* care whether BAR-Devtools' cross-repo orchestration is Windows-native — that surface affects 90%+ of main-repo contributors not at all. The position is about main-repo dev tooling specifically: lint, format, type-check, test, codemod, package install. Argues against making *that* surface require WSL/distrobox; supports organic adoption of cross-repo tooling for those who want it.
+- **PowerShell-cross-repo is not the proposal.** Marek concurs that the pattern in [PR #7533](https://github.com/beyond-all-reason/Beyond-All-Reason/pull/7533) is not the right shape for cross-repo tooling and is not maintainable at that scale. The PoC is scoped to demonstrating that the *main-repo* surface can install a single tool (`lx`) without mandating WSL.
+- **Mandatory vs. organic adoption.** Cross-repo orchestration tooling should not be a requirement of contributing to the main game repo; organic adoption by contributors who find it valuable is the right shape. The question this raises for the proposal: do the proposed CI gates create *de-facto* mandatory adoption of BAR-Devtools, even if it isn't formally required?
+- **Optimize for the majority Windows contributor base** — they're also the least experienced; simplicity for them outweighs elegance for Linux contributors. Frames evaluation criteria across all decisions involving contributor-facing tooling.
+- **`common/luaUtilities` repackaging needs a stronger motivation.** If something is genuinely useful, it should end up provided by the engine. Affects the Specific Deps table direction in Decision 1.
 
 ### WatchTheFort
 
