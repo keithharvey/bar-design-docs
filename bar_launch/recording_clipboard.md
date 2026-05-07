@@ -5,7 +5,8 @@ code --install-extension ms-vscode-remote.remote-wsl
 
 winget install --id DEVCOM.JetBrainsMonoNerdFont
 
-Get-ComputerInfoa
+Get-ComputerInfo
+
 @"
 [wsl2]
 memory=8GB
