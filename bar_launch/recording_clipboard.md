@@ -1,3 +1,5 @@
+Hey man, here is my "cheat sheet" from the video, that should get you started:
+
 ## Scene 1 — Open
 
 ```pwsh
@@ -7,6 +9,7 @@ winget install --id DEVCOM.JetBrainsMonoNerdFont
 
 Get-ComputerInfo
 
+# modify this to fit your computer, you want ~5-6Gb for Windows
 @"
 [wsl2]
 memory=12GB
@@ -17,8 +20,7 @@ processors=4
 wsl -l -v
 wsl --install -d Ubuntu-24.04
 ```
-**Set Ubuntu to be the default and set the font**
-
+**Set Ubuntu to be the default terminal and set the font under your profile**
 **Start a new terminal**
 
 ### Starship
@@ -26,7 +28,17 @@ wsl --install -d Ubuntu-24.04
 ```sh
 curl -sS https://starship.rs/install.sh | sh
 echo 'eval "$(starship init bash)"' >> ~/.bashrc && exec bash
-echo 'eval "$(starship init bash)"' >> ~/.bashrc
+
+mkdir -p ~/.config && cat > ~/.config/starship.toml <<'EOF'
+right_format = '$time'
+
+[time]
+disabled = false
+format = '[$time]($style)'
+time_format = '%T'
+style = 'bold yellow'
+EOF
+
 exec "$SHELL" -l
 ```
 
@@ -38,16 +50,21 @@ cd code
 git clone https://github.com/keithharvey/BAR-Devtools.git
 cd BAR-Devtools
 
+git fetch origin
+git checkout launch
+git remote remove origin
+git remote add origin git@github.com:keithharvey/BAR-Devtools.git
+
 cat > repos.local.conf <<'EOF'
 @local_root ~/code
 @protocol ssh
 bar_debug_launcher   git@github.com:keithharvey/bar_debug_launcher.git  cli
-RecoilEngine         git@github.com:keithharvey/RecoilEngine.git         fix/archivescanner-empty-pool-roots-crash
+RecoilEngine         git@github.com:keithharvey/RecoilEngine.git        fix/archivescanner-empty-pool-roots-crash
+Beyond-All-Reason    git@github.com:keithharvey/bar.git                 fix/lux-29-deps
 EOF
 
-git checkout launch
 bash scripts/bootstrap.sh
-exec "$SHELL" -l
+source ~/.bashrc
 just --version
 ```
 
@@ -58,22 +75,16 @@ just --version
 just setup::init
 ```
 
-## Scene 4 — `bar::launch`
-
-```sh
-just bar::launch
-just bar::log
-## second pane
-just bar::sync-logs
-```
 ## Scene 5 — Lua + EmmyLua + clangd
 
 ```sh
 cd ~/code
-code RecoilEngine/ Beyond-All-Reason/
+code RecoilEngine/ Beyond-All-Reason/ BAR-Devtools/
 ```
 
 Open "gui_top_bar.lua", show Problems/EmmyLua working
+Open "LuaSyncedCtrl.cpp"
+Open `Beyond-All-Reason/luarules/gadgets/gui_display_dps.lua` (unsynced).
 
 ## Scene 6 - the dev loop
 ---
@@ -111,8 +122,7 @@ just bar::stop
 
 ### Claude code and git config
 ```sh
-curl -fsSL https://claude.ai/install.sh | bash
-
 git config --global user.email "keithdanielharvey@gmail.com"
 git config --global user.name "Daniel Harvey"
+curl -fsSL https://claude.ai/install.sh | bash
 ```
