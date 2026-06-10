@@ -41,28 +41,7 @@ The actual edit snippets to paste live in `recording_clipboard.md`.
 
 ## Scene 1 — Open (~1.5m)
 
-PowerShell:
-
-```pwsh
-code --install-extension ms-vscode-remote.remote-wsl
-winget install --id DEVCOM.JetBrainsMonoNerdFont
-Get-ComputerInfo
 ```
-
-Then drop the WSL2 resource caps and reboot the WSL service:
-
-```pwsh
-@"
-[wsl2]
-memory=12GB
-swap=8GB
-processors=4
-"@ | Set-Content $env:USERPROFILE\.wslconfig; wsl --shutdown
-
-wsl -l -v
-wsl --install -d Ubuntu-24.04
-```
-
 - "Wiped WSL. Going to use the new dev tools to set my environment up like I would normally."
 - `wsl -l -v` should show no distros before the install. If anything else, **stop the take**.
 - Starship and the dev container emit Unicode glyphs (git branch, status icons, lock symbols). Without a Nerd Font they render as tofu boxes — that's what the JetBrainsMono Nerd Font is for.

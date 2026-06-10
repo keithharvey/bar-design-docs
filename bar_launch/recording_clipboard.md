@@ -115,7 +115,6 @@ In game: `Enter` → `/luarules reload gui_display_dps`
 
 ```sh
 just bar::stop
-just bar::stop
 ```
 
 ## Scene 8 - Nice to haves
