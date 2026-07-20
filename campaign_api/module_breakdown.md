@@ -71,7 +71,8 @@ Three supporting rules:
 
 ## Module: matchflow
 
-Already planned in detail (matchflow_module_plan.md). Doc requirements it
+Planned in detail separately (matchflow module plan, posting as its own
+PR — it's the first-module exemplar). Doc requirements it
 absorbs: Player Victory, Player Defeat, Pause Simulation, Sim Speed 0,
 Autosave/Set Checkpoint, "PAUSE GAME FOR MID-MISSION INGAME CUTSCENE" (macro),
 "Pause All Movement, Weapon Movement, and Damage Effects".
@@ -440,4 +441,5 @@ Build order that respects both dependency and politics:
   effect or combat? (Currently: stays GG per the matchflow plan.)
 - Naming: ai_director vs waves; attributes vs unit_state; intel vs vision.
 - Mission authoring surface (how triggers/actions get written, checked, and
-  edited): see [mission_authoring_dsl.md](mission_authoring_dsl.md).
+  edited): see [PR #2](https://github.com/keithharvey/bar-design-docs/pull/2)
+  (mission_authoring_dsl.md).
