@@ -16,7 +16,7 @@ T.When(Team.Player:Has(UnitDef("armpw"), 3))
 
 ## Where it's built
 
-On the **modules branch** — module_handler, policy_builder, injected-env loading, rml_widgets auto-load, and the type system all already exist there. This is a demo, not the matchflow PR: the master-bootstrap path in matchflow_module_plan.md stays the productionization route. Do not conflate them in comms — the demo proves the authoring experience; the PR proves mergeability.
+On a new branch **off master** (fetch upstream first — local master goes stale), **borrowing files from the modules branch** rather than basing on it: copy in `modules/module_handler.lua`, `modules/policy_builder.lua`, and the minimal `modules/types/` + emmylua config the loader needs. Two reasons over branching off modules: the demo stays standalone (checkoutable without the 1500-file stack), and the modules branch is regenerated (`just bar::sharing-module rebuild` — overlay commits), so anything based on it gets orphaned on regeneration. Side effect: this IS step 1 of matchflow_module_plan.md's sequencing (the master bootstrap) — the demo doubles as proof the bootstrap is small. If the borrowed files drag in more than expected, that's a finding worth reporting, not silently working around.
 
 ## Components, smallest that can work
 
