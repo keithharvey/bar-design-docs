@@ -53,15 +53,11 @@ Demo-grade: a modoption is overkill and needs lobby plumbing. Use a dev start: l
 
 `modules/missions/rml_widgets/mission_editor.lua`: one form showing the registered trigger — condition (unit type dropdown, count field), effect (readonly text is fine) — with an Apply button that rewrites the values and re-registers the trigger live. Cheat mode only. The demo line: change 3 → 5 mid-game, build two more Pawns, win.
 
-**There is no editor model.** The model is the registered trigger descriptors — the same tables the engine runs. Loading the mission file IS parsing (parse-by-execution): the file runs in the injected env, the builders record descriptors, the form renders from them. Hand edits and form edits converge automatically because both flow through load-and-register. Do not build a separate form state that shadows the descriptors — that would be the second source of truth this whole architecture exists to prevent.
+**Tonight has NO editor scope.** The stretch, if the evening survives milestone 4 and the reload command, is exactly one thing:
 
-The stretch ladder, in order — stop wherever the evening ends:
+**Editor demo, milestone 1 — VS Code + hot reload.** The mission file open in VS Code with emmylua diagnostics (already works — annotations are already load-bearing), plus a file watcher that fires the `/luarules mission reload` path when the file saves (watcher script poking a ping the gadget polls, or whatever is cheapest — this is demo plumbing, not architecture). Demo beat: edit the Pawn count in a real editor, save, the running game obeys; type a string where the count goes, red squiggle before the game ever sees it. Works identically in Zed (emmylua is LSP, the watcher is editor-agnostic) — say so in the clip, don't demo both.
 
-1. **Live apply**: form mutates the descriptor values, re-registers, game obeys.
-2. **Write-back + type check** (the proof of the "basically free" claim made publicly): serialize the descriptors back to canonical trigger-file text and run emmylua on the result, surfacing output in the form. Opaque `:Then` bodies round-trip byte-exact via `debug.getinfo` (source + linedefined/lastlinedefined -> extract the span from the file), comments inside them included. DSL value helpers (`seconds(...)`) and named refs must carry their source form (tagged values / self-describing objects) so regeneration writes `seconds(10)`, not `300` — build that into the primitives from the start, it's cheap now and painful later. Demo beat: enter a bad value, the annotation catches it before the game ever sees it.
-3. Later, not tonight: the static subset parser — buys editing without a running game, CI validation without executing files, and comment-perfect file-level round-trips (prose BETWEEN triggers is lost on regeneration until then; say so if asked, it's the one honest degradation).
-
-Do NOT attempt: source-patching (regenerate, never patch), arbitrary trigger creation, multiple triggers. One form, one trigger.
+Everything beyond that — the lossless CST model (tree-sitter-lua), the subset recognizer, comment-safe write-back, the in-game RML form — is the editor architecture track: see editor_architecture_plan.md. Do not start it tonight. Parse-by-execution is the runtime loading path, nothing more; if an in-game inspector ever uses it, read-only, so it can never become a second writer.
 
 ## Order of work tonight
 
