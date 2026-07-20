@@ -19,6 +19,8 @@ Before building the recognizer: check what the type-migration transform toolchai
 
 ## Milestones
 
+Each milestone gets its own plan doc when it starts (milestone 1's already lives in hello_pawns_plan.md); this file stays the index and the principles — update the list here with links as the docs appear.
+
 1. **VS Code + hot reload** (lives in hello_pawns_plan.md as the demo stretch): emmylua diagnostics + save-triggered `/luarules mission reload`. No parser work. Both directions exist and meet at the file. This is demoable first and buys time for the real track.
 2. **Recognizer + validator**: tree-sitter parse, subset classification, CI check mode ("this mission is well-formed") wired into the repo's checks. Deliverable is a CLI: point it at a missions/ dir, get structure or errors. This is the first artifact that proves "one grammar, two consumers" concretely.
 3. **Write-back**: CST transformations for the editable node kinds (literal args first — counts, names, times), print, emmylua gate, save. Hand-written prose anywhere in the file survives untouched. Test: round-trip a heavily commented mission file with zero byte churn outside the edited node.
