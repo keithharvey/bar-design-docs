@@ -1,6 +1,6 @@
 # Editor Architecture: the MVP of the Real Thing
 
-The mission editor track, separated from the hello_pawns demo so the demo can't inherit its scope. Companion to mission_authoring_dsl.md (the public design) — this is the build plan, and it makes one correction to that doc's framing: we are not writing a grammar or a lexer. The DSL is Lua; Lua's grammar is already implemented by the tools we want to integrate with anyway. Our "grammar" is a subset recognizer over an existing lossless parse.
+The mission editor track, separated from the hello_pawns demo so the demo can't inherit its scope. Companion to mission_authoring_dsl.md (the public design) — this is the build plan. The architecture is parser-first: the UI model is extracted from a real, lossless parse of the file, and every read and write goes through that model. The one economy: we don't hand-author the lexer/parser layer — the DSL is syntactically plain Lua, so we take Lua's grammar as implemented by tree-sitter-lua (lossless CST, comments as nodes) and author the layer above it: a subset recognizer that classifies CST nodes into DSL structure. The recognizer IS our grammar in the meaningful sense — the single definition of what's form-editable — it's just defined over a mature parse instead of a bespoke one.
 
 ## Principles
 
