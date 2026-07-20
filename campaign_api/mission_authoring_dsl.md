@@ -2,7 +2,9 @@
 
 How mission designers get a real editor — forms, a trigger graph, a verb
 palette — without anyone building or maintaining a second file format.
-Companion to [module_breakdown.md](module_breakdown.md), which covers what the
+Companion to
+[module_breakdown.md](https://github.com/keithharvey/bar-design-docs/pull/1)
+(PR #1), which covers what the
 domain modules own; this doc covers how missions drive them, and how the
 editor the campaign team wants falls out of that.
 
