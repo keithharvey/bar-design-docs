@@ -53,7 +53,13 @@ Demo-grade: a modoption is overkill and needs lobby plumbing. Use a dev start: l
 
 `modules/missions/rml_widgets/mission_editor.lua`: one form showing the registered trigger — condition (unit type dropdown, count field), effect (readonly text is fine) — with an Apply button that rewrites the values and re-registers the trigger live. Cheat mode only. The demo line: change 3 → 5 mid-game, build two more Pawns, win.
 
-Do NOT attempt: writing the edit back to the .lua file (that's the subset-parser round-trip, a later milestone), arbitrary trigger creation, multiple triggers. One form, one trigger, live apply.
+The stretch ladder, in order — stop wherever the evening ends:
+
+1. **Live apply**: form rewrites the values, re-registers the trigger, game obeys.
+2. **Write-back + type check** (this is the proof of the "basically free" claim made publicly): the form REGENERATES the trigger file from its model — no source patching; in-subset content serializes deterministically from the model, which is why this is cheap — then runs emmylua on the result and surfaces the output in the form. Demo beat: enter a bad value, the annotation catches it before the game ever sees it.
+3. NOT tonight: the subset parser (file→GUI direction for hand-edited Lua). The demo's honest framing: the form reads the model it wrote; hand edits enter through `/luarules mission reload`. Both directions exist — they meet at the running game rather than at a parser.
+
+Do NOT attempt: source-patching existing hand-written files, arbitrary trigger creation, multiple triggers. One form, one trigger.
 
 ## Order of work tonight
 
