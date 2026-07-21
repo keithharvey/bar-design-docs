@@ -9,10 +9,19 @@ The whole mission:
 T.When(Team.Player.Has(UnitDef("armpw"), 3))
     .Then(function()
         Objective("build_pawns").Complete()
+    end)
+    .Register()
+
+T.When(Objective("build_pawns").IsComplete())
+    .Then(function()
         MatchFlow.Victory(Team.Player.allyTeam)
     end)
     .Register()
 ```
+
+(Victory as its own trigger watching objective state — Harkenn's factoring
+from the Discord thread: with 4 objectives in any order, the win trigger just
+watches all of them; the objective triggers never need to know about victory.)
 
 ## Where it's built
 
