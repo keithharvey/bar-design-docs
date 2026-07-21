@@ -19,6 +19,15 @@ The mission editor track, separated from the hello_pawns demo so the demo can't 
 
 Before building the recognizer: check what the type-migration transform toolchain (Devtools) already parses Lua with. It is deterministic-AST machinery of the same species; reusing its parse layer beats introducing a second one, and if it is emmylua-based there may be a comments-preserved AST already available. tree-sitter is the default answer, not the foregone one.
 
+## Packaging
+
+The editor lives in **BAR-Devtools** as a real application with a real runtime (Rust; emmylua_parser under the recognizer). Decision made after cycling the alternatives (in-game-first, sidecar + intents files, LSP-server-first) — this is the shape with the fewest moving parts:
+
+- **The editor is the authoritative writer** of mission .lua files. It owns the CST, applies transformations, writes source. Nothing else writes.
+- **The game is a reader.** Dev mode runs from a source checkout in the data dir; the existing hot-reload path picks up saves. The filesystem is the entire interface — no IPC, no intents, no protocol.
+- **Derived artifacts** (AST caches, validation reports, anything BAR wants at runtime) are placed by Devtools into the data dir where the game's VFS finds them.
+- The in-game RML editor and editor-agnostic LSP delivery remain possible later — the recognizer/grammar/conformance core is host-neutral — but they are explicitly not the plan of record.
+
 ## Milestones
 
 Each milestone gets its own plan doc when it starts (milestone 1's already lives in hello_pawns_plan.md); this file stays the index and the principles — update the list here with links as the docs appear.
