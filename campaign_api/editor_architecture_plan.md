@@ -19,6 +19,10 @@ The mission editor track, separated from the hello_pawns demo so the demo can't 
 
 Before building the recognizer: check what the type-migration transform toolchain (Devtools) already parses Lua with. It is deterministic-AST machinery of the same species; reusing its parse layer beats introducing a second one, and if it is emmylua-based there may be a comments-preserved AST already available. tree-sitter is the default answer, not the foregone one.
 
+## The display notation
+
+Building the form cards produced a second notation for the DSL, distinct from its source notation: verbs as colored tokens, chain steps as uppercase badges, literals and refs styled apart from structure — a compact, legible rendering of a trigger that is NOT the file text. Treat it as a deliberate artifact, not styling: everything that needs to show a trigger compactly wants the same renderer — the trigger-graph visualization, savegame debug views, the eventual "what triggers are armed" spectator panel, PR review tooling. One renderer, many surfaces. It lives in the mission editor widget today (`renderValue`/`renderTrigger` over the decorated AST); when a second in-game consumer appears, it graduates to a shared lib rather than being reinvented per surface. The renderer reads the AST artifact only — it must never grow its own parse.
+
 ## Packaging
 
 The editor lives in **BAR-Devtools** as a real application with a real runtime (Rust; emmylua_parser under the recognizer). Decision made after cycling the alternatives (in-game-first, sidecar + intents files, LSP-server-first) — this is the shape with the fewest moving parts:
