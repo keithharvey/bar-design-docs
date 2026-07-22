@@ -78,6 +78,24 @@ Three layers in the example above, three owners:
 2. **Domain verbs** — `Wave.Define`, `Intel.Grant`, `Build.Restrict`, `Region(...):EnteredBy`. MODULE-owned, shipped next to the module's policies, annotated. New module, new vocabulary, zero editor changes.
 3. **Mission logic** — the `:Then` bodies. Author-owned, plain Lua, inside the sandbox.
 
+## Conditions declare their inputs (decided at prototype stage, on purpose)
+
+A condition is not a bare predicate — it carries metadata about what can change its answer:
+
+```lua
+---@class MissionCondition
+---@field evaluate fun(ctx: MissionContext): boolean
+---@field inputs string[]|nil  -- events that can change this answer; nil = poll every cadence
+```
+
+Verbs declare inputs when they build the condition: `Team.Player.Has(...)` watches `UnitFinished/UnitDestroyed/UnitGiven/UnitTaken` (transfers move counts too). The engine indexes input -> watching triggers at Register; an event marks its watchers dirty, and the evaluation cadence processes dirty triggers plus pollers. `AndWhen` composes as the union of the parts' inputs; a poll-only part makes the whole trigger poll. The mission gadget subscribes only to callins some registered trigger actually watches — the don't-hook-what-you-don't-use rule, applied automatically per mission.
+
+**Inputs name events, not just engine callins.** `Objective("x").IsComplete()` watches a rulesparam, and rulesparam changes have no callin — but the missions module is the thing that completes objectives, so it emits its own event. `"UnitFinished"` and `"mission.objective_changed"` are the same kind of string on one small internal bus; engine callins are one producer, modules are another. This is why the metadata exists from the first verb rather than being retrofitted at verb fifteen: with only callins in the vocabulary, module-state conditions would silently stay pollers forever.
+
+Two consumers share this metadata for free: event-driven evaluation (Rasoul's review point on the hello_pawns PR), and the editor's live trigger-state display — "watches: UnitFinished · currently false · fired at 4:32" reads the same declarations plus a derived last-result table. Save story untouched: inputs are configuration (reload from source), dirty flags and last-results are derived (never serialized).
+
+The demo engine polls; that stays fine as a fallback and for genuinely input-less conditions. What's decided now is only the shape — every verb ships its inputs from birth.
+
 ## Savegames: the constraint no format escapes
 
 The campaign spec requires Autosave / Set Checkpoint. Functions do not survive serialization — in ANY authoring format (the draft data format has `Function` parameters too; this constraint was never format-dependent). So everything a mission is gets split into two piles, and a checkpoint only ever saves the second:
