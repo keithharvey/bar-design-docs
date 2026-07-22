@@ -2,6 +2,11 @@
 
 How mission designers get a real editor — forms, a trigger graph, a verb palette — without anyone building or maintaining a second file format. Companion to [module_breakdown.md](https://github.com/keithharvey/bar-design-docs/pull/1) (PR #1), which covers what the domain modules own; this doc covers how missions drive them, and how the editor the campaign team wants falls out of that.
 
+**Status: the skeleton is implemented.** Hello Pawns ([BAR PR #8375](https://github.com/beyond-all-reason/Beyond-All-Reason/pull/8375)) ships the trigger engine, the chain builder, three verbs, and hot-reload identity; the matchflow extraction ([#8378](https://github.com/beyond-all-reason/Beyond-All-Reason/pull/8378)) puts a real domain module under `MatchFlow.Victory`. Two grammar decisions came out of building and reviewing it, and this doc now reflects them:
+
+1. **Dot-only chains.** Every chain step is a plain call with parens — no colon methods anywhere on the mission-facing surface. Mixing dots and colons would confuse everyone, especially newcomers; the cost is the DSL lifting functions internally, paid once by the framework.
+2. **Closure-free mission files** (Boneless's line, and it holds): trigger files contain **no function bodies**. Effects are lazy objects built by named verbs — `Do(Objective("x").Complete())` — accumulated on the chain and executed by the engine when the condition fires. The beginner surface is named verbs only, and every chain step is form-editable.
+
 ## Start from what the editor needs
 
 Any mission editor, whatever the file format underneath, needs four things:
@@ -15,31 +20,27 @@ Point 4 is where editors go to die. The moment the escape hatch is a *different 
 
 ## The move: one format, and it's the one we already have
 
-Every layer of the modules framework already authors through small declarative builder files: policies (`Policies.Pipeline():Gate(...):Compute(...):Register()`), actions, modes. Each is Lua, loaded in an injected environment, checked by EmmyLua, readable by tooling. Missions use the same idiom. A trigger file:
+Every layer of the modules framework already authors through small declarative builder files: policies (`Policies.Pipeline():Gate(...):Compute(...):Register()`), actions, modes. (Policies are contributor surface and keep their colon style; the dot-only rule binds the *mission-facing* surface, where the audience is designers.) Each is Lua, loaded in an injected environment, checked by EmmyLua, readable by tooling. Missions use the same idiom. A trigger file:
 
 ```lua
 -- missions/cm3_flameswept/triggers/second_wave.lua
-local T = Mission.Trigger
-
-T.When(Region("north_pass"):EnteredBy(Team.Player, { count = 5 }))
-    :AndWhen(Objective("hold_the_line"):IsActive())
-    :Debounce(seconds(10))
-    :Once()
-    :Then(function(ctx)
-        Wave.Define("raptor_flank")
-            :Composition({ raptor_land_swarmer_basic = 40, raptor_land_assault_basic = 8 })
-            :Route(Path("east_ridge"))
-            :Target(Region("player_base"))
-            :Spawn()
-        Intel.Grant(Team.Player, { layers = { "radar" } })
-            :Over(Region("east_ridge"))
-            :For(seconds(30))
-        Presentation.Announce("wave_incoming_east")
-    end)
-    :Register()
+T.When(Region("north_pass").EnteredBy(Team.Player, { count = 5 }))
+    .AndWhen(Objective("hold_the_line").IsActive())
+    .Debounce(seconds(10))
+    .Once()
+    .Do(Wave.Define("raptor_flank")
+        .Composition({ raptor_land_swarmer_basic = 40, raptor_land_assault_basic = 8 })
+        .Route(Path("east_ridge"))
+        .Target(Region("player_base"))
+        .Spawn())
+    .Do(Intel.Grant(Team.Player, { layers = { "radar" } })
+        .Over(Region("east_ridge"))
+        .For(seconds(30)))
+    .Do(Presentation.Announce("wave_incoming_east"))
+    .Register()
 ```
 
-(Vocabulary illustrative — the verbs come from the domain modules, so this assumes the breakdown doc's modules exist.)
+(Vocabulary illustrative — the verbs come from the domain modules, so this assumes the breakdown doc's modules exist. What is NOT illustrative: dot-only calls, and no function body anywhere. Effect verbs are lazy — `Wave.Define(...).Spawn()` builds an effect object; the engine executes it when the condition fires. Conditions and effects are the same kind of thing on both sides of the chain: named, typed, inert until the engine says go — which is also what makes them serializable nodes for the editor.)
 
 Now walk the editor's four needs against this:
 
@@ -47,13 +48,13 @@ Now walk the editor's four needs against this:
 
 **Validator: same parser, two consumers.** The subset of Lua the editor understands (builder chains with literal arguments and named references) is defined once. The editor uses it to decide what's form-editable; CI uses it to decide what's a legal mission. They cannot drift, because they are the same code.
 
-**Round-tripping: structural where possible, byte-exact where not.** Chains with literal arguments round-trip as structure — the editor can rewrite them freely. Anything else (a computed argument, a `:Then` body with real logic) is an *opaque block*: the editor shows it as a code node, does not decompose it, and writes it back byte-for-byte, comments and formatting included. A hand-written mission survives the GUI untouched; a GUI-built mission is hand-editable. Neither author is a second-class citizen.
+**Round-tripping: fully structural in trigger files.** Closure-free bought this outright: a trigger file is nothing but chains of named verbs with literal arguments and named references, so the whole file round-trips as structure — no opaque nodes, nothing the editor has to tiptoe around with byte-exact write-back inside a trigger file. A hand-written mission survives the GUI untouched; a GUI-built mission is hand-editable. Neither author is a second-class citizen. (Byte-exact preservation still applies to what the editor doesn't own: comments and formatting, per the decorated-AST plan in editor_architecture_plan.md.)
 
-**Escape hatch: it's the same file, same language, same checks.** The `:Then` body above isn't an embedded blob in a foreign format — it's Lua in a Lua file, type-checked with everything else, sandboxed by the injected environment (the same mechanism policies and tweaks already use: a mission physically can't call what the mission surface doesn't hand it). The cliff between "what forms can express" and "what missions need" becomes a gentle slope inside one file.
+**Escape hatch: custom verbs in a sibling file, not bodies in the trigger file.** Real custom logic doesn't get to smuggle a closure into a chain — it becomes a *named verb* the mission defines next door (`missions/<name>/verbs.lua`, loaded into the same injected environment), and the trigger file calls it like any built-in. Same language, same LuaCATS checks, same sandbox — a mission physically can't call what the mission surface doesn't hand it. The editor shows the verb-definition file as code (its one honest opaque unit) while every *use* of the verb stays a form-editable node. The cliff between "what forms can express" and "what missions need" is still a gentle slope — it just runs between two files instead of hiding inside one chain.
 
 That's the pairing: the DSL isn't a rival to the GUI, it's the substrate that makes the GUI cheap. Everything the editor needs — schema, validation, round-trip, escape hatch — is a property the authoring format already has, because the authoring format is code with annotations rather than data with code holes.
 
-There's a second payoff, and for this project it may be the bigger one: **the editor becomes an on-ramp to contributing, not a ceiling.** BAR's contributors are mostly players who drifted into modding. In this design, a designer working in forms has the code in front of them the whole time — same file, the `:Then` blocks sitting next to the triggers they cooperate with. Curiosity has a zero-cost first step, and graduating from forms to code means decomposing more of the same file, not abandoning your missions' format to start over in a language the editor hid from you. It runs the other way too: a mission built entirely in the GUI is still reviewable Lua in a pull request — same diffs, same review culture, no "open the editor to see what changed." One design grows modders; the other grows editor users who hit a wall.
+There's a second payoff, and for this project it may be the bigger one: **the editor becomes an on-ramp to contributing, not a ceiling.** BAR's contributors are mostly players who drifted into modding. In this design, a designer working in forms has the code in front of them the whole time — the same chains, and when a mission defines custom verbs, the definitions sit one file over from the triggers that use them. Curiosity has a zero-cost first step, and graduating from forms to code means writing your first verb, not abandoning your missions' format to start over in a language the editor hid from you. It runs the other way too: a mission built entirely in the GUI is still reviewable Lua in a pull request — same diffs, same review culture, no "open the editor to see what changed." One design grows modders; the other grows editor users who hit a wall.
 
 ## The editor ships in stages, each useful alone
 
@@ -68,15 +69,15 @@ Because the file format is source, every stage is optional and no stage can hold
 
 ## Migration from the draft trigger/action tables
 
-Mechanical, not political: the existing declarative shapes map 1:1 onto chains — `{ type = 'UnitEntersArea', region = R, count = 5 }` becomes `Region(R):EnteredBy(team, { count = 5 })`. A converter is a few hundred lines, so adoption is a rename, not a rewrite. The draft shapes keep working during the transition; the chains are where the new capability (type checking, editor stages, savegame discipline) accrues.
+Mechanical, not political: the existing declarative shapes map 1:1 onto chains — `{ type = 'UnitEntersArea', region = R, count = 5 }` becomes `Region(R).EnteredBy(team, { count = 5 })`. A converter is a few hundred lines, so adoption is a rename, not a rewrite. The draft shapes keep working during the transition; the chains are where the new capability (type checking, editor stages, savegame discipline) accrues.
 
 ## Who owns which words
 
 Three layers in the example above, three owners:
 
-1. **Chain mechanics and combinators** — `When/AndWhen/Debounce/Once/Then/ Register`, AND/OR/NOT grouping, random-pick, repeat. These are the draft spec's "trigger modifiers," and they are FRAMEWORK-owned: one grammar, defined once (PolicyBuilder grown up). If every module invented its own `When`, authors would learn seven dialects and the editor would need seven parsers. Same split as the shared command handler: plumbing in the framework, decisions in the domains.
-2. **Domain verbs** — `Wave.Define`, `Intel.Grant`, `Build.Restrict`, `Region(...):EnteredBy`. MODULE-owned, shipped next to the module's policies, annotated. New module, new vocabulary, zero editor changes.
-3. **Mission logic** — the `:Then` bodies. Author-owned, plain Lua, inside the sandbox.
+1. **Chain mechanics and combinators** — `When/AndWhen/Debounce/Once/Do/Register`, AND/OR/NOT grouping, random-pick, repeat. These are the draft spec's "trigger modifiers," and they are FRAMEWORK-owned: one grammar, defined once (PolicyBuilder grown up; implemented as `modules/missions/lib/dsl.lua`). If every module invented its own `When`, authors would learn seven dialects and the editor would need seven parsers. Same split as the shared command handler: plumbing in the framework, decisions in the domains.
+2. **Domain verbs** — `Wave.Define`, `Intel.Grant`, `Build.Restrict`, `Region(...).EnteredBy`. MODULE-owned, shipped next to the module's policies, annotated, and **lazy on both sides**: condition verbs return `{ evaluate }` objects, effect verbs return `{ execute }` objects; the engine is the only thing that runs either. New module, new vocabulary, zero editor changes.
+3. **Mission logic** — custom verbs in the mission's own `verbs.lua`. Author-owned, plain Lua, inside the sandbox; the trigger files that use them stay closure-free.
 
 ## Savegames: the constraint no format escapes
 
@@ -88,12 +89,15 @@ The campaign spec requires Autosave / Set Checkpoint. Functions do not survive s
 | Owner | Mission files | The trigger engine, in plain tables |
 | On restore | Re-run the mission files (they're just code) | Reapply the saved tables on top |
 
-For the split to work, trigger definitions must be stateless: condition and effect functions read `ctx` and module state, and capture no mutable locals — a closure that counts in an upvalue has smuggled progress into the source pile, where the save can't see it. Enforce that from the first trigger-engine commit. It's the same split the modules already use: policies are code, verdicts are derived, only real state persists.
+For the split to work, trigger definitions must be stateless: condition and effect objects read `ctx` and module state, and capture configuration only (team handles, unit names, thresholds) — a closure that counts in an upvalue has smuggled progress into the source pile, where the save can't see it. This is enforced from the first trigger-engine commit, and the closure-free surface makes it structural: authors can't write the offending closure in a trigger file at all, because they don't write closures there. (Implemented: fired flags live in the engine's plain tables behind `GetState`/`SetState`; objective completion lives in rulesparams, which the engine already serializes.) It's the same split the modules already use: policies are code, verdicts are derived, only real state persists.
 
 ## Open questions
 
-- Combinator set: chain methods vs condition-expression objects (`All(a, b)`, `Any(a, b)`)? Leaning expression objects for arbitrary nesting, chain methods for the common linear case.
+- Combinator set: chain methods vs condition-expression objects (`All(a, b)`, `Any(a, b)`)? Leaning expression objects for arbitrary nesting, chain methods for the common linear case. Lazy condition objects make `All`/`Any` trivial to add — they're just conditions over conditions.
 - Named references: regions/paths/groups/objectives declared in a sibling file (`missions/<name>/map.lua`) so the editor and the parser resolve names without executing anything.
-- Difficulty variants: chain-level (`:OnDifficulty("hard", ...)`) vs file-level overlays (`triggers/hard/*.lua`) — probably both; overlays for wholesale changes, chain-level for parameter tweaks.
-- Hot-reload during authoring: re-running a registration file mid-game means unregister-by-identity first; trigger identity = filename + declaration order, same as policies. Design it in early — it's what makes iteration fast enough for mission designers to love.
+- Difficulty variants: chain-level (`.OnDifficulty("hard", ...)`) vs file-level overlays (`triggers/hard/*.lua`) — probably both; overlays for wholesale changes, chain-level for parameter tweaks.
 - How much of the `Wave.*` vocabulary is authoring DSL vs runtime API — the spec's Wave verbs read like both; probably the DSL builds WaveDefs and the runtime API drives them.
+- Lazy-verb boilerplate: every domain verb is lifted (`Victory(team)` returns an effect rather than acting), which is a little ceremony per verb, paid by module authors. Worth a tiny helper (`lazy(fn)`) in the framework once a third module ships verbs — not before.
+- The custom-verb escape hatch is designed but not yet exercised: `verbs.lua` needs its loading contract (same injected env? what may it capture?) settled the first time a real mission needs a verb the modules don't ship. Decide it against a concrete case, not in the abstract.
+
+~~Hot-reload during authoring~~ — resolved and implemented: unregister-by-identity, trigger identity = filename + declaration order, stamped at Register. `/luarules mission reload` is the demo path.
