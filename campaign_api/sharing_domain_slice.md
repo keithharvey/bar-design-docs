@@ -181,16 +181,23 @@ Foundations first, in strict dependency order:
 | # | stage | requires | why here |
 |---|---|---|---|
 | 1 | gui_chat | — | master has **zero** headroom; anything touching it later breaks silently |
-| 2 | context | — | the factory every module enriches; nothing above can register without it |
-| 3 | modes | context | grammar + presets; `mode_dsl` lands once, not twice |
-| 4 | hello_pawns | context, modes | trigger runtime + DSL, `ctx` built by the factory |
-| 5 | matchflow | — | `game_end` hands over |
-| 6 | bar_editor | missions | the served editor |
-| 7 | combat | context | protection + stun; registers `Protect`/`Unprotect` |
-| 8 | tech | context | before transfer — the tax rate reads the tier |
-| 9 | transfer | context, tech | registers the handover, through the pipeline |
-| 10 | construction | context, transfer | assist/reclaim/resurrect/mex, roster + `Spawn` |
-| 11 | cm8_ashfall | missions + the domains it uses | a mission consumes modules |
+| 2 | module_runtime | — | `modules/` on master is a flat file dump; there is no module system until this lands |
+| 3 | context | runtime | the factory every module enriches; nothing above can register without it |
+| 4 | modes | context | grammar + presets; `mode_dsl` lands once, not twice |
+| 5 | missions | context, modes | trigger runtime + DSL, `ctx` built by the factory |
+| 6 | matchflow | runtime | `game_end` hands over |
+| 7 | bar_editor | missions | the served editor |
+| 8 | combat | context | protection + stun; registers `Protect`/`Unprotect` |
+| 9 | tech | context | before transfer — the tax rate reads the tier |
+| 10 | transfer | context, tech | registers the handover, through the pipeline |
+| 11 | construction | context, transfer | assist/reclaim/resurrect/mex, roster + `Spawn` |
+| 12 | cm8_ashfall | missions + the domains it uses | a mission consumes modules |
+
+**Stage 2 is a split, not a new commit.** `hello_pawns` currently bundles the
+module runtime (`module_handler.lua` 473 lines, `policy_builder.lua`,
+`types/modules.lua`, the `luarules/gadgets.lua` autoload hook, `.busted` spec
+discovery) with two modules built on it. Foundations-first separates them, and
+the branch stops being named after a demo mission.
 
 **The enricher pattern inverts the dependency, which is what keeps this cheap.**
 Missions does not need to sit above combat/transfer/construction — it needs
