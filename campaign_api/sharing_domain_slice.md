@@ -176,22 +176,47 @@ silently fails to load. That is how the `I18N` crash hid: seven broken call
 sites produced no error because the widget never loaded. Anything touching that
 file before the refactor is a silent breakage.
 
+Foundations first, in strict dependency order:
+
 | # | stage | requires | why here |
 |---|---|---|---|
-| 1 | gui_chat | — | master has **zero** headroom |
-| 2 | hello_pawns | — | trigger runtime + DSL; ships no roster |
-| 3 | matchflow | — | one owner of the verdict |
-| 4 | bar_editor | missions | the served editor |
-| 5 | context | — | breaks the real transfer <-> tech cycle; nothing cuts cleanly without it |
-| 6 | modes | context | only consumer of the grammar; `mode_dsl` moves here |
-| 7 | combat | — | protection + stun only; the roster leaves |
+| 1 | gui_chat | — | master has **zero** headroom; anything touching it later breaks silently |
+| 2 | context | — | the factory every module enriches; nothing above can register without it |
+| 3 | modes | context | grammar + presets; `mode_dsl` lands once, not twice |
+| 4 | hello_pawns | context, modes | trigger runtime + DSL, `ctx` built by the factory |
+| 5 | matchflow | — | `game_end` hands over |
+| 6 | bar_editor | missions | the served editor |
+| 7 | combat | context | protection + stun; registers `Protect`/`Unprotect` |
 | 8 | tech | context | before transfer — the tax rate reads the tier |
-| 9 | transfer | context, tech | biggest; everything else has left by then |
-| 10 | construction | context, transfer | 3 of 4 gadgets need only `mode_enums`; gains roster + `Spawn`, which calls transfer for event-time handover |
-| 11 | cm8_ashfall | missions, combat, construction | a mission consumes modules, so it sits above them |
+| 9 | transfer | context, tech | registers the handover, through the pipeline |
+| 10 | construction | context, transfer | assist/reclaim/resurrect/mex, roster + `Spawn` |
+| 11 | cm8_ashfall | missions + the domains it uses | a mission consumes modules |
 
-`missions.requires` grows as each module lands — the pattern already in use
-(`{matchflow}` at stage 2, gaining `combat` when combat arrives).
+**The enricher pattern inverts the dependency, which is what keeps this cheap.**
+Missions does not need to sit above combat/transfer/construction — it needs
+`context`, and each domain registers *into* it. So `hello_pawns` stays low, the
+existing 4 -> 5 -> 6 sequence survives shifted down by three, and the domains
+slot in above rather than the mission API being pushed to the top.
+
+`missions.requires` still grows as each module lands, for **vocabulary**
+composition — the pattern already in use (`{matchflow}`, gaining `combat` when
+combat arrives). Under `mode_as_configuration_root.md` that list eventually
+becomes the mode's active set instead.
+
+Two costs, stated plainly:
+
+- **Three foundation stages land before any existing work**, so every open PR
+  rebases and renumbers; `hello_pawns` becomes 4/11. Unavoidable — `context`
+  must precede `mission_loader` building its `ctx` through the factory.
+- **`mission_loader.lua:43` is rewritten at stage 4**, not patched later. The
+  monolithic ctx table stops hardcoding `Protect`, `Unprotect` and
+  `TransferGroup`, keeping `frame`, objectives and the unit latches. This
+  interacts with the reload transaction work already done on that function: the
+  staging swap survives, the ctx construction beneath it changes shape.
+
+What it quietly fixes: `Units.Transfer` bypassing the policy pipeline stops
+being something to remember during the transfer extraction. Once transfer owns
+the enricher there is no `Spring.TransferUnit` left in the mission runtime.
 
 ## Gates
 
