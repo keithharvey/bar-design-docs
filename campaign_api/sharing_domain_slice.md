@@ -74,7 +74,43 @@ transfer disappears.
 What remains is genuine mid-mission handover, and **spawn may call transfer's
 capability for that** — reuse, not duplication, which is the point of having one
 implementation. So `construction -> transfer` is an expected edge, and it stays
-acyclic: transfer needs policy and tech, neither needs construction.
+acyclic: transfer needs context and tech, neither needs construction.
+
+## Why the substrate is called `context`
+
+It is not a leftovers bucket, and the proof is that it breaks a real cycle:
+
+    tech      game_tech_blocking      -> context_factory
+    transfer  resource_transfer_ctrl  -> tech/blocking
+              economy/shared_config   -> tech/blocking
+              resource/comms          -> tech/blocking_comms
+              unit/comms              -> tech/blocking_comms
+
+Transfer needs tech for the tax rate; tech needs `context_factory`. Put the
+context inside transfer and that is `transfer -> tech -> transfer`. v2's
+instinct that something here resists cutting was right — it misidentified what.
+
+**`policy` names the consumer, not the thing.** The rules that read this live in
+`modes` (presets) and in the domains (controllers). What this module provides is
+*the facts of a proposed action, assembled once and enriched by whoever knows
+something relevant.* That is a context, and the reuse mechanism already exists:
+`registerPolicyContextEnricher`, with the registry on `GG` because `VFS.Include`
+re-runs per call and a module-local list would split registrar from consumer.
+
+**Every module should reuse it** for one shape of question — *may this action
+happen, and what does it cost?* Transfer, build restriction, tech gating and
+combat exceptions are all that question; the engine's own vocabulary agrees
+(`AllowUnitTransfer`, `AllowUnitBuildStep`, `AllowWeaponTarget`).
+
+**But not the mission `ctx`.** That is services available to a trigger
+(`ctx.frame`, `ctx.IsObjectiveComplete`), not the subject of a decision. Merging
+environment-for-a-callback with facts-of-a-decision is the same category error
+that produced v2's phantom cycles.
+
+**`cache` was considered and rejected**: the caching lives in the domains
+(`factor_cache` has specs under both `unit/` and `resource/`) and
+`serialization.lua`'s pooled buffer is one file's implementation detail. Naming
+the substrate after an optimisation that mostly is not in it would age badly.
 
 ## The slice
 
@@ -85,7 +121,7 @@ acyclic: transfer needs policy and tech, neither needs construction.
       +-- combat        protection, stun
       +-- tech          tier gating, tech points
             |
-            +---------> policy   pipeline + vocabulary
+            +---------> context  the facts of a proposed action
 
 Domains import `mode_enums` — vocabulary — never `modes` itself, so
 configuration sits above without inverting. The one cross-domain edge is
@@ -126,12 +162,12 @@ file before the refactor is a silent breakage.
 | 2 | hello_pawns | — | trigger runtime + DSL; ships no roster |
 | 3 | matchflow | — | one owner of the verdict |
 | 4 | bar_editor | missions | the served editor |
-| 5 | policy | — | nothing cuts cleanly while vocabulary lives in a domain |
-| 6 | modes | policy | only consumer of the grammar; `mode_dsl` moves here |
+| 5 | context | — | breaks the real transfer <-> tech cycle; nothing cuts cleanly without it |
+| 6 | modes | context | only consumer of the grammar; `mode_dsl` moves here |
 | 7 | combat | — | protection + stun only; the roster leaves |
-| 8 | tech | policy | before transfer — the tax rate reads the tier |
-| 9 | transfer | policy, tech | biggest; everything else has left by then |
-| 10 | construction | policy, transfer | 3 of 4 gadgets need only `mode_enums`; gains roster + `Spawn`, which calls transfer for event-time handover |
+| 8 | tech | context | before transfer — the tax rate reads the tier |
+| 9 | transfer | context, tech | biggest; everything else has left by then |
+| 10 | construction | context, transfer | 3 of 4 gadgets need only `mode_enums`; gains roster + `Spawn`, which calls transfer for event-time handover |
 | 11 | cm8_ashfall | missions, combat, construction | a mission consumes modules, so it sits above them |
 
 `missions.requires` grows as each module lands — the pattern already in use
