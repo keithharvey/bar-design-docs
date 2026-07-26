@@ -102,10 +102,30 @@ happen, and what does it cost?* Transfer, build restriction, tech gating and
 combat exceptions are all that question; the engine's own vocabulary agrees
 (`AllowUnitTransfer`, `AllowUnitBuildStep`, `AllowWeaponTarget`).
 
-**But not the mission `ctx`.** That is services available to a trigger
-(`ctx.frame`, `ctx.IsObjectiveComplete`), not the subject of a decision. Merging
-environment-for-a-callback with facts-of-a-decision is the same category error
-that produced v2's phantom cycles.
+**Including the mission `ctx`.** The factory was always meant to build *every*
+kind of context; policy contexts are one family, not the purpose. The mission
+runtime is the case that most needs it. `mission_loader.lua:43` assembles one
+monolithic table that hardcodes capabilities it does not own:
+
+    TransferGroup = function(...)  -- calls Spring.TransferUnit inline
+    Protect       = function(...)  -- combat's capability
+    Unprotect     = function(...)
+
+This is why `Units.Transfer` escapes the policy pipeline: the engine call sits
+in the mission runtime. And it is exactly the split `context_factory`'s own
+comment warns about — today a module contributes its *vocabulary*
+(`Combat.Protect`, via `mission_dsl.ForFile`) while the *implementation* lives
+in `mission_loader`. Two mechanisms doing one job, with the registrar and the
+consumer in different modules.
+
+Under the factory each capability is an enricher owned by its module: combat
+registers `Protect`/`Unprotect`, transfer registers the handover (through the
+pipeline, authority as an input), construction registers placement. Missions
+keeps what is genuinely its own — `frame`, objectives, the unit latches.
+
+The product types stay distinct — a mission ctx is services for a callback, a
+policy ctx is the facts of a decision, and those should not collapse into one
+type. But they are built by one factory through one enrichment mechanism.
 
 **`cache` was considered and rejected**: the caching lives in the domains
 (`factor_cache` has specs under both `unit/` and `resource/`) and
