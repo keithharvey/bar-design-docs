@@ -199,6 +199,38 @@ module runtime (`module_handler.lua` 473 lines, `policy_builder.lua`,
 discovery) with two modules built on it. Foundations-first separates them, and
 the branch stops being named after a demo mission.
 
+## Built 2026-07-26
+
+The chain exists locally, twelve branches, one commit each, strictly linear.
+Suite 436/0. Three things the build corrected in this plan:
+
+- **matchflow precedes missions**, since `missions.requires` names it.
+- **construction precedes combat**: `Combat.Protect(Unit("vip"))` resolves
+  through the roster, so combat sits above whatever owns unit references.
+- **matchflow lands whole.** The old shape created `matchflow_verdict.lua` and
+  deleted it one commit later — a file that existed only to be removed, and the
+  modify/delete conflict every rebase of the stack had to auto-resolve.
+
+The runtime's loading paths were scattered across four stages: gadgets at
+`hello_pawns`, widgets at `bar_editor`, spec discovery at `sharing`. All call
+the same `ModuleHandler` functions, and `module_handler.lua` is byte-identical
+at both ends — the handler was always complete, only its call sites were spread
+out. They are consolidated into stage 2, because both scattered paths fail the
+same silent way: a module's widgets never load, and its specs are skipped.
+
+### Deferred, deliberately
+
+- **`Spawn` and the roster still live in the mission loader.** Construction took
+  its four gadgets; lifting the roster out is a change to how the mission
+  context is assembled, not a file move.
+- **The context factory does not build the mission `ctx` yet.** `Protect`,
+  `Unprotect` and `TransferGroup` are still hardcoded there, which is also why
+  `Units.Transfer` still reaches `Spring.TransferUnit` directly instead of
+  passing through transfer's pipeline. That is the one piece of the "one place
+  owns transfer" decision still outstanding.
+- **`economy` stays inside transfer**, as planned, until a non-transfer consumer
+  appears.
+
 **The enricher pattern inverts the dependency, which is what keeps this cheap.**
 Missions does not need to sit above combat/transfer/construction — it needs
 `context`, and each domain registers *into* it. So `hello_pawns` stays low, the
