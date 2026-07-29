@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1560" height="700" viewBox="0 0 1560 700">
+<rect width="1560" height="700" fill="#0d1117"/>
+<text x="40" y="44" font-family="DejaVu Sans" font-size="21" font-weight="bold" fill="#e8eef6">Shipped as a line</text>
+<text x="40" y="66" font-family="DejaVu Sans" font-size="13" fill="#8fa3b8">twelve PRs, each based on the one below</text>
+<text x="560" y="44" font-family="DejaVu Sans" font-size="21" font-weight="bold" fill="#e8eef6">Ordered by dependency, most of it is parallel</text>
+<text x="560" y="66" font-family="DejaVu Sans" font-size="13" fill="#8fa3b8">the same twelve — anything in a row could land together</text>
+<line x1="514" y1="86" x2="514" y2="670" stroke="#1d2938" stroke-width="1.5"/>
+<rect x="40" y="98" width="52" height="22" rx="4" fill="#16283c" stroke="#33517a"/>
+<text x="66" y="114" text-anchor="middle" font-family="DejaVu Sans Mono" font-size="11" fill="#8fbcff">#8467</text>
+<text x="104" y="114" font-family="DejaVu Sans Mono" font-size="14" fill="#cfe4ff">gui_chat_locals</text>
+<line x1="66" y1="120" x2="66" y2="142" stroke="#2c3b4d" stroke-width="1.5"/>
+<rect x="40" y="142" width="52" height="22" rx="4" fill="#16283c" stroke="#33517a"/>
+<text x="66" y="158" text-anchor="middle" font-family="DejaVu Sans Mono" font-size="11" fill="#8fbcff">#8484</text>
+<text x="104" y="158" font-family="DejaVu Sans Mono" font-size="14" fill="#cfe4ff">module-runtime</text>
+<line x1="66" y1="164" x2="66" y2="186" stroke="#2c3b4d" stroke-width="1.5"/>
+<rect x="40" y="186" width="52" height="22" rx="4" fill="#16283c" stroke="#33517a"/>
+<text x="66" y="202" text-anchor="middle" font-family="DejaVu Sans Mono" font-size="11" fill="#8fbcff">#8485</text>
+<text x="104" y="202" font-family="DejaVu Sans Mono" font-size="14" fill="#cfe4ff">context</text>
+<line x1="66" y1="208" x2="66" y2="230" stroke="#2c3b4d" stroke-width="1.5"/>
+<rect x="40" y="230" width="52" height="22" rx="4" fill="#16283c" stroke="#33517a"/>
+<text x="66" y="246" text-anchor="middle" font-family="DejaVu Sans Mono" font-size="11" fill="#8fbcff">#8486</text>
+<text x="104" y="246" font-family="DejaVu Sans Mono" font-size="14" fill="#cfe4ff">modes</text>
+<line x1="66" y1="252" x2="66" y2="274" stroke="#2c3b4d" stroke-width="1.5"/>
+<rect x="40" y="274" width="52" height="22" rx="4" fill="#16283c" stroke="#33517a"/>
+<text x="66" y="290" text-anchor="middle" font-family="DejaVu Sans Mono" font-size="11" fill="#8fbcff">#8487</text>
+<text x="104" y="290" font-family="DejaVu Sans Mono" font-size="14" fill="#cfe4ff">matchflow</text>
+<line x1="66" y1="296" x2="66" y2="318" stroke="#2c3b4d" stroke-width="1.5"/>
+<rect x="40" y="318" width="52" height="22" rx="4" fill="#16283c" stroke="#33517a"/>
+<text x="66" y="334" text-anchor="middle" font-family="DejaVu Sans Mono" font-size="11" fill="#8fbcff">#8488</text>
+<text x="104" y="334" font-family="DejaVu Sans Mono" font-size="14" fill="#cfe4ff">missions</text>
+<line x1="66" y1="340" x2="66" y2="362" stroke="#2c3b4d" stroke-width="1.5"/>
+<rect x="40" y="362" width="52" height="22" rx="4" fill="#16283c" stroke="#33517a"/>
+<text x="66" y="378" text-anchor="middle" font-family="DejaVu Sans Mono" font-size="11" fill="#8fbcff">#8489</text>
+<text x="104" y="378" font-family="DejaVu Sans Mono" font-size="14" fill="#cfe4ff">mission-editor</text>
+<line x1="66" y1="384" x2="66" y2="406" stroke="#2c3b4d" stroke-width="1.5"/>
+<rect x="40" y="406" width="52" height="22" rx="4" fill="#16283c" stroke="#33517a"/>
+<text x="66" y="422" text-anchor="middle" font-family="DejaVu Sans Mono" font-size="11" fill="#8fbcff">#8490</text>
+<text x="104" y="422" font-family="DejaVu Sans Mono" font-size="14" fill="#cfe4ff">tech</text>
+<line x1="66" y1="428" x2="66" y2="450" stroke="#2c3b4d" stroke-width="1.5"/>
+<rect x="40" y="450" width="52" height="22" rx="4" fill="#16283c" stroke="#33517a"/>
+<text x="66" y="466" text-anchor="middle" font-family="DejaVu Sans Mono" font-size="11" fill="#8fbcff">#8491</text>
+<text x="104" y="466" font-family="DejaVu Sans Mono" font-size="14" fill="#cfe4ff">transfer</text>
+<line x1="66" y1="472" x2="66" y2="494" stroke="#2c3b4d" stroke-width="1.5"/>
+<rect x="40" y="494" width="52" height="22" rx="4" fill="#16283c" stroke="#33517a"/>
+<text x="66" y="510" text-anchor="middle" font-family="DejaVu Sans Mono" font-size="11" fill="#8fbcff">#8492</text>
+<text x="104" y="510" font-family="DejaVu Sans Mono" font-size="14" fill="#cfe4ff">construction</text>
+<line x1="66" y1="516" x2="66" y2="538" stroke="#2c3b4d" stroke-width="1.5"/>
+<rect x="40" y="538" width="52" height="22" rx="4" fill="#16283c" stroke="#33517a"/>
+<text x="66" y="554" text-anchor="middle" font-family="DejaVu Sans Mono" font-size="11" fill="#8fbcff">#8493</text>
+<text x="104" y="554" font-family="DejaVu Sans Mono" font-size="14" fill="#cfe4ff">combat</text>
+<line x1="66" y1="560" x2="66" y2="582" stroke="#2c3b4d" stroke-width="1.5"/>
+<rect x="40" y="582" width="52" height="22" rx="4" fill="#16283c" stroke="#33517a"/>
+<text x="66" y="598" text-anchor="middle" font-family="DejaVu Sans Mono" font-size="11" fill="#8fbcff">#8494</text>
+<text x="104" y="598" font-family="DejaVu Sans Mono" font-size="14" fill="#cfe4ff">cm8-ashfall</text>
+<path d="M635,196 C635,162 841,164 841,130" stroke="#47709e" stroke-width="1.6" fill="none" opacity="0.8"/>
+<path d="M841,196 C841,162 841,164 841,130" stroke="#47709e" stroke-width="1.6" fill="none" opacity="0.8"/>
+<path d="M1047,196 C1047,162 841,164 841,130" stroke="#47709e" stroke-width="1.6" fill="none" opacity="0.8"/>
+<path d="M1253,196 C1253,162 841,164 841,130" stroke="#47709e" stroke-width="1.6" fill="none" opacity="0.8"/>
+<path d="M635,292 C635,258 1047,260 1047,226" stroke="#47709e" stroke-width="1.6" fill="none" opacity="0.8"/>
+<path d="M635,292 C635,258 1253,260 1253,226" stroke="#47709e" stroke-width="1.6" fill="none" opacity="0.8"/>
+<path d="M841,292 C841,258 635,260 635,226" stroke="#47709e" stroke-width="1.6" fill="none" opacity="0.8"/>
+<path d="M635,388 C635,354 635,356 635,322" stroke="#47709e" stroke-width="1.6" fill="none" opacity="0.8"/>
+<path d="M841,388 C841,354 635,260 635,226" stroke="#47709e" stroke-width="1.6" fill="none" opacity="0.8"/>
+<path d="M841,388 C841,354 841,356 841,322" stroke="#47709e" stroke-width="1.6" fill="none" opacity="0.8"/>
+<path d="M635,484 C635,450 841,452 841,418" stroke="#47709e" stroke-width="1.6" fill="none" opacity="0.8"/>
+<path d="M635,580 C635,546 635,356 635,322" stroke="#47709e" stroke-width="1.6" fill="none" opacity="0.8"/>
+<path d="M635,580 C635,546 841,452 841,418" stroke="#47709e" stroke-width="1.6" fill="none" opacity="0.8"/>
+<text x="544" y="120" text-anchor="end" font-family="DejaVu Sans" font-size="11" fill="#3987e5">2×</text>
+<rect x="560" y="100" width="150" height="30" rx="6" fill="#16283c" stroke="#3987e5" stroke-width="1.5"/>
+<text x="635.0" y="120" text-anchor="middle" font-family="DejaVu Sans Mono" font-size="13" fill="#cfe4ff">gui_chat_locals</text>
+<rect x="766" y="100" width="150" height="30" rx="6" fill="#16283c" stroke="#3987e5" stroke-width="1.5"/>
+<text x="841.0" y="120" text-anchor="middle" font-family="DejaVu Sans Mono" font-size="13" fill="#cfe4ff">module-runtime</text>
+<text x="544" y="216" text-anchor="end" font-family="DejaVu Sans" font-size="11" fill="#199e70">4×</text>
+<rect x="560" y="196" width="150" height="30" rx="6" fill="#16283c" stroke="#199e70" stroke-width="1.5"/>
+<text x="635.0" y="216" text-anchor="middle" font-family="DejaVu Sans Mono" font-size="13" fill="#cfe4ff">context</text>
+<rect x="766" y="196" width="150" height="30" rx="6" fill="#16283c" stroke="#199e70" stroke-width="1.5"/>
+<text x="841.0" y="216" text-anchor="middle" font-family="DejaVu Sans Mono" font-size="13" fill="#cfe4ff">modes</text>
+<rect x="972" y="196" width="150" height="30" rx="6" fill="#16283c" stroke="#199e70" stroke-width="1.5"/>
+<text x="1047.0" y="216" text-anchor="middle" font-family="DejaVu Sans Mono" font-size="13" fill="#cfe4ff">matchflow</text>
+<rect x="1178" y="196" width="150" height="30" rx="6" fill="#16283c" stroke="#199e70" stroke-width="1.5"/>
+<text x="1253.0" y="216" text-anchor="middle" font-family="DejaVu Sans Mono" font-size="13" fill="#cfe4ff">combat</text>
+<text x="544" y="312" text-anchor="end" font-family="DejaVu Sans" font-size="11" fill="#199e70">2×</text>
+<rect x="560" y="292" width="150" height="30" rx="6" fill="#16283c" stroke="#199e70" stroke-width="1.5"/>
+<text x="635.0" y="312" text-anchor="middle" font-family="DejaVu Sans Mono" font-size="13" fill="#cfe4ff">missions</text>
+<rect x="766" y="292" width="150" height="30" rx="6" fill="#16283c" stroke="#199e70" stroke-width="1.5"/>
+<text x="841.0" y="312" text-anchor="middle" font-family="DejaVu Sans Mono" font-size="13" fill="#cfe4ff">tech</text>
+<text x="544" y="408" text-anchor="end" font-family="DejaVu Sans" font-size="11" fill="#199e70">2×</text>
+<rect x="560" y="388" width="150" height="30" rx="6" fill="#16283c" stroke="#199e70" stroke-width="1.5"/>
+<text x="635.0" y="408" text-anchor="middle" font-family="DejaVu Sans Mono" font-size="13" fill="#cfe4ff">mission-editor</text>
+<rect x="766" y="388" width="150" height="30" rx="6" fill="#16283c" stroke="#199e70" stroke-width="1.5"/>
+<text x="841.0" y="408" text-anchor="middle" font-family="DejaVu Sans Mono" font-size="13" fill="#cfe4ff">transfer</text>
+<text x="544" y="504" text-anchor="end" font-family="DejaVu Sans" font-size="11" fill="#199e70">1×</text>
+<rect x="560" y="484" width="150" height="30" rx="6" fill="#16283c" stroke="#199e70" stroke-width="1.5"/>
+<text x="635.0" y="504" text-anchor="middle" font-family="DejaVu Sans Mono" font-size="13" fill="#cfe4ff">construction</text>
+<text x="544" y="600" text-anchor="end" font-family="DejaVu Sans" font-size="11" fill="#d95926">1×</text>
+<rect x="560" y="580" width="150" height="30" rx="6" fill="#16283c" stroke="#d95926" stroke-width="1.5"/>
+<text x="635.0" y="600" text-anchor="middle" font-family="DejaVu Sans Mono" font-size="13" fill="#cfe4ff">cm8-ashfall</text>
+<text x="560" y="678" font-family="DejaVu Sans" font-size="13" fill="#97a5b4">Stacked for review. The dependencies never required a single file.</text>
+</svg>
