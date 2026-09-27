@@ -4,15 +4,23 @@
 
 ## Intro
 
-No LLMs were used in the making of this RFC message. This is a human. One that used to be (and I hope still is) a software architect that has seen some shit, and is trying their best to make these ideas as robust and understandable as possible for this project, because I believe these changes would unambiguously benefit all stakeholders. I am doing nothing here outside of normal software engineering design patterns in response to the shape of the problem.
+This is an RFC for **modules**: a way for BAR's Lua to declare its own boundaries.
+
+Pick any behaviour in the game and try to answer "what owns this?". Take transfer — units and resources changing hands between allies. The answer today is spread across a handful of gadgets, a couple of widgets, some modoptions, and a cache or two, and the only way to find the full set is to grep for it. Nothing declares that those pieces belong together, so nothing can be reasoned about as a unit: not tested in isolation, not documented as a whole, not handed to a new contributor intact, and not reused by the next feature that needs the same behaviour.
+
+A module is that missing declaration. It names what it owns, what it depends on, and what vocabulary it publishes. The framework loads it and wires it up. When one module requires another, the required module's vocabulary becomes available — so composition happens by declaring a dependency rather than by reaching across the tree.
+
+That has a second effect, which is really the point. Once boundaries are written down, "what module owns this behaviour?" becomes a question with an answer you can point at in code, instead of a discussion about control flow. That is the conversation I want to be having with maintainers, and it is the one this RFC is trying to make possible.
+
+What follows is a working demonstration rather than a proposal on paper: twelve PRs of runtime and modules, a mission written entirely in the resulting DSL, and an editor that is a live view over that Lua rather than a separate format.
 
 ### Intended audience
 
-This one is aimed at BAR developers, QA ninjas and, last but not least, technical leaders. Please ask me if something is not making sense to you.
+BAR developers, QA, and technical leadership. Please ask me if something is not making sense — the shape of these boundaries is exactly what I want argued with.
 
 ### A note to maintainers
 
-I had to restack this branch and in the process I squashed the atomic commits. Sorry, not sorry. Aint nobody that wants to read my vibe coded commit history anyway.
+This branch has been restacked and the per-step commits squashed. Each PR is one layer, and each diff is scoped to that layer alone, so they are meant to be read top to bottom rather than commit by commit.
 
 ## Branch Structure
 
@@ -73,8 +81,6 @@ Spawn a unit and give it to gaia, in this named group, after the mission is acti
 In editor:
 
 ![The roster, as a form in the editor](./spawn.png)
-
-##### `cm8_ashfall/units.lua`
 
 This form in the editor is just a _view_ over the lua file.
 

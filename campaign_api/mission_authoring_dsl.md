@@ -115,3 +115,45 @@ For the split to work, trigger definitions must be stateless: condition and effe
 - Difficulty variants: chain-level (`:OnDifficulty("hard", ...)`) vs file-level overlays (`triggers/hard/*.lua`) — probably both; overlays for wholesale changes, chain-level for parameter tweaks.
 - Hot-reload during authoring: re-running a registration file mid-game means unregister-by-identity first; trigger identity = filename + declaration order, same as policies. Design it in early — it's what makes iteration fast enough for mission designers to love.
 - How much of the `Wave.*` vocabulary is authoring DSL vs runtime API — the spec's Wave verbs read like both; probably the DSL builds WaveDefs and the runtime API drives them.
+
+flowchart TB
+    subgraph SRC["Mission source (the one source of truth)"]
+        LUA["missions/hello_pawns/triggers/*.lua<br/>dot-only, closure-free chains"]
+    end
+
+    subgraph KIT["BAR-Devtools · bar-mission-kit serve (authoritative writer)"]
+        PARSE["recognizer<br/>(emmylua_parser CST → decorated AST,<br/>semantic-stamped literals)"]
+        AST["mission_ast.json<br/>(AST artifact + surface schema + file hash)"]
+        GATE["edit gate<br/>(CAS hash check → recognizer validate → write .lua)"]
+    end
+
+    subgraph IDE["IDE (VS Code / Zed)"]
+        VSC["text editing + emmylua LSP diagnostics"]
+    end
+
+    subgraph GAME["Game runtime"]
+        subgraph SYNCED["synced"]
+            LOADER["mission_loader gadget<br/>(injected env = the API surface;<br/>wires only watched callins)"]
+            DSL["DSL builder<br/>When/AndWhen/Do/Once/Register<br/>→ TriggerDescriptor"]
+            ENGINE["trigger engine<br/>input→watchers index · dirty marks<br/>state tables (the save pile)"]
+            BUS["event bus<br/>engine callins + module events<br/>('UnitFinished', 'mission.objective_changed')"]
+            MF["matchflow module<br/>Victory/Defeat → pending verdict"]
+            VG["verdict gadget<br/>(deferred, idempotent Spring.GameOver)"]
+        end
+        subgraph UNSYNC["unsynced"]
+            WIDGET["mission_editor RML widget<br/>form + display notation<br/>(reader + intent source)"]
+        end
+    end
+
+    LUA -->|"watch + parse"| PARSE --> AST
+    AST -->|"poll (0.5s)"| WIDGET
+    WIDGET -->|"edit intents<br/>(span + new_text + base_hash)"| GATE
+    GATE -->|"validated bytes"| LUA
+    VSC <-->|"open request / saves"| LUA
+
+    LUA -->|"VFS.Include per file<br/>(hot reload by identity)"| LOADER
+    LOADER --> DSL -->|"descriptors"| ENGINE
+    LOADER -->|"forward watched callins"| BUS --> ENGINE
+    ENGINE -->|"execute effects"| MF -->|"emit 'mission.objective_changed'"| BUS
+    MF --> VG
+    AST -.->|"new generation →<br/>/luarules mission reload"| LOADER
