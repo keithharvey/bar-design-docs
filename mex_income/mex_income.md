@@ -78,10 +78,10 @@ As a **player**, I want
 
 Regions are sort of in terraformer today in the form of start boxes. Regions would also be useful for circling other things on a map, like mexes that you want to be grouped for 1 player -- assuming you want to restrict who can build where. But then you have the problem of how you compose _game behavior_ on top of those regions, so you need [policies](https://github.com/beyond-all-reason/Beyond-All-Reason/pull/9170).
 
-## Proposed Solution Summary
+## Proposed High Level Archiecture
 
 1) Adds a Regions module. Regions are a point or a closed area on a map; they also carry data from the map maker to the runtime.
-2) Adds a Start module, which is the if-we-categorize-by-domain module home for any pre-game start logic. Move startbox logic behind the start module, expressed as policies around regions of type "start".
+2) Adds a Start module, which is the module home for any pre-game start logic. Move startbox logic behind the start module, expressed as policies around regions of type "start".
 3) Terraformer then interacts with the Regions api to get its list of regions and allows users to select the type of region they want to be looking at/working on, generically. It defines its own `EditorRegion < Region`, with fields specific to editor run-time state defined there (the cached ground-fill mesh and whether it needs rebuilding). Its tools come from the apis of the modules that own them: start lends placement and the exports, transfer lends the mex hull.
 4) Transfer module adds a "Mex Splitting" modoption, a new `MexRegion < Region` model in its own directory, and its own policies contributing to existing module behaviors already expressed composably upstream by transfer's required modules: Regions (naming, coverage and description of a mex region), Construction (who holds a spot, the build gate) and Economy (Shared: what extraction pays each team this tick; the engine's answer is the default, Shared answers the ally team's average for metal).
 
@@ -106,44 +106,91 @@ A policy is a named decision with named steps; each step is a pure function of t
 * a **Single** policy's first step to answer wins
 * a **Product** policy's steps multiply.
 
-`modules/regions/policies/names.lua`
+`modules/regions/policies/names.lua`, whole. Then the same file again, a few lines at a time.
 ```lua
-  local Policy = require("modules/policy") -- declares policies: Fold, Single, Product, Facts, Contributes
+local Policy = require("modules/policy")
 
--- Input type - suffixed "Context" on the type or "ctx" in a closure. Generic over the region: regions has no
--- types of its own, so whoever contributes a step says what region it reads
 ---@class RegionNamesContext<R>
 ---@field type RegionType
 ---@field regions R[]
 ---@field proposed string[]
 
--- the policy's steps, typed <TInput, TOutput>; a Fold's output is its context.
--- Each step is typed as its own value, so the checker holds the table below to this class.
 ---@class RegionNamesPolicy: PolicySteps<RegionNamesContext<Region>, RegionNamesContext<Region>>
 ---@field Label "Label"
 
--- add our policy to the module's contract type
 ---@class (partial) RegionsContract
 ---@field Names RegionNamesPolicy
 
--- the policy's steps, as the table that runs; the literal sits on the typed local so the checker sees it
 ---@type RegionNamesPolicy
 local Names = {
-  Label = "Label",
+	Label = "Label",
 }
-Policy.Fold(Names) -- a Fold: every step runs on the context
+Policy.Fold(Names)
 
--- 
 Policies.On(Names).Apply(Names.Label, function(ctx)
-  -- this is region module labelling things, so it has nooooo idea and just defaults to the lower case region type
-	local label = ctx.type.label:lower()
+	local label = ctx.type.label:lower():gsub(" ", "_")
 	for i in ipairs(ctx.regions) do
-    -- modify ctx ("Context") in place. This function is part of a Fold Policy<C, C> so ctx (C) is mutated in place here.
 		ctx.proposed[i] = label
 	end
 end)
 
-return { Names = Names } -- the file returns the policies it declares; the loader stamps them with the module and they become the module's contract
+return { Names = Names }
+```
+
+`Policy` is where policies are declared: `Fold`, `Single`, `Product`, `Facts`, `Contributes`.
+
+```lua
+local Policy = require("modules/policy")
+```
+
+The input type. It is suffixed "Context" on the type and called `ctx` in a closure. It is generic over the region: regions has no region types of its own, so whoever contributes a step says what region it reads.
+
+```lua
+---@class RegionNamesContext<R>
+---@field type RegionType
+---@field regions R[]
+---@field proposed string[]
+```
+
+The policy's steps, typed `<TInput, TOutput>`; a Fold's output is its context. Each step is typed as its own value, so the checker holds the table below to this class.
+
+```lua
+---@class RegionNamesPolicy: PolicySteps<RegionNamesContext<Region>, RegionNamesContext<Region>>
+---@field Label "Label"
+```
+
+Add our policy to the module's contract type.
+
+```lua
+---@class (partial) RegionsContract
+---@field Names RegionNamesPolicy
+```
+
+The policy's steps, as the table that runs; the literal sits on the typed local so the checker sees it. Then the shape: a Fold, every step runs on the context.
+
+```lua
+---@type RegionNamesPolicy
+local Names = {
+	Label = "Label",
+}
+Policy.Fold(Names)
+```
+
+The rule. This is the regions module labelling things, so it has nooooo idea and just defaults to the lower case region type. It modifies `ctx` in place: this function is part of a Fold `Policy<C, C>`, so `ctx` (`C`) is mutated here and is the result.
+
+```lua
+Policies.On(Names).Apply(Names.Label, function(ctx)
+	local label = ctx.type.label:lower():gsub(" ", "_")
+	for i in ipairs(ctx.regions) do
+		ctx.proposed[i] = label
+	end
+end)
+```
+
+The file returns the policies it declares; the loader stamps them with the module and they become the module's contract.
+
+```lua
+return { Names = Names }
 ```
 
 So all of regions is written this way, extensibly. But for now we're focused on the Start module, so let's see how Start Areas get named there.
@@ -154,15 +201,89 @@ Let's break down the Start regions policy. We are going to go over the policy li
 
 `modules/start/policies/regions.lua`
 ```lua
+local Modules = require("modules/enums").Modules
+local Policy = require("modules/policy")
+local RegionsApi = require("modules/regions/api")
+
+---@type RegionsContract
+local Regions = Policies.Contract(Modules.Regions)
+
+-- Start regions describe what makes them special at run-time
+--
+---@class StartDescription: RegionDescription
+---@field team integer
+---@field positions { x: number, z: number }[]
+
+---@class StartRegionsDescribeSteps: PolicySteps<RegionDescribeContext<StartRegion>, StartDescription>
+---@field Start "Start"
+
+---@type StartRegionsDescribeSteps
+local RegionsDescribe = {
+	Start = "Start",
+}
+Policy.Contributes(Regions.Describe, RegionsDescribe)
+
+Policies.On(RegionsDescribe)
+	.Answer(RegionsDescribe.Start, function(ctx)
+		return { team = ctx.region.team, positions = ctx.region.positions or {} }
+	end)
+	.When(RegionsApi.OfType(RegionsApi.Enums.Types.Start))
+	.Before(Regions.Describe.Nobody)
+
+-- Start regions are named by team, if present
+--   (if a map maker hasn't defined the start region.name via terraformer e.g. "canyon", "carry", etc.)
+--
+---@class StartRegionsNamesSteps: PolicySteps<RegionNamesContext<StartRegion>, RegionNamesContext<StartRegion>>
+---@field FromTeam "FromTeam"
+
+---@type StartRegionsNamesSteps
+local RegionsNames = {
+	FromTeam = "FromTeam",
+}
+Policy.Contributes(Regions.Names, RegionsNames)
+
+Policies.On(RegionsNames)
+	.Apply(RegionsNames.FromTeam, function(ctx)
+		for i, region in ipairs(ctx.regions) do
+			if region.team ~= nil then
+				ctx.proposed[i] = tostring(region.team)
+			end
+		end
+	end)
+	.When(RegionsApi.OfType(RegionsApi.Enums.Types.Start))
+
+-- Start regions do not overlap (validation enforced by the map editor)
+--
+---@class StartRegionsSetSteps: PolicySteps<RegionSetContext<StartRegion>, RegionSetContext<StartRegion>>
+---@field AreasDisjoint "AreasDisjoint"
+
+---@type StartRegionsSetSteps
+local RegionsSet = {
+	AreasDisjoint = "AreasDisjoint",
+}
+Policy.Contributes(Regions.CheckSet, RegionsSet)
+
+Policies.On(RegionsSet)
+	.Apply(RegionsSet.AreasDisjoint, function(ctx)
+		local label = ctx.type.label:lower()
+		for i, a in ipairs(ctx.regions) do
+			for j, b in ipairs(ctx.regions) do
+				if i ~= j and #a.vertices >= 3 and #b.vertices >= 3 and RegionsApi.Overlaps(a.vertices, b.vertices) then
+					RegionsApi.ProblemWith(ctx, i, "overlaps " .. label .. " " .. ctx.names[j])
+				end
+			end
+		end
+	end)
+	.When(RegionsApi.OfType(RegionsApi.Enums.Types.Start))
+
+return { RegionsNames = RegionsNames, RegionsSet = RegionsSet, RegionsDescribe = RegionsDescribe }
 ```
 
-`modules/start/policies/regions`
-
-The includes here are self-explanatory:
+The includes here are self-explanatory; the last is the regions api:
 ```lua
 local Modules = require("modules/enums").Modules
 local Policy = require("modules/policy")
-local RegionsApi = require("modules/regions/api") -- the regions api
+local RegionsApi = require("modules/regions/api")
 ```
 
 We grab the regions policy contract:
@@ -171,55 +292,62 @@ We grab the regions policy contract:
 local Regions = Policies.Contract(Modules.Regions)
 ```
 
-We do this through the loader because regions has no contract file: its contract is the union of what its policy files return, and only the loader holds that union. EmmyLua holds the type as a global, so we get edit-time enforcement.
+We do this through the loader because no module has a contract file: a module's contract is the union of what its policy files return, and only the loader holds that union. EmmyLua holds the type as a global, so we get edit-time enforcement.
 
 The loader is where the handshake is enforced at run-time:
 * a step you contribute to must exist
 * two files cannot declare the same member
 * two modules cannot need each other
 
-Next, we define our region type:
+Next, our region type. It sits beside the fields the editor shows for it, in `modules/start/region_types.lua`:
 
 ```lua
+-- A start: an ally team's seat, drawn as the area its positions lie in, or a point.
 ---@class StartRegion: Region
 ---@field type "start"
----@field team integer
----@field name string|nil
+---@field team integer the ally team seated here
 ---@field positions { x: number, z: number }[]|nil
+---@field source string|nil where the match's shape came from: the modoption that set it, or "engine"
 ```
 
-Notice how fucking good this is. We have a real domain model that means things to _our_ code. Every field is self-evident because it's written and organized by the _domain_ the file occupies (`modules/start/policies/regions`).
+Notice how fucking good this is. We have a real domain model that means things to _our_ code. Every field is self-evident because it's written and organized by the _domain_ the file occupies (`modules/start`).
 
-Next is a bit of book keeping. Just like the Regions module names its own behaviors explicitly so other people could  it, we're going to name each of our own behaviors.
+Next is a bit of book keeping. Just like the Regions module names its own behaviors explicitly so other people could extend them, we're going to name each of our own behaviors. The name has a shape:
+
+```
+StartRegionsNamesSteps
+^----                    "Start" = module name as a prefix (classes are global)
+     ^-----------        "RegionsNames" = the policy of theirs we extend
+                 ^----   "Steps" = the policy's named steps
+```
+
+The context is regions' `NamesContext`, over OUR region: the closure further down reads `region.team` with no cast. The step name appears twice: the class is what the checker reads, the table is what runs, and typing the field as its own value holds them together.
+
 ```lua
 ---@class StartRegionsNamesSteps: PolicySteps<RegionNamesContext<StartRegion>, RegionNamesContext<StartRegion>>
-       -- the context is regions' NamesContext, over OUR region: the closure below reads region.team with no cast
-       -- ^------------------------ "Start" = module name as a prefix (classes are global)
-       --       ^------------------ "RegionsNames" = the policy of theirs we extend
-       --                  ^------- "Steps" = the policy's named steps
 ---@field FromTeam "FromTeam"
 
 ---@type StartRegionsNamesSteps
 local RegionsNames = {
-	FromTeam = "FromTeam", -- the name twice: the class is what the checker reads, the table is what runs, and typing the field as its own value holds them together
+	FromTeam = "FromTeam",
 }
 Policy.Contributes(Regions.Names, RegionsNames)
 ```
 
 Regions exposes its own naming of regions in policies as Regions.Names, and by calling `Policy.Contributes(Regions.Names,...)`, we are saying "I extend region naming" with my own behavior: "FromTeam".
 
+We open the chain on OUR steps, not regions': ours are typed over `StartRegion` (so `ctx.regions` is `StartRegion[]`, no cast), and the loader files the chain under the policy they contribute to. The `When` at the end means it runs for start regions only.
+
 ```lua
--- open the chain on OUR steps, not regions': ours are typed over StartRegion, and the loader
--- files the chain under the policy they contribute to
 Policies.On(RegionsNames)
 	.Apply(RegionsNames.FromTeam, function(ctx)
-		for i, region in ipairs(ctx.regions) do -- StartRegion[], no cast
+		for i, region in ipairs(ctx.regions) do
 			if region.team ~= nil then
 				ctx.proposed[i] = tostring(region.team)
 			end
 		end
 	end)
-	.When(RegionsApi.OfType(RegionsApi.Enums.Types.Start)) -- runs for start regions only
+	.When(RegionsApi.OfType(RegionsApi.Enums.Types.Start))
 ```
 
 For clarity here, `RegionsApi.OfType`
@@ -236,13 +364,13 @@ end
 So that is bit of syntactic sugar (`RegionsApi.OfType(RegionsApi.Enums.Types.Start)`) is equivalent to writing.
 ```lua
 .When(function(ctx)
-  ctx.type.key == RegionsApi.Enums.Types.Start
+	return ctx.type.key == RegionsApi.Enums.Types.Start
 end)
 ```
 
 Buuuut we want the ability to chain functional code together like this. Composing functions that read like english, IN the Regions module, is extremely powerful for expressing behavior -- behavior more complex than names.
 
-This policy does more, including checking region sets for disjointed areas (which is not allowed in the editor):
+This file does more, including checking region sets for disjointed areas (which is not allowed in the editor). We contribute a new step into `Regions.CheckSet`; `AreasDisjoint` is a validation: it ensures no two regions overlap, and writes problems onto the context (which is the return) with a helper provided by `RegionsApi` again.
 
 ```lua
 ---@class StartRegionsSetSteps: PolicySteps<RegionSetContext<StartRegion>, RegionSetContext<StartRegion>>
@@ -252,18 +380,14 @@ This policy does more, including checking region sets for disjointed areas (whic
 local RegionsSet = {
 	AreasDisjoint = "AreasDisjoint",
 }
-
--- we contribute a new step into Regions.Checkset
 Policy.Contributes(Regions.CheckSet, RegionsSet)
+
 Policies.On(RegionsSet)
-  -- AreasDisjoint is a validation
 	.Apply(RegionsSet.AreasDisjoint, function(ctx)
 		local label = ctx.type.label:lower()
-    -- ensure no two regions overlap
 		for i, a in ipairs(ctx.regions) do
 			for j, b in ipairs(ctx.regions) do
 				if i ~= j and #a.vertices >= 3 and #b.vertices >= 3 and RegionsApi.Overlaps(a.vertices, b.vertices) then
-          -- write problems onto context (which is the return) with a helper provided by RegionsApi again
 					RegionsApi.ProblemWith(ctx, i, "overlaps " .. label .. " " .. ctx.names[j])
 				end
 			end
@@ -274,20 +398,19 @@ Policies.On(RegionsSet)
 
 This `AreasDisjoint` policy is aimed at map makers. Evaluate is called against this policy by `modules/regions/api.lua` when it asks regions to check the set.
 
-Here is region's CheckSet:
+Here is region's CheckSet, `modules/regions/policies/check_set.lua`. First we model our problems; `at` is what supports navigate-to-error in terraformer.
 
 ```lua
--- model our problems:
 ---@class RegionProblem
 ---@field message string
 ---@field region Region|nil
 ---@field name string|nil
----@field at { x: number, z: number }|nil -- supports navigate-to-error in terraformer
+---@field at { x: number, z: number }|nil
+```
 
--- this context is interesting! It has a region type R because regions does not
--- implement its own region types (it leaves that to other modules),
--- this is very powerful for letting the regions module define the base type,
--- and then work with other modules regions itself, oblivious to the particulars.
+This context is interesting! It has a region type `R` because regions does not implement its own region types (it leaves that to other modules). This is very powerful for letting the regions module define the base type, and then work with other modules' regions itself, oblivious to the particulars.
+
+```lua
 ---@class RegionSetContext<R>
 ---@field type RegionType
 ---@field regions R[]
@@ -296,20 +419,27 @@ Here is region's CheckSet:
 ---@field problems RegionProblem[]
 
 ---@class (partial) RegionMap
+```
 
--- name the policy
----@class RegionSetSteps: PolicySteps<RegionSetContext<Region>, RegionSetContext<Region>>
+Name the policy, add it to the contract, and stamp its shape:
+
+```lua
+---@class RegionSetPolicy: PolicySteps<RegionSetContext<Region>, RegionSetContext<Region>>
 ---@field Each "Each"
 
 ---@class (partial) RegionsContract
----@field CheckSet RegionSetSteps
+---@field CheckSet RegionSetPolicy
 
----@type RegionSetSteps
+---@type RegionSetPolicy
 local CheckSet = {
 	Each = "Each",
 }
 Policy.Fold(CheckSet)
+```
 
+The rule: check each region on its own, and file its problems on the set.
+
+```lua
 Policies.On(CheckSet).Apply(CheckSet.Each, function(ctx)
 	local names = {} ---@type table<Region, string>
 	for i, region in ipairs(ctx.regions) do
@@ -324,8 +454,9 @@ Policies.On(CheckSet).Apply(CheckSet.Each, function(ctx)
 		end
 	end
 end)
-```
 
+return { CheckSet = CheckSet }
+```
 
 ## Terraformer Changes
 
@@ -338,12 +469,10 @@ Unverified: how SPADS decides which mod option keys it accepts. Check that befor
 ## Mex Splitting
 
 ```lua
-local teams = Claims.Rank(ctx.teams, ctx.regions)
-local starts = Claims.Seat(teams)
-for _, start in ipairs(starts) do
-      Claims.Round(start.teams, held, Claims.OwnedBy(start.ordinal))
-end
-Claims.Round(teams, held, Claims.Not(Claims.OfStart(starts)))
+local teams = Claims.RankRegionsByDistance(ctx.teams, ctx.regions)
+local held = {}
+Claims.RoundRobin(teams, held, Claims.OwnStart)
+Claims.RoundRobin(teams, held, Claims.EmptyStart(ctx.teams))
 local emptyHanded = Claims.EmptyHanded(ctx.teams, held)
 ```
 
@@ -352,14 +481,14 @@ Adds the Mex Splitting Dropdown to the Transfer Resources section with three opt
 * Shared  -- split a teams metal evenly across players
 * Map Assigned -- requires the map maker to define regions  of type "mex_region", grouping the mexes on the map. Falls back to None if preconditions aren't met.
 
-In mex_splitting, we get a layout that looks like this:
+In mex_splitting, we get a layout that looks like this. Two corners is a rect; the codec gives each region its id and the deal is keyed by it; `team` is the ally team, as the engine numbers it; a region with no name gets one derived from its group on request.
 
 ```lua
 { regions = {
     start = { ... },
     mex_region = {
-      { id = "anti1@1", team = 1, name = "anti1", group = "anti", poly = { { x = 0, y = 0 }, { x = 60, y = 200 } } }, -- two corners: a rect; the codec gives the id, the deal is keyed by it
-      { id = "carry@1", team = 1, group = "carry", poly = { { x = 60, y = 40 }, { x = 140, y = 40 }, { x = 100, y = 160 } } }, -- no name: derived from the group on request
+      { id = "anti1@0", team = 0, name = "anti1", group = "anti", poly = { { x = 0, y = 0 }, { x = 60, y = 200 } } },
+      { id = "carry@0", team = 0, group = "carry", poly = { { x = 60, y = 40 }, { x = 140, y = 40 }, { x = 100, y = 160 } } },
     },
 } }
 ```
@@ -369,6 +498,13 @@ For **Map Assigned**, **Transfer** decides who may build where, so it defines it
 ```lua
 local Enums = require("modules/regions/enums")
 local Fields = require("modules/start/fields")
+
+-- A mex region: an area of the layout whose metal is dealt to the teams seated at one start. The deal is keyed by
+-- its id; a name is the map's to give, and Regions.Names derives one from the group otherwise.
+---@class MexRegion: Region
+---@field type "mex_region"
+---@field team integer
+---@field group string
 
 return {
 	[Enums.Types.MexRegion] = {
