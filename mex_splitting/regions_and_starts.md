@@ -1,53 +1,23 @@
-## Mex Splitting User Story
+# Start Regions
 
-### "None" Mex Splitting
+## Context
 
-As a **player**, I want nothing to ever change. I will use Chobby with Standard mode, playing Glitters until I die.
+Regions are sort of in terraformer today in the form of start boxes. Regions would also be useful for circling other things on a map, like mexes that you want to be grouped for 1 player -- assuming you want to restrict who can build where. But then you have the problem of how you compose _game behavior_ on top of those regions, so you need [policies](https://github.com/beyond-all-reason/Beyond-All-Reason/pull/9170).
 
-### "Map Assigned" Mex Splitting
+## User Story
 
 ```md
-As a **player**, I want
-  to play in lobbies with a set of mexes that are "mine", depending on my start position and the prevailing meta for a given map.
-    In game,
-      at pre-game start,
-        each start's own mex regions are dealt round the players seated at that start, nearest first; regions of a start nobody sits at are dealt round everyone the same way
-          if there are too many regions,
-            players will receive multiples from the unclaimed pool
-          if there are too few regions or invalid regions,
-            An error is displayed, "Mex Splitting: Map Assigned is set but mex regions are not configured by the map maker. Please set the 'mex_regions_layout' mod option."
-            The game is allowed to proceed with "Mex Splitting: None" behavior.
-        I should receive a message informing me that mex building is restricted.
-        I should be able to see the mexes that are mine highlighted.
-      during the game,
-        when building a mex in my own team's territory,
-          building a mex in enemy team's territory should be allowed
-          for an invalid mex spot,
-            I should see
-              which mexes I can build (or not) highlighted on the map
-              tooltips describing an invalid mex spot
-            errors when an existing mex exists (unchanged)
-        when a player leaves the game,
-          their mex regions should be assigned to their nearest-neighbor, who has been gifted the fewest total number of mex regions
-        for allied interactions (like upgrading mexes in my mex regions),
-          there is already an orthogonal mod option in transfer that decides that behavior (`unit_sharing_mode`):
-            when it lets utility buildings change hands, an ally may build onto my mex on my spot
-            otherwise, a spot an ally holds is closed to me
-As a **map maker**, I want add regions enclosing specific mexes to display on my map.
-  On each region, I need to add
-    a required team (example: "north", "south"), from a list of teams
-    a required group (example: "tech", "anti_canyon")
-    an optional name (example: "tech", "anti_canyon_1", "anti_canyon_2")
-  On all regions, I need
-    to validate that every mex is circled by a region at least once.
-    if a mex spot is contained in two regions, the players holding either region may claim that mex
+As a **Player**, I want
+  to have clearly marked positions so I can select where to place my command
+
+As a **Map Maker**, I want add start regions that enclose specific areas on my map.
+  On each start region, I need to add
+    a required team (example: "North", "South"), from a list of teams
+    an optional name (example: "North Team Start")
+  On all regions, I need to validate that
+    there is no overlap
   I need a save button in Terraformer, so that I can persist my own changes to my bar data directory and see them in my next session.
   I need a publish/Open PR button in Terraformer, so that I can publish my map metadata to other people. (not built: COPY gives the blob, a host `!bset`s it)
-As a **BAR Lobby Host**,
-  I want to select an option for Mex Splitting: [None, MapAssigned, Shared]
-    with tooltips
-  (nice to have) if a map doesn't have the metadata to support MapAssigned, warn the lobby
-  (nice to have) add a filter to Change Map for only maps with mex regions defined.
 
 As a **Terraformer maintainer**, I want region logic and runtime code out of terraform.
 As a **BAR Developer**,
@@ -57,47 +27,63 @@ As a **BAR Developer**,
 As a **BAR Maintainer**,
   I would like type checking so any mistakes I make are caught at edit-time and not run-time.
   I would like map metadata changes to be in their own review stream.
-As a **BAR AI**,
-  I am out of scope for this feature and haven't been considered in depth.
 ```
 
-### "Shared" Mex Splitting
-
-```md
-As a **player**, I want
-  to play in lobbies where my team shares all metal income.
-    In game,
-      at pre-game start,
-        I should receive a message informing me that all mex income is shared across the team evenly.
-      during the game,
-        I should receive mex income equal to my team's total metal extraction income / number of team players.
-          (income, not a count of mexes: mexes differ by spot and by tier)
-```
-
-## Technical Context
-
-Regions are sort of in terraformer today in the form of start boxes. Regions would also be useful for circling other things on a map, like mexes that you want to be grouped for 1 player -- assuming you want to restrict who can build where. But then you have the problem of how you compose _game behavior_ on top of those regions, so you need [policies](https://github.com/beyond-all-reason/Beyond-All-Reason/pull/9170).
-
-## Proposed High Level Archiecture
-
-1) Adds a Regions module. Regions are a point or a closed area on a map; they also carry data from the map maker to the runtime.
-2) Adds a Start module, which is the module home for any pre-game start logic. Move startbox logic behind the start module, expressed as policies around regions of type "start".
-3) Terraformer then interacts with the Regions api to get its list of regions and allows users to select the type of region they want to be looking at/working on, generically. It defines its own `EditorRegion < Region`, with fields specific to editor run-time state defined there (the cached ground-fill mesh and whether it needs rebuilding). Its tools come from the apis of the modules that own them: start lends placement and the exports, transfer lends the mex hull.
-4) Transfer module adds a "Mex Splitting" modoption, a new `MexRegion < Region` model in its own directory, and its own policies contributing to existing module behaviors already expressed composably upstream by transfer's required modules: Regions (naming, coverage and description of a mex region), Construction (who holds a spot, the build gate) and Economy (Shared: what extraction pays each team this tick; the engine's answer is the default, Shared answers the ally team's average for metal).
-
-## Start areas
+## Functional Decomposition
 
 ### Intro
-The start module is every concern related to game start. That includes player start area selection, the module's first feature.
 
-Start areas are an instructive feature, because they explain the reasons you would want to factor code in this way end to end. I added regions at the very end, after this system was already validated elsewhere, so they were a new feature on top of an existing framework. That allows us to use this document and PR to quickly cover every layer in the framework end to end.
+Since Regions sits directly on the policies branch and relies on the middleware it introduced implicitly in its technical implementation. But, for the purposes of this document: I'm going to keep descriptions inline that probably belong on upstream policies READMEs. For now, you don't know what policies are and you want to understand requirements all the way through to having an understanding of regions and why you would want to factor code utilizing this middleware.
 
-I will try to explain _why_ something is the way it is at every step.
+So let's start by putting on our feature engineer hats and model this from requirements in Lua.
 
-### Start areas
+### Regions
 
-So let's start by putting on our feature engineer hats and model this. The user story is pretty straightforward: have some areas defined on the map, validate the data format in your map editor, save the data format to bar-metadata on map-maker request, enforce runtime requirements on the lua side.
+```lua
+As a **BAR Developer**,
+  I want the ability to add a feature that talks about a region, which is an enclosed area on a map.
+```
 
+From `modules/regions/types.lua`
+
+```lua
+---@class Region
+---@field type RegionTypeKey
+---@field id string
+---@field vertices { x: number, z: number }[]
+---@field kind "point"|"polygon"|"box"|"spline"|nil
+---@field name string|nil
+```
+
+The region's module itself defines no `RegionTypeKey`. This is left for other modules, which is why we'll be talking about Regions in conjunction with the Start module.
+
+Here is `modules/regions/api.lua:46`:
+
+```lua
+---@param typeKey RegionTypeKey
+---@param fields table|nil
+---@return Region
+function Api.Create(typeKey, fields)
+	local region = fields or {}
+	region.type = typeKey
+	region.id = region.id or Identity.Mint()
+	region.vertices = region.vertices or {}
+	return region --[[@as Region]]
+end
+```
+
+
+### Start Regions
+
+```md
+As a **Map Maker**, I want add start regions that enclose specific areas on my map.
+  On each start region, I need to add
+    a required team (example: "North", "South"), from a list of teams
+    an optional name (example: "North Team Start")
+```
+
+
+```md
 ## Regions Module: Naming Regions
 Let's start with a simple example to demonstrate policies and how they work.
 
