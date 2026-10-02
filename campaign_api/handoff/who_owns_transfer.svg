@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1520" height="600" viewBox="0 0 1520 600">
+<rect width="1520" height="600" fill="#0d1117"/>
+<text x="40" y="42" font-family="DejaVu Sans" font-size="20" font-weight="bold" fill="#e8eef6">“Who decides whether a unit can be given away?”</text>
+<text x="40" y="78" font-family="DejaVu Sans" font-size="15" font-weight="bold" fill="#d95926">Before — you grep, and hope</text>
+<rect x="34" y="94" width="640" height="440" rx="10" fill="none" stroke="#3a2a26" stroke-width="1.5"/>
+<text x="74" y="126" font-family="DejaVu Sans Mono" font-size="12.5" fill="#8fa3b8" opacity="0.85">luarules/gadgets/cmd_idle_players.lua</text>
+<text x="108" y="161" font-family="DejaVu Sans Mono" font-size="12.5" fill="#8fa3b8" opacity="0.85">luaui/Widgets/cmd_share_unit.lua</text>
+<text x="64" y="196" font-family="DejaVu Sans Mono" font-size="12.5" fill="#8fa3b8" opacity="0.85">luaui/Widgets/gui_advplayerslist.lua</text>
+<text x="120" y="231" font-family="DejaVu Sans Mono" font-size="12.5" fill="#8fa3b8" opacity="0.85">luaui/Widgets/gui_top_bar.lua</text>
+<text x="86" y="266" font-family="DejaVu Sans Mono" font-size="12.5" fill="#8fa3b8" opacity="0.85">common/luaUtilities/lua_rules_msg.lua</text>
+<text x="130" y="301" font-family="DejaVu Sans Mono" font-size="12.5" fill="#8fa3b8" opacity="0.85">luaui/Widgets/gui_teamstats.lua</text>
+<text x="56" y="336" font-family="DejaVu Sans Mono" font-size="12.5" fill="#8fa3b8" opacity="0.85">luaui/Widgets/gui_tax_buildspeed_debuff.lua</text>
+<text x="100" y="371" font-family="DejaVu Sans Mono" font-size="12.5" fill="#8fa3b8" opacity="0.85">modules/sharing/unit/synced.lua</text>
+<text x="142" y="406" font-family="DejaVu Sans Mono" font-size="12.5" fill="#8fa3b8" opacity="0.85">modules/sharing/resource/synced.lua</text>
+<text x="78" y="441" font-family="DejaVu Sans Mono" font-size="12.5" fill="#8fa3b8" opacity="0.85">modules/sharing/economy/waterfill_solver.lua</text>
+<text x="116" y="476" font-family="DejaVu Sans Mono" font-size="12.5" fill="#8fa3b8" opacity="0.85">modules/sharing/take/comms.lua</text>
+<text x="92" y="511" font-family="DejaVu Sans Mono" font-size="12.5" fill="#8fa3b8" opacity="0.85">luaui/Widgets/gui_chat.lua</text>
+<text x="352" y="565" text-anchor="middle" font-family="DejaVu Sans" font-size="13" fill="#97a5b4">no declared boundary — every caller is a maybe</text>
+<text x="760" y="78" font-family="DejaVu Sans" font-size="15" font-weight="bold" fill="#199e70">After — the module says so, and the manifest proves it</text>
+<rect x="754" y="94" width="732" height="440" rx="10" fill="none" stroke="#1e3a2e" stroke-width="1.5"/>
+<rect x="1010" y="150" width="170" height="40" rx="7" fill="#16283c" stroke="#199e70" stroke-width="1.8"/>
+<text x="1095" y="176" text-anchor="middle" font-family="DejaVu Sans Mono" font-size="15" fill="#cfe4ff">transfer</text>
+<rect x="880" y="320" width="170" height="40" rx="7" fill="#16283c" stroke="#3987e5" stroke-width="1.8"/>
+<text x="965" y="346" text-anchor="middle" font-family="DejaVu Sans Mono" font-size="15" fill="#cfe4ff">context</text>
+<rect x="1160" y="320" width="170" height="40" rx="7" fill="#16283c" stroke="#3987e5" stroke-width="1.8"/>
+<text x="1245" y="346" text-anchor="middle" font-family="DejaVu Sans Mono" font-size="15" fill="#cfe4ff">tech</text>
+<path d="M1095,190 C1095,250 965,260 965,320" stroke="#47709e" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
+<path d="M1095,190 C1095,250 1245,260 1245,320" stroke="#47709e" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
+<defs><marker id="a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#47709e"/></marker></defs>
+<rect x="800" y="400" width="640" height="104" rx="7" fill="#0b1017" stroke="#1d2938"/>
+<text xml:space="preserve" x="822" y="428" font-family="DejaVu Sans Mono" font-size="13" fill="#8fa3b8">return {</text>
+<text xml:space="preserve" x="822" y="448" font-family="DejaVu Sans Mono" font-size="13" fill="#cfe4ff">  name = "transfer",</text>
+<text xml:space="preserve" x="822" y="468" font-family="DejaVu Sans Mono" font-size="13" fill="#cfe4ff">  requires = { "context", "tech" },</text>
+<text xml:space="preserve" x="822" y="488" font-family="DejaVu Sans Mono" font-size="13" fill="#cfe4ff">}</text>
+<text x="1120" y="565" text-anchor="middle" font-family="DejaVu Sans" font-size="13" fill="#97a5b4">two edges, both declared, both checked at edit time</text>
+</svg>
