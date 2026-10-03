@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1520 560" width="1520" height="560">
+  <rect width="1520" height="560" fill="#0b1017"/>
+
+  <text x="60" y="66" font-family="DejaVu Sans" font-size="30" font-weight="bold" fill="#e8eef6">One statement, three levels of editor support</text>
+  <text x="60" y="104" font-family="DejaVu Sans" font-size="19" fill="#8fa3b8">The same line of Lua, rendered by the same form. Only rows 2 and 3 needed anyone to write editor code.</text>
+
+  <!-- row 1: no editor code at all -->
+  <rect x="60" y="140" width="1400" height="98" rx="8" fill="#0d1117" stroke="#1d2938" stroke-width="2"/>
+  <rect x="86" y="176" width="52" height="26" rx="4" fill="#16283c"/>
+  <text x="112" y="194" font-family="DejaVu Sans" font-size="14" font-weight="bold" fill="#8fa3b8" text-anchor="middle">DO</text>
+  <text x="162" y="196" font-family="DejaVu Sans Mono" font-size="20" fill="#cfe4ff">Transfer.Units("outpost_auto", Team.Player)</text>
+  <text x="1434" y="180" font-family="DejaVu Sans" font-size="17" font-weight="bold" fill="#d95926" text-anchor="end">day 0</text>
+  <text x="1434" y="206" font-family="DejaVu Sans" font-size="16" fill="#8fa3b8" text-anchor="end">no editor code written</text>
+
+  <!-- row 2: a sentence -->
+  <rect x="60" y="262" width="1400" height="98" rx="8" fill="#0d1117" stroke="#1d2938" stroke-width="2"/>
+  <rect x="86" y="298" width="52" height="26" rx="4" fill="#16283c"/>
+  <text x="112" y="316" font-family="DejaVu Sans" font-size="14" font-weight="bold" fill="#8fa3b8" text-anchor="middle">DO</text>
+  <text x="162" y="318" font-family="DejaVu Sans" font-size="20" fill="#cfe4ff">share group <tspan fill="#e8eef6" font-weight="bold">outpost_auto</tspan> with the player</text>
+  <text x="1434" y="302" font-family="DejaVu Sans" font-size="17" font-weight="bold" fill="#3987e5" text-anchor="end">+ one sentence</text>
+  <text x="1434" y="328" font-family="DejaVu Sans" font-size="16" fill="#8fa3b8" text-anchor="end">declared beside the action</text>
+
+  <!-- row 3: typed controls in the slots -->
+  <rect x="60" y="384" width="1400" height="98" rx="8" fill="#0d1117" stroke="#1d2938" stroke-width="2"/>
+  <rect x="86" y="420" width="52" height="26" rx="4" fill="#16283c"/>
+  <text x="112" y="438" font-family="DejaVu Sans" font-size="14" font-weight="bold" fill="#8fa3b8" text-anchor="middle">DO</text>
+  <text x="162" y="440" font-family="DejaVu Sans" font-size="20" fill="#cfe4ff">share group</text>
+  <rect x="288" y="418" width="188" height="30" rx="5" fill="#16283c" stroke="#47709e" stroke-width="1.5"/>
+  <text x="300" y="440" font-family="DejaVu Sans" font-size="19" fill="#cfe4ff">outpost_auto</text>
+  <text x="458" y="440" font-family="DejaVu Sans" font-size="14" fill="#8fa3b8">▼</text>
+  <text x="492" y="440" font-family="DejaVu Sans" font-size="20" fill="#cfe4ff">with the player</text>
+  <text x="1434" y="424" font-family="DejaVu Sans" font-size="17" font-weight="bold" fill="#199e70" text-anchor="end">+ typed slots</text>
+  <text x="1434" y="450" font-family="DejaVu Sans" font-size="16" fill="#8fa3b8" text-anchor="end">the type says what may go there</text>
+
+  <text x="60" y="524" font-family="DejaVu Sans" font-size="18" fill="#97a5b4">Every row clicks through to the Lua, and every row round-trips an edit. A brand-new module gets row 1 for nothing.</text>
+</svg>
