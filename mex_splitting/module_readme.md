@@ -182,7 +182,7 @@ Consumer example from `modules/construction/gadgets/game_allied_assist_mode.lua`
 ---@param targetIsBuilder boolean
 ---@return boolean
 local function mayAssist(unitTeam, targetID, targetIsBuilder)
-	---@type ConstructionContract -- the module contract we created in the policy
+	---@type ConstructionContract -- (1)
 	local Construction = ModuleHandler.Contract(Modules.Construction)
 	---@type ConstructionAssistContext
 	local ctx = {
@@ -191,8 +191,7 @@ local function mayAssist(unitTeam, targetID, targetIsBuilder)
 		targetIsBuilder = targetIsBuilder,
 		assistEnabled = assistEnabled,
 	}
-	-- evaluate or "get an answer" from the policy
-	return ModuleHandler.Evaluate(Construction.Assist, ctx) == true
+	return ModuleHandler.Evaluate(Construction.Assist, ctx) == true -- (2)
 end
 
 local function isBuilderAllowedCommand(cmdID, p1, p2, p5, p6, unitTeam)
@@ -200,6 +199,8 @@ local function isBuilderAllowedCommand(cmdID, p1, p2, p5, p6, unitTeam)
 		return mayAssist(unitTeam, p1, (p1 and canBuildStep[spGetUnitDefID(p1)]) == true)
     ...
 ```
+1. the module contract we created in the policy
+2. evaluate or "get an answer" from the policy
 
 EmmyLua can "Navigate To Definition" and "Find All References" on `Construction.Assist`.
 
