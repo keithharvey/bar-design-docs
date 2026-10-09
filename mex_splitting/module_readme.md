@@ -20,25 +20,33 @@ return {
 **Directory structure**
 
 The loader expects code in the following subdirectories:
-`gadgets/`, 
-`widgets/`, 
-`rml_widgets/`, 
-`scripts/`,
-`policies/`,
-`modes/`,
+
+| directory | what goes there | read by |
+|---|---|---|
+| `gadgets/` | gadgets, loaded as the game's own `luarules/gadgets/` are | the loader |
+| `language/` | `language/<code>/*.json` - translation strings, merged with the game's `language/<code>/`. `units.json` there names and describes the module's units | the loader |
+| `modes/` | declarative presets of game behavior configuration | the lobby |
+| `policies/` | typed functions from a context to a result | the loader |
+| `rml_widgets/` | RmlUi widgets | the loader |
+| `scripts/` | unit scripts. Lua only, no `.cob` (engine restriction) | the loader |
+| `units/` | unit defs. Subfolders are the same (`units/ArmBuildings/TechCore/armkeystone.lua`) | the loader |
+| `widgets/` | widgets | the loader |
+| `spec/` | unit tests | busted, on the host; the game ignores it |
+| `tests/` | headless tests | the test runner, in a test match; the game ignores it |
+
+By convention, we put stateless helper functions in `lib/`.
 
 And the following files:
-`api.lua`,
-`api_unsynced.lua`,
-`api_synced.lua`,
-`enums.lua`,
-`mode_verbs.lua`,
-`modoptions.lua`,
 
-It'll load the stuff in `<module>/gadgets/` as a gadget, `widgets/` as a widget, and so on.
-It will only load unit scripts from `scripts/`. .cob files won't be loaded.
-
-If you make a `modoptions.lua`, the loader will add its contents to the base modoptions.
+| file | what it is |
+|---|---|
+| `api.lua` | "common" entry-points to your module (a service). Runs in any engine Lua handle |
+| `api_synced.lua` | "synced" function entry-points |
+| `api_unsynced.lua` | "unsynced" function entry-points to your module |
+| `enums.lua` | please use these |
+| `mode_verbs.lua` | lets a lobby preset set your modoptions: the verbs it may use, and what they write to modoptions |
+| `modoptions.lua` | merge with the base modoptions |
+| `state.lua` | cached state, typed, owned, and managed by your module |
 
 **`modules/enums.lua`**
 
@@ -87,7 +95,7 @@ These files define the module's api. Together they act as a [service](https://en
 Each file in a module speaks to one engine Lua handle (the engine's word for its Lua states: LuaRules synced, LuaRules unsynced, LuaUI), or to any of them in the case of `api.lua`, which runs in all.
 * **api_unsynced** - what a widget asks that touches the unsynced engine
 * **api_synced** - what a gadget asks that touches the synced engine
-* **api** - neutral: it runs in any Lua state (a synced gadget, a widget, the lobby), so it calls nothing that `Spring.*` offers in one handle only.
+* **api** - common: this file is available in all Lua states (gadgets, widgets, lobby), so it can only call Spring functions that are available everywhere
 
 Here is `modules/construction/api.lua`, trimmed:
 ```lua
@@ -115,9 +123,15 @@ return {
 
 Consumers require it as `local Construction = require("modules/construction/api")` and call `Construction.Mexes()`.
 
-`spec/modules/handles_spec.lua` holds every module to it. `api.lua`, `policies/` and `lib/` may not `require` a file bound to one handle (`api_synced.lua`, `synced.lua`, anything under `widgets/`) and call nothing the engine offers in one handle only. The named files are one half only: `api_synced.lua` and any `synced.lua` call nothing offered only in the unsynced handle, `api_unsynced.lua` and anything under `widgets/` the reverse. For example `Spring.SetUnitPosition` exists only in the synced handle and `Spring.GetSelectedUnits` only in the unsynced one: `api.lua` may call neither, `api_synced.lua` the first and not the second.
+`spec/modules/module_env_spec.lua` holds every module to it. `api.lua`, `policies/` and `lib/` may not `require` a file bound to one handle (`api_synced.lua`, `synced.lua`, anything under `widgets/`) and call nothing the engine offers in one handle only. The named files are one half only: `api_synced.lua` and any `synced.lua` call nothing offered only in the unsynced handle, `api_unsynced.lua` and anything under `widgets/` the reverse. For example `Spring.SetUnitPosition` exists only in the synced handle and `Spring.GetSelectedUnits` only in the unsynced one: `api.lua` may call neither, `api_synced.lua` the first and not the second.
+
+As a BAR module developer, I want to be sure of which engine handle I am operating in.
+
+In synced code, I want to only call functions from the engine 
 
 A gadget is the one file that runs in both handles, a half for each chosen by `gadgetHandler:IsSyncedCode()`; the rule leaves gadgets alone. The two handles never call each other; they pass messages (`SendToUnsynced`, `SendLuaRulesMsg`).
+
+### Policies
 
 **`<module>/policies/<name>.lua`**
 Policies are a typed function from a context to a result, cut into named steps, assembled by the loader from every module that contributes one, and evaluated with no state but the context it's handed.
@@ -171,7 +185,7 @@ So this policy reads top to bottom:
 6. `Policies.On(Assist)` - start a chain, evaluated in declaration order.
 7. `.Unless(Assist.AlliedAssistDisabled, function(ctx)` - a logic gate. Passing (returning false in this case), proceeds on to the next step. Not passing returns false for T only by accident here.
 8. `.Answer(Assist.Allowed, function()` - all of our gates passed, return true.
-9. `---@class (partial) ConstructionContract` - this policies place on the module contract, which is what callers get from `ModuleHandler.Contract`
+9. `---@class (partial) ConstructionContract` - this policies place on the module contract, which is what callers get from `ModuleHandler.Contract`.
 10. `return Contract` - hand the loader the contract for evaluation later.
 
 Consumer example from `modules/construction/gadgets/game_allied_assist_mode.lua`:
@@ -204,7 +218,47 @@ local function isBuilderAllowedCommand(cmdID, p1, p2, p5, p6, unitTeam)
 
 EmmyLua can "Navigate To Definition" and "Find All References" on `Construction.Assist`.
 
+**The four kinds of policy**
+
+`Policy.Single` is one of four. Each names how the steps several modules contribute are combined, and the loader combines them that way; a policy declares its kind once, where its steps are declared.
+
+| kind | the steps combine as | result | example |
+|---|---|---|---|
+| `Single` | guards in order (`If`, `Unless`), the first refusal wins, then one `Answer` | `T` | may a builder help an ally's unit along |
+| `Fold` | every `Apply` step runs on the same value, in declared order (`After`, `Before` place a step) | the value, `C` | every unit def through the base game's post, then transport's and tech's steps |
+| `Product` | every `Factor` multiplies | a number | a loaded transport's speed: the base factor times the commander drag |
+| `Facts` | named slots a module `Provide`s; the owner's `Default` answers a slot nobody filled; two live modules answering one slot is a load error | a table of answers | a team's tier; who holds a mex spot; a team's tax rate |
+
+#### Contributing to another module's policy
+A module adds a step to a policy it does not own by declaring the step's name under `Policy.Contributes(target, names)` and attaching it with the same verbs. Tech's `modules/tech/policies/creation.lua`:
+
+```lua
+---@type ConstructionContract
+local Construction = Policies.Contract(Modules.Construction)
+
+---@class TechConstructionCreationSteps: PolicySteps<ConstructionCreationContext, boolean>
+---@field BelowTier "BelowTier"
+local Creation = { BelowTier = "BelowTier" }
+Policy.Contributes(Construction.Creation, Creation)
+
+Policies.On(Construction.CreationFacts).Provide(Construction.CreationFacts.Tier, function(ctx)
+	return tonumber(ctx.springRepo.GetTeamRulesParam(ctx.teamID, "tech_level"))
+end)
+
+Policies.On(Creation).Unless(Creation.BelowTier, function(ctx)
+	return ctx.tier ~= nil and ctx.unitDef.isFactory and required(ctx.unitDef) > ctx.tier
+end)
+```
+
+Construction asks `Evaluate(Construction.Creation, ctx)` and knows nothing of tech. Construction declared a `Tier` fact it cannot answer (its `Default` is nil: no tier system); tech provides it, and refuses a lab above the team's tier. Delete `modules/tech` and every lab opens at tier one again. The loader refuses a step whose name neither the owner nor a contributor declared, and a provision for a fact that has no owner default.
+
+**What a step may read.** A step or a provider gets its context and nothing else. The context carries the modoptions (`ctx.modOptions`) and the engine (`ctx.springRepo`, the real `Spring` in the game and a stand-in in a spec); no policy file imports `Spring`. That is what makes a policy evaluable on the host without an engine.
+
+**A module speaks its own words.** A lower module never names a higher one: construction has a `tier`, not a tech level; economy has `shares` and a `taxRate`, not transfer's sharing modes. Where a lower module needs a sentence only a higher one can write, it asks for the sentence as a fact. Transfer's tooltips ask `UnitTermsNotes.Opening`, a clause on what would open sharing further; tech provides "Constructors unlock at Tech 2 (1/3 Keystones)", in its own language file. Transfer never learns the word Keystone.
+
 See the `policies_getting_started` for more information.
+
+### Modes
 
 **`<module>/modes/<name>.lua`** and **`<module>/mode_verbs.lua`**
 
@@ -250,6 +304,13 @@ A verb is two functions:
 1. `parse` (`function(modeName, which)`) checks what the mode wrote and keeps its parameters
 2. `write` (`function(p, lock)`) turns them into modoptions.
 
+Beside `verbs`, a fragment may bring two more things to the axis:
+
+* `nouns = function(nouns)` adds the module's nouns to the grammar, or decorates another module's. Tech adds `Tech` and gives transfer's grants a tier: `Transfer.Units.Constructors.AtT2` is the same grant, written to the option tech reads once a team reaches Tech 2 (a noun may name the option it writes).
+* `expose = function(modeName)` returns the module's dials at their starting point. A preset that lets the player tweak everything says `.Expose()` and gets every module's dials, open, without naming the modules; that is how `Customize` opens tech's dials without a line about tech.
+
+An axis's lobby option (`transfer_mode`, `game_mode`) lists the presets its owner declared, then every other module's presets for that axis, with their names. Tech Core reaches the lobby with the tech module and leaves with it.
+
 That is why `standard.lua` can say `.EnemyTransporting(...)`: the game module's grammar merges every module's game verbs (`ModuleHandler.ModeVerbs("game")`), so transport owns the modoption, the verb and its checking, and the game module's mode just uses the word.
 
 **Which modules are live.** The picked mode on each axis decides, by what it writes:
@@ -261,6 +322,6 @@ Tech ships `Tech Core` on the transfer axis and owns the tech dials, so:
 
 * `Tech Core` picked: tech is live (its own mode).
 * `Enabled` picked: tech is off (nothing of tech's is written).
-* `Customize` picked: tech is live again, because `.Open(Tech, 1, 1.5)` writes the dials.
+* `Customize` picked: tech is live again, because `.Expose()` wrote tech's dials.
 
 `ModuleHandler.LiveModulesFor(modOptions)` reads the picks off the `<category>_mode` modoptions. The live set decides whose providers and contributions take part when a policy is evaluated.
